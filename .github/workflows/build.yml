@@ -1,0 +1,47 @@
+name: Build Swish Vision
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Test tracking logic
+        run: gradle :app:testReleaseUnitTest --no-daemon --stacktrace
+
+      - name: Build APK
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk "SwishVision-0.1.${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SwishVision-0.1.${{ github.run_number }}
+          path: SwishVision-*.apk
+
+      - name: Publish install link
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Swish Vision 0.1.${{ github.run_number }}
+          body: "Open this page on your phone, tap the .apk file, then Install."
+          files: SwishVision-*.apk
+          make_latest: true

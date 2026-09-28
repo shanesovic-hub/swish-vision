@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Basketball: orange ball with seams, on the 108dp adaptive-icon canvas -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#F5A524"
+        android:pathData="M54,30a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <path android:strokeColor="#0E1216" android:strokeWidth="2.2" android:fillColor="#00000000"
+        android:pathData="M30,54L78,54M54,30L54,78" />
+    <path android:strokeColor="#0E1216" android:strokeWidth="2.2" android:fillColor="#00000000"
+        android:pathData="M37,37C45,45 45,63 37,71M71,37C63,45 63,63 71,71" />
+</vector>

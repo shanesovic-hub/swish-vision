@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="court">#0E1216</color>
+    <color name="panel">#1A212A</color>
+    <color name="panel2">#232C37</color>
+    <color name="amber">#F5A524</color>
+    <color name="make">#4ADE80</color>
+    <color name="miss">#F87171</color>
+    <color name="net">#EDF1F4</color>
+    <color name="muted">#7B8794</color>
+    <color name="line">#2E3944</color>
+</resources>
