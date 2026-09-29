@@ -8,8 +8,8 @@ import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.AudioManager
-import android.media.ToneGenerator
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -100,7 +100,10 @@ class TrackerActivity : AppCompatActivity() {
     private var session = Session(System.currentTimeMillis())
     private var shotType = ShotType.FT
     private var soundOn = true
-    private var tone: ToneGenerator? = null
+    // Game sounds: a net swish for makes, an arena buzzer for misses.
+    private var sounds: SoundPool? = null
+    private var swishId = 0
+    private var buzzerId = 0
     private var latestFps = 0f
     private var fpsSum = 0f
     private var fpsCount = 0
@@ -186,7 +189,20 @@ class TrackerActivity : AppCompatActivity() {
             if (!hasCamera()) askCamera.launch(Manifest.permission.CAMERA)
         }
 
-        tone = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 90) }.getOrNull()
+        sounds = runCatching {
+            SoundPool.Builder()
+                .setMaxStreams(3)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                .build()
+        }.getOrNull()?.also { pool ->
+            swishId = pool.load(this, R.raw.swish, 1)
+            buzzerId = pool.load(this, R.raw.buzzer, 1)
+        }
 
         // Build the detector on the analysis thread: the GPU delegate must run where it was created.
         analysisExecutor.execute {
@@ -214,7 +230,8 @@ class TrackerActivity : AppCompatActivity() {
         ui.removeCallbacksAndMessages(null)
         analysisExecutor.execute { detector?.close(); detector = null }
         analysisExecutor.shutdown()
-        tone?.release()
+        sounds?.release()
+        sounds = null
         super.onDestroy()
     }
 
@@ -428,10 +445,7 @@ class TrackerActivity : AppCompatActivity() {
         session.add(now, result, shotType, method)
         overlay.flash(result)
         if (soundOn) {
-            tone?.startTone(
-                if (result == Result.MAKE) ToneGenerator.TONE_PROP_BEEP2 else ToneGenerator.TONE_PROP_NACK,
-                180,
-            )
+            sounds?.play(if (result == Result.MAKE) swishId else buzzerId, 1f, 1f, 1, 0, 1f)
         }
         refresh()
     }

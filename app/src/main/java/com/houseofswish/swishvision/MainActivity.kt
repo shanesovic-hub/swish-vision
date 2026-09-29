@@ -90,7 +90,8 @@ class MainActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val b = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             v.setPadding(b.left, b.top, b.right, b.bottom)
-            insets
+            // Consumed here: the page must not add the same space again (that doubled the bottom bar).
+            WindowInsetsCompat.CONSUMED
         }
 
         with(web.settings) {

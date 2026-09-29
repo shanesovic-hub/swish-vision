@@ -30,11 +30,21 @@
       '.bottom-nav{padding-left:2px!important;padding-right:2px!important}' +
       '.bottom-nav .nav-item{flex:1 1 0;min-width:0;padding:6px 2px!important}' +
       '.bottom-nav .nav-label{letter-spacing:0.5px!important;white-space:nowrap}' +
-      '#sv-log-btn,#sv-dash-btn{white-space:nowrap;font-size:18px!important;letter-spacing:2px!important}';
+      '#sv-log-btn,#sv-dash-btn{white-space:nowrap;font-size:18px!important;letter-spacing:2px!important}' +
+      // Screens with the bottom bar: always leave room for the bar's real height, so nothing hides behind it.
+      '.dashboard-screen,.stats-screen,.badges-screen,.profile-screen,.board-screen' +
+      '{padding-bottom:calc(var(--sv-nav-h, 90px) + 24px)!important}';
     document.head.appendChild(css);
   }
 
+  function syncNavHeight() {
+    var n = document.getElementById('bottom-nav');
+    if (n && n.offsetHeight) document.documentElement.style.setProperty('--sv-nav-h', n.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', syncNavHeight);
+
   function install() {
+    syncNavHeight();
     var form = document.querySelector('#log-session .log-form');
     if (form && !document.getElementById('sv-log-btn')) {
       form.insertBefore(cameraButton('sv-log-btn'), form.firstChild);
