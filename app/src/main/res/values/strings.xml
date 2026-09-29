@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Swish Vision</string>
+    <string name="app_name">Swish Quest</string>
     <string name="setup_hint">Set the phone off to the side of the hoop (about 45°) so the whole rim and net are in view.\nThen drag a box snugly around the rim and the top of the net.</string>
     <string name="camera_needed">Swish Vision needs the camera to watch the rim. Tap to allow it.</string>
 </resources>
