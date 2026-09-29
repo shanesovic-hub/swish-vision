@@ -175,6 +175,45 @@ object TrackerScenarios {
         Scenario("real: vanishes and never comes back = no call (add it by hand)", emptyList()) {
             Sim().apply { run(descent(955f).take(6)); nothing(4000) }.calls
         },
+        // --- reported from the first home test ---
+        Scenario("in line with the camera: front rim, drops in front of the net (miss)", listOf(Result.MISS)) {
+            Sim().apply {
+                val d = descent(950f).take(10)                         // looks like it's going in...
+                run(d)
+                run(line(d.last(), Pair(952f, 385f), 4), w = 58f)       // ...hits the rim, pops up toward the camera
+                run(line(Pair(952f, 385f), Pair(956f, 640f), 9), w = 66f) // drops in front of the net: bigger on screen
+            }.calls
+        },
+        Scenario("in line with the camera: swish, ball partly hidden by the net (make)", listOf(Result.MAKE)) {
+            Sim().apply {
+                val d = descent(950f).take(10)
+                run(d)
+                run(line(d.last(), Pair(951f, 600f), 6), w = 44f)       // smaller box: net covers part of it
+            }.calls
+        },
+        Scenario("walking to a new spot with the ball near the camera is not a shot", emptyList()) {
+            Sim().apply {
+                // carried at chest height close to the camera: looks "above the rim" on screen
+                val walk = (0 until 60).map { i -> Pair(600f + 12f * i, 330f + 5f * kotlin.math.sin(i / 3f)) }
+                run(walk, w = 70f)
+                run(line(walk.last(), Pair(1320f, 700f), 30), w = 70f) // then lowers it and keeps walking
+                nothing(1500)
+            }.calls
+        },
+        Scenario("picking the ball up under the hoop and walking away is not a shot", emptyList()) {
+            Sim().apply {
+                run(line(Pair(940f, 900f), Pair(945f, 330f), 25), w = 60f) // lifted up (close to camera, looks high)
+                run(line(Pair(945f, 330f), Pair(700f, 360f), 30), w = 60f) // carried away
+                run(line(Pair(700f, 360f), Pair(650f, 720f), 30), w = 60f) // lowered slowly
+                nothing(1500)
+            }.calls
+        },
+        Scenario("soft layup off the glass still counts (make)", listOf(Result.MAKE)) {
+            Sim().apply {
+                run(line(Pair(880f, 560f), Pair(935f, 330f), 10))
+                run(line(Pair(935f, 330f), Pair(950f, 600f), 14))
+            }.calls
+        },
         Scenario("net shake after a make does not double count", listOf(Result.MAKE)) {
             Sim().apply {
                 run(descent(950f))

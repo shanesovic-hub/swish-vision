@@ -22,6 +22,18 @@
     return b;
   }
 
+  // App-only layout fixes: keep all five bottom tabs on screen at any phone width.
+  if (!document.getElementById('sv-app-css')) {
+    var css = document.createElement('style');
+    css.id = 'sv-app-css';
+    css.textContent =
+      '.bottom-nav{padding-left:2px!important;padding-right:2px!important}' +
+      '.bottom-nav .nav-item{flex:1 1 0;min-width:0;padding:6px 2px!important}' +
+      '.bottom-nav .nav-label{letter-spacing:0.5px!important;white-space:nowrap}' +
+      '#sv-log-btn,#sv-dash-btn{white-space:nowrap;font-size:18px!important;letter-spacing:2px!important}';
+    document.head.appendChild(css);
+  }
+
   function install() {
     var form = document.querySelector('#log-session .log-form');
     if (form && !document.getElementById('sv-log-btn')) {

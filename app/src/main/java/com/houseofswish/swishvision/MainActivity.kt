@@ -78,7 +78,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         bridgeJs = assets.open("bridge.js").bufferedReader().use { it.readText() }
 
-        val root = FrameLayout(this).apply { setBackgroundColor(Color.parseColor("#0E1216")) }
+        // Same colour as Swish Quest's bottom bar, so the strip above the phone's gesture bar blends in.
+        val root = FrameLayout(this).apply { setBackgroundColor(Color.parseColor("#111111")) }
         web = WebView(this)
         root.addView(web, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         offline = offlineView()
@@ -97,6 +98,9 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true
             databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
+            // Render Swish Quest at its designed size, like Chrome does. (By default the in-app browser
+            // also applies the phone's font-size setting, which pushed the bottom tabs off screen.)
+            textZoom = 100
             userAgentString = "$userAgentString SwishQuestApp"
         }
         web.addJavascriptInterface(Bridge(), "SwishVisionNative")
