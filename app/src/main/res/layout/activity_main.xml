@@ -6,16 +6,14 @@
     android:layout_height="match_parent"
     android:background="@color/court">
 
-    <!-- Camera stage: always 16:9, so the preview and the analysed frames line up exactly -->
+    <!-- Camera stage: preview is fit-centred; the overlay maps the same letterboxed area -->
     <FrameLayout
         android:id="@+id/stage"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="W,16:9"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintEnd_toStartOf="@id/panel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -47,14 +45,13 @@
     <!-- Right-hand panel: scoreboard and controls -->
     <LinearLayout
         android:id="@+id/panel"
-        android:layout_width="0dp"
+        android:layout_width="250dp"
         android:layout_height="0dp"
         android:background="@color/panel"
         android:orientation="vertical"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/stage"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
@@ -70,17 +67,8 @@
                 android:letterSpacing="0.12"
                 android:text="SWISH VISION"
                 android:textColor="@color/amber"
-                android:textSize="13sp"
+                android:textSize="13dp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="4dp"
-                android:text="Starting…"
-                android:textColor="@color/muted"
-                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/soundBtn"
@@ -90,6 +78,16 @@
                 android:text="🔊"
                 android:textSize="14sp" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Starting…"
+            android:textColor="@color/muted"
+            android:textSize="11dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -129,7 +127,8 @@
             android:gravity="center"
             android:text="Streak 0 · Best 0 · Last 10 – · 0:00"
             android:textColor="@color/net"
-            android:textSize="12sp" />
+            android:textSize="11dp"
+            android:maxLines="2" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -152,8 +151,7 @@
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_height="6dp" />
 
         <LinearLayout
             android:layout_width="match_parent"

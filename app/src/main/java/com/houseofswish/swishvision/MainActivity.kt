@@ -84,6 +84,8 @@ class MainActivity : AppCompatActivity() {
     @Volatile private var resetTracker = false
     @Volatile private var detectorError: String? = null
     @Volatile private var backend = "…"
+    @Volatile private var hot = false
+    private var frameNo = 0L
 
     // --- main thread state ---
     private var session = Session(System.currentTimeMillis())
@@ -132,6 +134,9 @@ class MainActivity : AppCompatActivity() {
         overlay.onRimDrawn = { box ->
             rim = box
             resetTracker = true
+            if (hint.visibility == View.VISIBLE) {
+                Toast.makeText(this, "Drag the box to move it, or a corner to resize", Toast.LENGTH_LONG).show()
+            }
             hint.visibility = View.GONE
         }
         chips.forEach { (type, btn) -> btn.setOnClickListener { shotType = type; refresh() } }
@@ -316,7 +321,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun analyze(proxy: ImageProxy) {
         val det = detector
-        if (det == null) {
+        frameNo++
+        // Phone running hot: check every other frame to cool down (tracker is tested down to 15/s).
+        if (det == null || (hot && frameNo % 2L == 1L)) {
             proxy.close()
             return
         }
@@ -410,6 +417,7 @@ class MainActivity : AppCompatActivity() {
                 val pm = ContextCompat.getSystemService(this@MainActivity, PowerManager::class.java)
                 (pm?.currentThermalStatus ?: 0) >= PowerManager.THERMAL_STATUS_SEVERE
             } else false
+            this@MainActivity.hot = hot
             status.text = when {
                 err != null -> "Model error"
                 detector == null -> "Loading…"

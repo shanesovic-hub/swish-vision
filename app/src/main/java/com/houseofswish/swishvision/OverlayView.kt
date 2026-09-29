@@ -114,8 +114,66 @@ class OverlayView @JvmOverloads constructor(
     private fun fx(vx: Float) = (vx - offX()) / scale()
     private fun fy(vy: Float) = (vy - offY()) / scale()
 
+    // --- adjusting an existing rim box: drag inside to move, drag a corner to resize ---
+    private enum class Edit { NONE, MOVE, TL, TR, BL, BR }
+    private var edit = Edit.NONE
+    private var editStart: Box? = null
+    private var touchX = 0f
+    private var touchY = 0f
+    private val handleR = 9f * density
+    private val grab = 30f * density
+    private val handlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#F5A524") }
+
+    private fun adjust(e: MotionEvent): Boolean {
+        val b = rim ?: return false
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val l = vx(b.x); val t = vy(b.y); val r = vx(b.right); val bt = vy(b.bottom)
+                fun near(x: Float, y: Float) = abs(e.x - x) < grab && abs(e.y - y) < grab
+                edit = when {
+                    near(l, t) -> Edit.TL
+                    near(r, t) -> Edit.TR
+                    near(l, bt) -> Edit.BL
+                    near(r, bt) -> Edit.BR
+                    e.x > l - grab / 2 && e.x < r + grab / 2 && e.y > t - grab / 2 && e.y < bt + grab / 2 -> Edit.MOVE
+                    else -> Edit.NONE
+                }
+                if (edit == Edit.NONE) return false
+                editStart = b; touchX = e.x; touchY = e.y
+                parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            MotionEvent.ACTION_MOVE -> {
+                val s0 = editStart ?: return false
+                val dx = (e.x - touchX) / scale()
+                val dy = (e.y - touchY) / scale()
+                val minW = 12f; val minH = 8f
+                var x0 = s0.x; var y0 = s0.y; var x1 = s0.right; var y1 = s0.bottom
+                when (edit) {
+                    Edit.MOVE -> { x0 += dx; x1 += dx; y0 += dy; y1 += dy }
+                    Edit.TL -> { x0 = min(x0 + dx, x1 - minW); y0 = min(y0 + dy, y1 - minH) }
+                    Edit.TR -> { x1 = max(x1 + dx, x0 + minW); y0 = min(y0 + dy, y1 - minH) }
+                    Edit.BL -> { x0 = min(x0 + dx, x1 - minW); y1 = max(y1 + dy, y0 + minH) }
+                    Edit.BR -> { x1 = max(x1 + dx, x0 + minW); y1 = max(y1 + dy, y0 + minH) }
+                    Edit.NONE -> return false
+                }
+                // keep it on screen
+                val sx = when { x0 < 0 -> -x0; x1 > frameW -> frameW - x1; else -> 0f }
+                val sy = when { y0 < 0 -> -y0; y1 > frameH -> frameH - y1; else -> 0f }
+                if (edit == Edit.MOVE) { x0 += sx; x1 += sx; y0 += sy; y1 += sy }
+                rim = Box(x0.coerceAtLeast(0f), y0.coerceAtLeast(0f),
+                    x1.coerceAtMost(frameW.toFloat()) - x0.coerceAtLeast(0f),
+                    y1.coerceAtMost(frameH.toFloat()) - y0.coerceAtLeast(0f))
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (edit != Edit.NONE) rim?.let { onRimDrawn?.invoke(it) }
+                edit = Edit.NONE; editStart = null
+            }
+        }
+        return true
+    }
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (!settingRim) return false
+        if (!settingRim) return adjust(e)
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> { dragStart = e.x to e.y; dragNow = dragStart }
             MotionEvent.ACTION_MOVE -> dragNow = e.x to e.y
@@ -163,7 +221,11 @@ class OverlayView @JvmOverloads constructor(
                 Phase.COOLDOWN -> "…"
                 else -> "READY"
             }
-            c.drawText(label, rect.left, rect.top - 6 * density, labelPaint)
+            c.drawText(if (edit != Edit.NONE) "ADJUSTING" else label, rect.left, rect.top - 6 * density, labelPaint)
+            // corner handles: drag to resize
+            for ((hx, hy) in listOf(rect.left to rect.top, rect.right to rect.top, rect.left to rect.bottom, rect.right to rect.bottom)) {
+                c.drawCircle(hx, hy, handleR, handlePaint)
+            }
         }
 
         val a = dragStart; val b = dragNow
