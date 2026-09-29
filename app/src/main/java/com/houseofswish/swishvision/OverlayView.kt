@@ -117,6 +117,7 @@ class OverlayView @JvmOverloads constructor(
     // --- adjusting an existing rim box: drag inside to move, drag a corner to resize ---
     private enum class Edit { NONE, MOVE, TL, TR, BL, BR }
     private var edit = Edit.NONE
+    val isEditing: Boolean get() = edit != Edit.NONE || dragStart != null
     private var editStart: Box? = null
     private var touchX = 0f
     private var touchY = 0f

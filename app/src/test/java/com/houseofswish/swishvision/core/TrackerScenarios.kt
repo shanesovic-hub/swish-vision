@@ -147,6 +147,34 @@ object TrackerScenarios {
         Scenario("ten makes in a row", List(10) { Result.MAKE }) {
             Sim().apply { repeat(10) { run(descent(940f + it * 2)); nothing(1300) } }.calls
         },
+        // --- patterns seen in real gym footage (ball hidden by backboard/net near the rim) ---
+        Scenario("real: ball vanishes above the rim, reappears under the net (make)", listOf(Result.MAKE)) {
+            Sim().apply {
+                val d = descent(955f)
+                run(d.take(6))            // last seen ~1U above the ring
+                nothing(430)              // hidden by backboard + net
+                run(line(Pair(948f, 560f), Pair(946f, 620f), 3)) // falls out of the net
+            }.calls
+        },
+        Scenario("real: vanishes, then reappears below but well wide of the rim (miss)", listOf(Result.MISS)) {
+            Sim().apply {
+                run(descent(990f).take(6))
+                nothing(400)
+                run(line(Pair(1180f, 560f), Pair(1200f, 640f), 3)) // bounced off the side
+            }.calls
+        },
+        Scenario("real: vanishes, a ball sitting on the floor nearby is not the shot", listOf(Result.MAKE)) {
+            Sim().apply {
+                val floor = listOf(Detection(1150f, 880f, 55f, 55f, 0.4f))
+                repeat(30) { frame(null, extra = floor) }
+                run(descent(955f).take(6), extra = floor)
+                repeat(12) { frame(null, extra = floor) }
+                run(line(Pair(950f, 560f), Pair(948f, 620f), 3), extra = floor)
+            }.calls
+        },
+        Scenario("real: vanishes and never comes back = no call (add it by hand)", emptyList()) {
+            Sim().apply { run(descent(955f).take(6)); nothing(4000) }.calls
+        },
         Scenario("net shake after a make does not double count", listOf(Result.MAKE)) {
             Sim().apply {
                 run(descent(950f))

@@ -22,17 +22,22 @@ import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
 /**
- * Runs YOLO11n (COCO) on the phone's GPU and returns basketballs ("sports ball")
- * in camera-frame pixels. Input is NCHW float [1,3,640,640], RGB 0..1.
- * Output is [1,84,8400] with normalised boxes.
+ * Runs a basketball + hoop YOLOv8n model on the phone's GPU.
+ * Input is NCHW float [1,3,640,640], RGB 0..1. Output is [1,6,8400]:
+ * cx, cy, w, h (normalised), basketball score, hoop score.
+ * Returns balls and hoops in camera-frame pixels.
  */
+data class Found(val balls: List<Detection>, val hoops: List<Detection>)
+
 class BallDetector(context: Context) : AutoCloseable {
     companion object {
-        const val MODEL_FILE = "yolo11n_640.tflite"
-        const val MODEL_NAME = "yolo11n-coco-640"
+        const val MODEL_FILE = "bball_640.tflite"
+        const val MODEL_NAME = "yolov8n-basketball-hoop-640"
         const val INPUT = 640
         const val ANCHORS = 8400
-        const val CLASSES = 80
+        const val CLASSES = 2
+        const val BALL = 0
+        const val HOOP = 1
         private const val INV255 = 1f / 255f
         private const val TAG = "BallDetector"
     }
@@ -51,7 +56,8 @@ class BallDetector(context: Context) : AutoCloseable {
     private val out = FloatArray((4 + CLASSES) * ANCHORS)
     private val pixels = IntArray(plane)
 
-    var confThreshold = 0.30f
+    var ballThreshold = 0.25f
+    var hoopThreshold = 0.35f
 
     init {
         val model = loadModel(context)
@@ -98,8 +104,8 @@ class BallDetector(context: Context) : AutoCloseable {
     private val dst = RectF()
     private val padColor = Color.rgb(114, 114, 114)
 
-    /** Detect balls inside [roi] of [frame]. Results are in frame pixels. */
-    fun detect(frame: Bitmap, roi: Roi): List<Detection> {
+    /** Detect balls and hoops inside [roi] of [frame]. Results are in frame pixels. */
+    fun detect(frame: Bitmap, roi: Roi): Found {
         val s = roi.scale
         canvas.drawColor(padColor)
         src.set(roi.x, roi.y, roi.x + roi.w, roi.y + roi.h)
@@ -122,10 +128,11 @@ class BallDetector(context: Context) : AutoCloseable {
         outBytes.rewind()
         outBytes.asFloatBuffer().get(out)
 
-        return YoloDecoder.decode(
-            out, ANCHORS, CLASSES, YoloDecoder.COCO_SPORTS_BALL,
-            confThreshold, INPUT, normalizedBoxes = true,
-        ).map { roi.toFrame(it) }
+        val balls = YoloDecoder.decode(out, ANCHORS, CLASSES, BALL, ballThreshold, INPUT, normalizedBoxes = true)
+            .map { roi.toFrame(it) }
+        val hoops = YoloDecoder.decode(out, ANCHORS, CLASSES, HOOP, hoopThreshold, INPUT, normalizedBoxes = true, maxResults = 3)
+            .map { roi.toFrame(it) }
+        return Found(balls, hoops)
     }
 
     override fun close() {

@@ -43,6 +43,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.houseofswish.swishvision.core.Box
+import com.houseofswish.swishvision.core.HoopFinder
 import com.houseofswish.swishvision.core.Method
 import com.houseofswish.swishvision.core.Result
 import com.houseofswish.swishvision.core.Roi
@@ -77,6 +78,8 @@ class TrackerActivity : AppCompatActivity() {
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var detector: BallDetector? = null
     private val tracker = ShotTracker()
+    private val hoopFinder = HoopFinder()
+    private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
     private var frameBmp: Bitmap? = null
     private var tight: ByteBuffer? = null
     private var lastFrameAt = 0L
@@ -87,7 +90,10 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var resetTracker = false
     @Volatile private var detectorError: String? = null
     @Volatile private var backend = "…"
-    @Volatile private var hot = false
+    @Volatile private var hot = false          // critical: check every other frame
+    @Volatile private var autoRim = false      // rim came from the hoop finder (and follows the hoop)
+    @Volatile private var autoFind = true      // look for the hoop while no rim is set
+    @Volatile private var ballRate = 0
     private var frameNo = 0L
 
     // --- main thread state ---
@@ -144,6 +150,7 @@ class TrackerActivity : AppCompatActivity() {
         })
 
         overlay.onRimDrawn = { box ->
+            autoRim = false // the player placed it: stop auto-following
             rim = box
             resetTracker = true
             if (hint.visibility == View.VISIBLE) {
@@ -160,11 +167,13 @@ class TrackerActivity : AppCompatActivity() {
             refresh()
         }
         findViewById<Button>(R.id.redraw).setOnClickListener {
+            autoFind = false // they want to draw it themselves
+            autoRim = false
             rim = null
             resetTracker = true
             overlay.rim = null
             overlay.settingRim = true
-            hint.text = getString(R.string.setup_hint)
+            hint.text = getString(R.string.draw_hint)
             hint.visibility = View.VISIBLE
         }
         findViewById<Button>(R.id.end).setOnClickListener { endSession() }
@@ -356,16 +365,25 @@ class TrackerActivity : AppCompatActivity() {
         if (resetTracker) {
             resetTracker = false
             tracker.reset()
+            hoopFinder.reset()
         }
         val r = rim
         val w = frame.width
         val h = frame.height
         val roi = if (r != null) Roi.aroundRim(r, w, h, BallDetector.INPUT) else Roi.full(w, h, BallDetector.INPUT)
-        val balls = try {
+        val found = try {
             det.detect(frame, roi)
         } catch (t: Throwable) {
             Log.e(TAG, "detect failed", t)
-            emptyList()
+            Found(emptyList(), emptyList())
+        }
+        val balls = found.balls
+        if (balls.isNotEmpty()) ballFrames++
+        // Find the hoop automatically, and keep the box on it if the phone gets nudged.
+        val autoBox: Box? = when {
+            r == null && autoFind -> hoopFinder.find(found.hoops)
+            r != null && autoRim -> hoopFinder.follow(r, found.hoops)
+            else -> null
         }
         val call = tracker.update(tMs, balls, r)
         if (frame !== frameBmp) frame.recycle()
@@ -384,6 +402,21 @@ class TrackerActivity : AppCompatActivity() {
             latestFps = fps
             if (r != null && fps > 0f) { fpsSum += fps; fpsCount++ }
             if (call != null && r === rim) addShot(call, Method.AUTO)
+            if (autoBox != null) applyAutoRim(autoBox, first = r == null)
+        }
+    }
+
+    private fun applyAutoRim(box: Box, first: Boolean) {
+        if (overlay.isEditing) return
+        if (first && (rim != null || !autoFind)) return // the player got there first
+        rim = box
+        overlay.rim = box
+        overlay.settingRim = false
+        if (first) {
+            autoRim = true
+            resetTracker = true
+            hint.visibility = View.GONE
+            Toast.makeText(this, "Found the hoop. Drag the box to adjust it if needed.", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -427,13 +460,15 @@ class TrackerActivity : AppCompatActivity() {
             val err = detectorError
             val hot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val pm = ContextCompat.getSystemService(this@TrackerActivity, PowerManager::class.java)
-                (pm?.currentThermalStatus ?: 0) >= PowerManager.THERMAL_STATUS_SEVERE
+                val st = pm?.currentThermalStatus ?: 0
+                this@TrackerActivity.hot = st >= PowerManager.THERMAL_STATUS_CRITICAL
+                st >= PowerManager.THERMAL_STATUS_SEVERE
             } else false
-            this@TrackerActivity.hot = hot
+            analysisExecutor.execute { ballRate = ballFrames; ballFrames = 0 }
             status.text = when {
                 err != null -> "Model error"
                 detector == null -> "Loading…"
-                else -> "$backend · ${latestFps.toInt()}/s · ${cameraFps}fps" + if (hot) " · HOT" else ""
+                else -> "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
             }
             status.setTextColor(ContextCompat.getColor(this@TrackerActivity, if (hot || err != null) R.color.miss else R.color.muted))
             ui.postDelayed(this, 1000)

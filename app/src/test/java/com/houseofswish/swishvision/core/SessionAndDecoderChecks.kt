@@ -56,6 +56,29 @@ object SessionAndDecoderChecks {
         check(kotlin.math.abs(back.cx - (roi.x + 300f)) < 0.01f && kotlin.math.abs(back.w - 60f) < 0.01f, "roi map $back", f)
         val edge = Roi.aroundRim(Box(1850f, 20f, 60f, 50f), 1920, 1080, 640)
         check(edge.x + edge.w <= 1920 && edge.y >= 0, "roi clamped $edge", f)
+
+        // Hoop finder: needs a steady hoop, ignores one-off detections, follows small shifts
+        val hf = HoopFinder()
+        val hoop = Detection(360f, 164f, 40f, 48f, 0.85f) // from the real test video
+        var found: Box? = null
+        repeat(7) { found = hf.find(listOf(hoop)) }
+        check(found == null, "hoop found too early", f)
+        found = hf.find(listOf(hoop))
+        check(found != null, "hoop not found after 8 steady frames", f)
+        found?.let { b ->
+            check(kotlin.math.abs(b.w - 40f) < 0.5f && kotlin.math.abs(b.h - 24f) < 0.5f, "rim box size $b", f)
+            // ring line (25% down the rim box) should sit near the top of the hoop box (rim)
+            val ringY = b.y + 0.25f * b.h
+            check(ringY > 140f && ringY < 148f, "ring line at $ringY (hoop top 140)", f)
+            check(hf.follow(b, listOf(hoop)) == null, "follow moved a steady rim", f)
+            val shifted = Detection(372f, 170f, 40f, 48f, 0.85f)
+            val moved = hf.follow(b, listOf(shifted))
+            check(moved != null && moved.x > b.x && moved.x < b.x + 12f, "follow didn't nudge: $moved", f)
+            check(hf.follow(b, listOf(Detection(700f, 400f, 40f, 48f, 0.9f))) == null, "followed a different hoop", f)
+        }
+        val hf2 = HoopFinder()
+        repeat(20) { i -> hf2.find(if (i % 2 == 0) listOf(hoop) else emptyList()) }
+        check(hf2.find(emptyList()) == null, "flickering hoop accepted", f)
         return f
     }
 }
