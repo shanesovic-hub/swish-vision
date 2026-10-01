@@ -12,8 +12,9 @@ import java.util.Locale
 
 /**
  * The announcer. After the swish, the phone's voice says the make count, then one of Shane's
- * recorded calls plays (heating up, on fire, bonus, from downtown, Bang ...). See [AnnouncerScript]
- * for which call plays when. A new shot, Undo or Wrong call cuts off whatever is still playing.
+ * recorded calls plays (heating up, on fire, bonus, from downtown, Bang ...). After the buzzer, a miss
+ * comment. See [AnnouncerScript] for which call plays when. Comments that aren't recorded yet are
+ * spoken by the phone voice. A new shot, Undo or Wrong call cuts off whatever is still playing.
  */
 class Announcer(context: Context) : TextToSpeech.OnInitListener {
 
@@ -134,7 +135,8 @@ class Announcer(context: Context) : TextToSpeech.OnInitListener {
         pending = call
         handler.postDelayed({
             if (t != token) return@postDelayed
-            if (ready && runCatching { tts.speak(call.count, TextToSpeech.QUEUE_FLUSH, null, "count$t") }.getOrDefault(TextToSpeech.ERROR) == TextToSpeech.SUCCESS) {
+            val count = call.count
+            if (ready && count != null && runCatching { tts.speak(count, TextToSpeech.QUEUE_FLUSH, null, "count$t") }.getOrDefault(TextToSpeech.ERROR) == TextToSpeech.SUCCESS) {
                 handler.postDelayed({ startCall(t) }, COUNT_MAX_MS) // safety net; normally onDone starts it
             } else {
                 startCall(t)
@@ -145,8 +147,8 @@ class Announcer(context: Context) : TextToSpeech.OnInitListener {
     /** Call right after the buzzer. [missesInRow] includes this miss; [endedStreak] is the make streak it ended. */
     fun miss(missesInRow: Int, endedStreak: Int) {
         val t = newShot()
-        val clip = script.forMiss(missesInRow, endedStreak) ?: return
-        handler.postDelayed({ if (t == token) play(clip, null) }, AFTER_BUZZER_MS)
+        val call = script.forMiss(missesInRow, endedStreak)
+        handler.postDelayed({ if (t == token) play(call.clip, call.say) }, AFTER_BUZZER_MS)
     }
 
     /** The camera just took back a make ("Wrong call"). */

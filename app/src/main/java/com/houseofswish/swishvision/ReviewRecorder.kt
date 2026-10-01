@@ -18,6 +18,7 @@ import com.houseofswish.swishvision.core.Phase
 import com.houseofswish.swishvision.core.Result
 import com.houseofswish.swishvision.core.Roi
 import java.io.BufferedWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
@@ -39,12 +40,19 @@ import kotlin.math.min
  * - NNN_<event>.jpg: a picture sheet of the ~2 s around each call / correction, each tile showing what
  *   the detector saw (ball circles, rim box) and what the tracker was thinking
  *
- * No video is kept. Everything is bundled into one zip in Downloads/SwishVision when the session ends.
+ * - train/<t>.jpg: full-size pictures of exactly what the detector looked at (its 640 x 640 input),
+ *   ~7 a second around each shot, more around the player's corrections. Used to train the detector on
+ *   this hoop. <t> matches the frame's "t" in frames.jsonl. Size-capped.
+ *
+ * No video is kept. When the session ends everything goes to Downloads/SwishVision as two zips:
+ * swishvision-review_<date>.zip (the record and sheets) and swishvision-train_<date>.zip (the pictures).
  * All methods must be called on the analysis thread.
  */
 class ReviewRecorder(private val dir: File) {
 
     private class Thumb(val t: Long, val bmp: Bitmap, val phase: Phase, val nBalls: Int)
+    private class Pic(val t: Long, val jpg: ByteArray)
+    private class PicWindow(val id: Int, val until: Long, var fix: Boolean)
     private class Capture(
         val id: Int,
         var label: String,
@@ -62,6 +70,17 @@ class ReviewRecorder(private val dir: File) {
         private const val AUTO_AFTER_MS = 700L
         private const val MANUAL_BEFORE_MS = 5000L
         private const val MAX_TILES = 42
+
+        // Training pictures
+        private const val PIC_EVERY_MS = 150L
+        private const val PIC_RING_MS = 4000L
+        private const val PIC_QUALITY = 80
+        private const val PIC_AUTO_BEFORE_MS = 1200L
+        private const val PIC_AUTO_AFTER_MS = 500L
+        private const val PIC_FIX_BEFORE_MS = 3500L
+        private const val AUTO_PIC_BUDGET = 9_000_000L // pictures around ordinary camera calls
+        private const val FIX_PIC_BUDGET = 9_000_000L  // pictures around the player's corrections (most useful)
+        private const val TRAIN = "train"
     }
 
     private val frames = BufferedWriter(FileWriter(File(dir, "frames.jsonl")))
@@ -75,6 +94,18 @@ class ReviewRecorder(private val dir: File) {
     private var frameCount = 0L
     private var pendingManual: Pair<String, String>? = null // label, shot type
     var sheets = 0
+        private set
+
+    private val picDir = File(dir, TRAIN).apply { mkdirs() }
+    private val picRing = ArrayDeque<Pic>()
+    private val picWindows = ArrayList<PicWindow>()
+    private val picSaved = HashSet<Long>()
+    private val jpgBuf = ByteArrayOutputStream(96 * 1024)
+    private var lastPicT = Long.MIN_VALUE
+    private var lastAutoT = 0L
+    private var autoPicBytes = 0L
+    private var fixPicBytes = 0L
+    var pictures = 0
         private set
 
     private val filter = Paint(Paint.FILTER_BITMAP_FLAG)
@@ -93,6 +124,7 @@ class ReviewRecorder(private val dir: File) {
         lastT = t
         frameCount++
         writeFrame(t, roi, rim, balls, hoops, tracked, phase, call)
+        keepPicture(t, thumbSrc)
 
         // Thumbnails at ~15 per second (every other frame), plus always the frame of a call.
         if (frameCount % 2L == 0L || call != null) {
@@ -108,6 +140,9 @@ class ReviewRecorder(private val dir: File) {
             lastAutoId = id
             val label = "auto_" + call.name
             event(t, label, shotType, id)
+            lastAutoT = t
+            picRing.filter { t - it.t <= PIC_AUTO_BEFORE_MS }.forEach { savePic(it, fix = false) }
+            picWindows += PicWindow(id, t + PIC_AUTO_AFTER_MS, fix = false)
             open += Capture(id, label, shotType, t, t + AUTO_AFTER_MS,
                 ArrayList(ring.filter { t - it.t <= AUTO_BEFORE_MS }), scene(frame))
         }
@@ -116,6 +151,7 @@ class ReviewRecorder(private val dir: File) {
             pendingManual = null
             val id = nextId++
             event(t, label, type, id)
+            picRing.filter { t - it.t <= PIC_FIX_BEFORE_MS }.forEach { savePic(it, fix = true) }
             val tiles = ArrayList(ring.filter { t - it.t <= MANUAL_BEFORE_MS })
             writeSheet(Capture(id, label, type, t, t, tiles, scene(frame)))
         }
@@ -145,6 +181,10 @@ class ReviewRecorder(private val dir: File) {
         val id = lastAutoId
         if (id == 0) return
         event(lastT, flag.lowercase(Locale.US), "", id)
+        // A wrong camera call is a moment worth training on: keep its pictures even if the ordinary budget is used up.
+        val t0 = lastAutoT
+        picRing.filter { it.t >= t0 - PIC_AUTO_BEFORE_MS && it.t <= t0 + PIC_AUTO_AFTER_MS }.forEach { savePic(it, fix = true) }
+        picWindows.firstOrNull { it.id == id }?.fix = true
         open.firstOrNull { it.id == id }?.let { it.label = it.label + "_" + flag; return }
         written[id]?.let { f ->
             val renamed = File(f.parentFile, f.name.removeSuffix(".jpg") + "_" + flag + ".jpg")
@@ -168,7 +208,10 @@ class ReviewRecorder(private val dir: File) {
         if (summaryJson != null) runCatching { File(dir, "summary.json").writeText(summaryJson) }
         val stamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date())
         val name = "swishvision-review_$stamp.zip"
-        val ok = runCatching { exportZip(context, name) }.getOrDefault(false)
+        val record = dir.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
+        val ok = runCatching { exportZip(context, name, record, "") }.getOrDefault(false)
+        val pics = picDir.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
+        if (pics.isNotEmpty()) runCatching { exportZip(context, "swishvision-train_$stamp.zip", pics, "$TRAIN/") }
         dir.deleteRecursively()
         return if (ok) name else null
     }
@@ -267,8 +310,40 @@ class ReviewRecorder(private val dir: File) {
         Phase.COOLDOWN -> "cool"
     }
 
-    private fun exportZip(context: Context, name: String): Boolean {
-        val files = dir.listFiles()?.sortedBy { it.name } ?: return false
+    /** Every [PIC_EVERY_MS], keep a full-size JPEG of the detector's input in a short ring. */
+    private fun keepPicture(t: Long, src: Bitmap) {
+        if (t - lastPicT >= PIC_EVERY_MS) {
+            lastPicT = t
+            runCatching {
+                jpgBuf.reset()
+                src.compress(Bitmap.CompressFormat.JPEG, PIC_QUALITY, jpgBuf)
+                val pic = Pic(t, jpgBuf.toByteArray())
+                picRing.addLast(pic)
+                while (picRing.isNotEmpty() && t - picRing.first().t > PIC_RING_MS) picRing.removeFirst()
+                for (w in picWindows) savePic(pic, w.fix)
+            }
+        }
+        picWindows.removeAll { t >= it.until }
+    }
+
+    private fun savePic(p: Pic, fix: Boolean) {
+        if (p.t in picSaved) return
+        val size = p.jpg.size.toLong()
+        if (fix) {
+            if (fixPicBytes + size > FIX_PIC_BUDGET) return
+            fixPicBytes += size
+        } else {
+            if (autoPicBytes + size > AUTO_PIC_BUDGET) return
+            autoPicBytes += size
+        }
+        runCatching { File(picDir, "${p.t}.jpg").writeBytes(p.jpg) }.onSuccess {
+            picSaved += p.t
+            pictures++
+        }
+    }
+
+    private fun exportZip(context: Context, name: String, files: List<File>, prefix: String): Boolean {
+        if (files.isEmpty()) return false
         if (Build.VERSION.SDK_INT >= 29) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, name)
@@ -278,21 +353,22 @@ class ReviewRecorder(private val dir: File) {
             }
             val resolver = context.contentResolver
             val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return false
-            resolver.openOutputStream(uri)?.use { zip(files, it) } ?: return false
+            resolver.openOutputStream(uri)?.use { zip(files, prefix, it) } ?: return false
             values.clear()
             values.put(MediaStore.MediaColumns.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
             return true
         }
         val out = File(context.getExternalFilesDir(null), name)
-        FileOutputStream(out).use { zip(files, it) }
+        FileOutputStream(out).use { zip(files, prefix, it) }
         return true
     }
 
-    private fun zip(files: List<File>, out: OutputStream) {
+    private fun zip(files: List<File>, prefix: String, out: OutputStream) {
         ZipOutputStream(out).use { z ->
             for (f in files) {
-                z.putNextEntry(ZipEntry(f.name))
+                z.setLevel(if (f.name.endsWith(".jpg")) 0 else 6) // pictures are already compressed
+                z.putNextEntry(ZipEntry(prefix + f.name))
                 f.inputStream().use { it.copyTo(z) }
                 z.closeEntry()
             }

@@ -659,7 +659,7 @@ class TrackerActivity : AppCompatActivity() {
             val name = rec?.finish(app, summaryJson)
             if (name != null) {
                 Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(app, "Review file saved to Downloads/SwishVision", Toast.LENGTH_LONG).show()
+                    Toast.makeText(app, "Review files saved to Downloads/SwishVision", Toast.LENGTH_LONG).show()
                 }
             }
         }

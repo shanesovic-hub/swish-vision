@@ -5,22 +5,22 @@ import kotlin.random.Random
 /**
  * What the announcer does after each shot. Pure logic (no Android), so it can be tested.
  *
- * After a make: the phone voice says the make count ("12!"), then one of Shane's recorded clips may play:
+ * Every make: the phone voice says the make count ("12!"), then one of Shane's recorded clips plays:
  *   3 in a row  -> "He's heating up"        4 in a row -> "He's on fire"
  *   every 5     -> Bonus, Double bonus, Triple bonus, Quadruple bonus, Quintuple bonus (phone voice after that)
- *   threes      -> usually "From downtown" / "From the parking lot" / "From way downtown, bang"
- *   6+ in a row -> sometimes "En fuego" / "Dare I say en fuego"
- *   otherwise   -> about every other make, a classic call. Every call plays once before any repeats.
- * After a miss: "Not so fast my friend" when it ends a streak of 3+, "You got this" every 3 misses in a row.
+ *   otherwise   -> a call. Every call plays once before any call repeats. Threes lean toward the
+ *                  downtown calls, and long streaks (6+) toward "En fuego" / "Dare I say en fuego".
+ * Every miss: "Not so fast my friend" when it ends a streak of 3+, "You got this" every 3 misses in a row,
+ *   otherwise a miss comment (each once before any repeats). Miss comments without a recording yet are
+ *   spoken by the phone voice.
  * When tracking starts: "We talkin' bout practice".
  */
 class AnnouncerScript(
     private val rnd: Random = Random.Default,
-    private val callChance: Double = 0.5,
-    private val threeChance: Double = 0.75,
+    private val leanChance: Double = 0.6,
 ) {
     /** [count] is spoken by the phone voice; then [clip] plays, or [say] is spoken when there is no clip for it. */
-    data class Call(val count: String, val clip: String? = null, val say: String? = null)
+    data class Call(val count: String? = null, val clip: String? = null, val say: String? = null)
 
     companion object {
         val CALLS = listOf(
@@ -34,6 +34,11 @@ class AnnouncerScript(
         const val HEATING_UP = "streak_heating_up"
         const val ON_FIRE = "streak_on_fire"
         val BONUS = listOf("bonus_1", "bonus_2", "bonus_3", "bonus_4", "bonus_5") // index = level - 1
+        val MISSES = listOf(
+            "miss_no_good", "miss_brick", "miss_clank", "miss_not_this_time", "miss_off_the_mark",
+            "miss_shake_it_off", "miss_next_one", "miss_keep_shooting", "miss_so_close", "miss_reload",
+            "miss_stay_with_it", "miss_nope", "miss_line_it_up", "miss_short_memory",
+        )
         const val NOT_SO_FAST = "miss_not_so_fast"
         const val YOU_GOT_THIS = "miss_you_got_this"
         const val START = "start_practice"
@@ -56,6 +61,12 @@ class AnnouncerScript(
             "bonus_4" to "Quadruple bonus!", "bonus_5" to "Quintuple bonus!",
             "miss_not_so_fast" to "Not so fast, my friend!", "miss_you_got_this" to "You got this!",
             "start_practice" to "We talkin' bout practice!",
+            "miss_no_good" to "No good!", "miss_brick" to "Brick!", "miss_clank" to "Clank!",
+            "miss_not_this_time" to "Not this time!", "miss_off_the_mark" to "Off the mark!",
+            "miss_shake_it_off" to "Shake it off!", "miss_next_one" to "Next one's going down!",
+            "miss_keep_shooting" to "Keep shooting!", "miss_so_close" to "So close!", "miss_reload" to "Reload!",
+            "miss_stay_with_it" to "Stay with it!", "miss_nope" to "Nope!", "miss_line_it_up" to "Line it up again!",
+            "miss_short_memory" to "Short memory!",
         )
 
         // index = level - 2 (level 2 = 10 in a row)
@@ -76,22 +87,30 @@ class AnnouncerScript(
             name?.trim()?.split(Regex("\\s+"))?.firstOrNull()?.takeIf { it.isNotBlank() && it.length <= 20 }
     }
 
-    /** Plays every clip in a pile once, in random order, before any repeats (and never the same one back to back). */
-    private inner class Deck(private val all: List<String>) {
-        private val left = ArrayList<String>()
+    /**
+     * Every clip plays once before any clip repeats (and never the same one back to back).
+     * Only clips that fit the moment can play (downtown calls only on threes, en fuego only on a long
+     * streak); when the ones that fit have all played, they start over.
+     */
+    private inner class Rotation {
+        private val played = HashSet<String>()
         private var last: String? = null
-        fun draw(): String {
-            if (left.isEmpty()) {
-                left += all.shuffled(rnd)
-                if (left.size > 1 && left.last() == last) left.add(0, left.removeAt(left.size - 1))
+        fun draw(fits: List<String>, lean: List<String> = emptyList()): String {
+            var fresh = fits.filter { it !in played }
+            if (fresh.isEmpty()) {
+                played.removeAll(fits.toSet())
+                fresh = fits.filter { it != last }.ifEmpty { fits }
             }
-            return left.removeAt(left.size - 1).also { last = it }
+            val leaning = fresh.filter { it in lean }
+            val pick = if (leaning.isNotEmpty() && rnd.nextDouble() < leanChance) leaning.random(rnd) else fresh.random(rnd)
+            played += pick
+            last = pick
+            return pick
         }
     }
 
-    private val calls = Deck(CALLS)
-    private val threes = Deck(THREES)
-    private val hot = Deck(HOT)
+    private val makeCalls = Rotation()
+    private val missCalls = Rotation()
 
     /**
      * @param makes  makes so far this session, including this one
@@ -105,23 +124,19 @@ class AnnouncerScript(
         }
         if (streak == 3) return Call(count, clip = HEATING_UP)
         if (streak == 4) return Call(count, clip = ON_FIRE)
-        val clip = when {
-            isThree -> if (rnd.nextDouble() < threeChance) {
-                if (rnd.nextDouble() < 0.65) threes.draw() else calls.draw()
-            } else null
-            rnd.nextDouble() < callChance -> if (streak >= 6 && rnd.nextDouble() < 0.4) hot.draw() else calls.draw()
-            else -> null
-        }
-        return Call(count, clip = clip)
+        val hotStreak = streak >= 6
+        val fits = CALLS + (if (isThree) THREES else emptyList()) + (if (hotStreak) HOT else emptyList())
+        val lean = (if (isThree) THREES else emptyList()) + (if (hotStreak) HOT else emptyList())
+        return Call(count, clip = makeCalls.draw(fits, lean))
     }
 
     /**
      * @param missesInRow  misses in a row, including this one
      * @param endedStreak  the make streak this miss just ended (0 if none)
      */
-    fun forMiss(missesInRow: Int, endedStreak: Int): String? = when {
-        endedStreak >= 3 -> NOT_SO_FAST
-        missesInRow >= 3 && missesInRow % 3 == 0 -> YOU_GOT_THIS
-        else -> null
+    fun forMiss(missesInRow: Int, endedStreak: Int): Call = when {
+        endedStreak >= 3 -> Call(clip = NOT_SO_FAST)
+        missesInRow >= 3 && missesInRow % 3 == 0 -> Call(clip = YOU_GOT_THIS)
+        else -> Call(clip = missCalls.draw(MISSES))
     }
 }
