@@ -61,7 +61,7 @@ class ReviewRecorder(private val dir: File) {
         private const val AUTO_BEFORE_MS = 1700L
         private const val AUTO_AFTER_MS = 700L
         private const val MANUAL_BEFORE_MS = 5000L
-        private const val MAX_TILES = 35
+        private const val MAX_TILES = 42
     }
 
     private val frames = BufferedWriter(FileWriter(File(dir, "frames.jsonl")))

@@ -96,6 +96,9 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var autoFind = true      // look for the hoop while no rim is set
     @Volatile private var ballRate = 0
     @Volatile private var shotTypeKey = ShotType.FT.key
+    @Volatile private var frameW = 0
+    @Volatile private var frameH = 0
+    private var showingAdvice = false
     private var frameNo = 0L
 
     // --- main thread state ---
@@ -412,6 +415,8 @@ class TrackerActivity : AppCompatActivity() {
         val r = rim
         val w = frame.width
         val h = frame.height
+        frameW = w
+        frameH = h
         val roi = if (r != null) Roi.aroundRim(r, w, h, BallDetector.INPUT) else Roi.full(w, h, BallDetector.INPUT)
         val found = try {
             det.detect(frame, roi)
@@ -519,7 +524,37 @@ class TrackerActivity : AppCompatActivity() {
                 else -> "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
             }
             status.setTextColor(ContextCompat.getColor(this@TrackerActivity, if (hot || err != null) R.color.miss else R.color.muted))
+            setupCheck()
             ui.postDelayed(this, 1000)
+        }
+    }
+
+    /** Before the first shot: warn about framing that makes calls unreliable. */
+    private fun setupCheck() {
+        val r = rim
+        if (r == null) { showingAdvice = false; return } // the hoop-finding / draw-the-box hint owns the banner
+        val fw = frameW
+        val fh = frameH
+        val advice = if (fw == 0 || session.shots.isNotEmpty()) null else setupAdvice(r, fw, fh)
+        if (advice != null) {
+            hint.text = advice
+            hint.visibility = View.VISIBLE
+            showingAdvice = true
+        } else if (showingAdvice) {
+            hint.visibility = View.GONE
+            showingAdvice = false
+        }
+    }
+
+    private fun setupAdvice(r: Box, fw: Int, fh: Int): String? {
+        val u = r.w
+        return when {
+            u < fw * 0.03f -> "Setup: the rim looks small. Move the phone closer to the hoop."
+            u > fw * 0.20f -> "Setup: the rim looks too big. Move the phone back so there's room around it."
+            r.y < 2.5f * u -> "Setup: not enough room above the rim. Tilt the phone down a bit or move it back, so the ball is visible as it comes down."
+            r.bottom > fh - 1.5f * u -> "Setup: the net is near the bottom edge. Tilt the phone up a little so the whole net is in view."
+            r.x < 1.5f * u || r.right > fw - 1.5f * u -> "Setup: the rim is near the side edge. Turn the phone so the rim is more centered."
+            else -> null
         }
     }
 
