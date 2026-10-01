@@ -98,6 +98,9 @@ class BallDetector(context: Context) : AutoCloseable {
 
     // Reused every frame: the crop is drawn (scaled, filtered) into this square.
     private val inputBmp: Bitmap = Bitmap.createBitmap(INPUT, INPUT, Bitmap.Config.ARGB_8888)
+
+    /** The square image the model just looked at (valid until the next detect call). */
+    val modelInput: Bitmap get() = inputBmp
     private val canvas = Canvas(inputBmp)
     private val filter = Paint(Paint.FILTER_BITMAP_FLAG)
     private val src = Rect()

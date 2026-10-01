@@ -79,6 +79,7 @@ class TrackerActivity : AppCompatActivity() {
     private var detector: BallDetector? = null
     private val tracker = ShotTracker()
     private val hoopFinder = HoopFinder()
+    private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
     private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
     private var frameBmp: Bitmap? = null
     private var tight: ByteBuffer? = null
@@ -94,6 +95,7 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var autoRim = false      // rim came from the hoop finder (and follows the hoop)
     @Volatile private var autoFind = true      // look for the hoop while no rim is set
     @Volatile private var ballRate = 0
+    @Volatile private var shotTypeKey = ShotType.FT.key
     private var frameNo = 0L
 
     // --- main thread state ---
@@ -161,12 +163,27 @@ class TrackerActivity : AppCompatActivity() {
             }
             hint.visibility = View.GONE
         }
-        chips.forEach { (type, btn) -> btn.setOnClickListener { shotType = type; refresh() } }
+        shotTypeKey = shotType.key
+        chips.forEach { (type, btn) ->
+            btn.setOnClickListener {
+                shotType = type
+                shotTypeKey = type.key
+                onAnalysis { recorder?.note("shot_type", type.key) }
+                refresh()
+            }
+        }
         findViewById<Button>(R.id.addMake).setOnClickListener { addShot(Result.MAKE, Method.MANUAL) }
         findViewById<Button>(R.id.addMiss).setOnClickListener { addShot(Result.MISS, Method.MANUAL) }
-        findViewById<Button>(R.id.undo).setOnClickListener { session.undo(); refresh() }
+        findViewById<Button>(R.id.undo).setOnClickListener {
+            val undone = session.undo()
+            if (undone != null && undone.method == Method.AUTO && !undone.flipped) onAnalysis { recorder?.undoneAuto() }
+            refresh()
+        }
         findViewById<Button>(R.id.wrong).setOnClickListener {
-            session.flipLast()?.let { overlay.flash(it.result) }
+            session.flipLast()?.let { shot ->
+                overlay.flash(shot.result)
+                if (shot.method == Method.AUTO) onAnalysis { recorder?.wrongCall() }
+            }
             refresh()
         }
         findViewById<Button>(R.id.redraw).setOnClickListener {
@@ -210,6 +227,9 @@ class TrackerActivity : AppCompatActivity() {
                 val d = BallDetector(this)
                 detector = d
                 backend = d.backend
+                recorder = runCatching {
+                    ReviewRecorder(File(cacheDir, "review/" + System.currentTimeMillis()).apply { mkdirs() })
+                }.getOrNull()
             } catch (t: Throwable) {
                 Log.e(TAG, "Detector failed", t)
                 detectorError = t.message ?: t.javaClass.simpleName
@@ -228,7 +248,12 @@ class TrackerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         ui.removeCallbacksAndMessages(null)
-        analysisExecutor.execute { detector?.close(); detector = null }
+        analysisExecutor.execute {
+            recorder?.abandon() // only reached if the session wasn't ended with Save or Discard
+            recorder = null
+            detector?.close()
+            detector = null
+        }
         analysisExecutor.shutdown()
         sounds?.release()
         sounds = null
@@ -403,6 +428,11 @@ class TrackerActivity : AppCompatActivity() {
             else -> null
         }
         val call = tracker.update(tMs, balls, r)
+        recorder?.let { rec ->
+            runCatching {
+                rec.onFrame(tMs, frame, roi, r, balls, found.hoops, tracker.lastBall, tracker.phase, call, shotTypeKey, det.modelInput)
+            }.onFailure { Log.w(TAG, "review recorder", it) }
+        }
         if (frame !== frameBmp) frame.recycle()
 
         val now = SystemClock.elapsedRealtime()
@@ -443,6 +473,10 @@ class TrackerActivity : AppCompatActivity() {
         val now = System.currentTimeMillis()
         if (session.shots.isEmpty() && session.phantoms == 0) session = Session(now) // clock starts at the first shot
         session.add(now, result, shotType, method)
+        if (method == Method.MANUAL) {
+            val key = shotType.key
+            onAnalysis { recorder?.manualShot(result == Result.MAKE, key) } // the camera missed this one
+        }
         overlay.flash(result)
         if (soundOn) {
             sounds?.play(if (result == Result.MAKE) swishId else buzzerId, 1f, 1f, 1, 0, 1f)
@@ -522,6 +556,7 @@ class TrackerActivity : AppCompatActivity() {
             .setTitle("Session")
             .setMessage(msg)
             .setPositiveButton("Save to Swish Quest") { _, _ ->
+                saveReview(json)
                 setResult(RESULT_OK, Intent().putExtra(EXTRA_RESULT, json))
                 finish()
             }
@@ -535,11 +570,31 @@ class TrackerActivity : AppCompatActivity() {
             .setTitle("Discard this session?")
             .setMessage("${s.makes} of ${s.attempts} won't be saved to Swish Quest.")
             .setPositiveButton("Discard") { _, _ ->
+                saveReview(s.toJson(System.currentTimeMillis(), 0f, BallDetector.MODEL_NAME))
                 setResult(RESULT_CANCELED)
                 finish()
             }
             .setNegativeButton("Keep it") { _, _ -> s.endedAt = null }
             .show()
+    }
+
+    private fun onAnalysis(block: () -> Unit) {
+        runCatching { analysisExecutor.execute(block) }
+    }
+
+    /** Bundle the review record into Downloads/SwishVision (runs after this screen closes). */
+    private fun saveReview(summaryJson: String) {
+        val app = applicationContext
+        onAnalysis {
+            val rec = recorder
+            recorder = null
+            val name = rec?.finish(app, summaryJson)
+            if (name != null) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(app, "Review file saved to Downloads/SwishVision", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     companion object {
