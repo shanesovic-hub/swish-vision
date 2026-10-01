@@ -24,10 +24,26 @@ jobs:
           gradle-version: "8.11.1"
 
       - name: Test tracking logic
-        run: gradle :app:testReleaseUnitTest --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :app:testReleaseUnitTest --no-daemon --stacktrace 2>&1 | tee test.log || {
+            # Surface the reason as annotations (readable without signing in to the logs).
+            grep -E "^e: |What went wrong|FAILED|Exception|Error" -A2 test.log | grep -v "^\s*at " | head -40 | sed 's/^/::error::/'
+            for f in app/build/test-results/testReleaseUnitTest/*.xml; do
+              [ -f "$f" ] && grep -A6 "<failure" "$f" | head -30 | sed 's/^/::error::/'
+            done
+            exit 1
+          }
 
       - name: Build APK
-        run: gradle :app:assembleRelease --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :app:assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log || {
+            grep -E "^e: |What went wrong|Error" -A2 build.log | grep -v "^\s*at " | head -40 | sed 's/^/::error::/'
+            exit 1
+          }
 
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk "SwishVision-0.1.${{ github.run_number }}.apk"
