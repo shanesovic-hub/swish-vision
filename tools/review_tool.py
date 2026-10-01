@@ -36,7 +36,7 @@ for s in sheets:
     except ValueError: pass
 for e in events:
     rel = (e['t'] - t0) / 1000
-    print(f"  {rel:7.1f}s  {e['e']:14s} {e.get('d',''):8s} {sheet_by_id.get(e.get('id'), '')}")
+    print(f"  {rel:7.1f}s  {e['e']:14s} {e.get('d',''):8s} {sheet_by_id.get(e.get('id'), ''):28s} {e.get('why', '')}")
 
 # Replay through the current tracker
 rp = os.path.join(out, 'replay.txt')

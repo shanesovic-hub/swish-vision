@@ -45,6 +45,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.houseofswish.swishvision.core.Box
 import com.houseofswish.swishvision.core.HoopFinder
 import com.houseofswish.swishvision.core.Method
+import com.houseofswish.swishvision.core.Phase
 import com.houseofswish.swishvision.core.Result
 import com.houseofswish.swishvision.core.Roi
 import com.houseofswish.swishvision.core.Session
@@ -54,6 +55,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.max
 
 @androidx.annotation.OptIn(ExperimentalCamera2Interop::class)
@@ -91,7 +93,8 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var resetTracker = false
     @Volatile private var detectorError: String? = null
     @Volatile private var backend = "…"
-    @Volatile private var hot = false          // critical: check every other frame
+    @Volatile private var hot = false          // severe: slow down between shots even more
+    @Volatile private var critical = false     // critical: every other frame even during a shot
     @Volatile private var autoRim = false      // rim came from the hoop finder (and follows the hoop)
     @Volatile private var autoFind = true      // look for the hoop while no rim is set
     @Volatile private var ballRate = 0
@@ -100,6 +103,7 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var frameH = 0
     private var showingAdvice = false
     private var frameNo = 0L
+    private var lastNearRimAt = Long.MIN_VALUE / 2 // camera time a ball was last seen near the rim
 
     // --- main thread state ---
     private var session = Session(System.currentTimeMillis())
@@ -407,12 +411,19 @@ class TrackerActivity : AppCompatActivity() {
     private fun analyze(proxy: ImageProxy) {
         val det = detector
         frameNo++
-        // Phone running hot: check every other frame to cool down (tracker is tested down to 15/s).
-        if (det == null || (hot && frameNo % 2L == 1L)) {
+        val tMs = proxy.imageInfo.timestamp / 1_000_000L
+        // Save heat (a hot phone slows everything down): between shots, check every other frame (every
+        // third when the phone is hot). Once a ball is near the rim or a shot is up, check every frame.
+        val busy = tracker.phase != Phase.IDLE || tMs - lastNearRimAt < 800
+        val every = when {
+            busy -> if (critical) 2L else 1L
+            hot -> 3L
+            else -> 2L
+        }
+        if (det == null || frameNo % every != 0L) {
             proxy.close()
             return
         }
-        val tMs = proxy.imageInfo.timestamp / 1_000_000L
         val rotation = proxy.imageInfo.rotationDegrees
         val raw: Bitmap = try {
             frameBitmap(proxy)
@@ -445,6 +456,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         val balls = found.balls
         if (balls.isNotEmpty()) ballFrames++
+        if (r != null && balls.any { abs(it.cx - r.cx) < 3f * r.w && it.cy < r.bottom + r.w }) lastNearRimAt = tMs
         // Find the hoop automatically, and keep the box on it if the phone gets nudged.
         val autoBox: Box? = when {
             r == null && autoFind -> hoopFinder.find(found.hoops)
@@ -454,7 +466,8 @@ class TrackerActivity : AppCompatActivity() {
         val call = tracker.update(tMs, balls, r)
         recorder?.let { rec ->
             runCatching {
-                rec.onFrame(tMs, frame, roi, r, balls, found.hoops, tracker.lastBall, tracker.phase, call, shotTypeKey, det.modelInput)
+                rec.onFrame(tMs, frame, roi, r, balls, found.hoops, tracker.lastBall, tracker.phase, call, shotTypeKey, det.modelInput,
+                    busy = tracker.phase != Phase.IDLE || tMs - lastNearRimAt < 800, why = if (call != null) tracker.lastWhy else "")
             }.onFailure { Log.w(TAG, "review recorder", it) }
         }
         if (frame !== frameBmp) frame.recycle()
@@ -547,7 +560,8 @@ class TrackerActivity : AppCompatActivity() {
             val hot = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val pm = ContextCompat.getSystemService(this@TrackerActivity, PowerManager::class.java)
                 val st = pm?.currentThermalStatus ?: 0
-                this@TrackerActivity.hot = st >= PowerManager.THERMAL_STATUS_CRITICAL
+                this@TrackerActivity.hot = st >= PowerManager.THERMAL_STATUS_SEVERE
+                this@TrackerActivity.critical = st >= PowerManager.THERMAL_STATUS_CRITICAL
                 st >= PowerManager.THERMAL_STATUS_SEVERE
             } else false
             analysisExecutor.execute { ballRate = ballFrames; ballFrames = 0 }

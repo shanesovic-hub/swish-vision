@@ -120,11 +120,12 @@ class ReviewRecorder(private val dir: File) {
     fun onFrame(
         t: Long, frame: Bitmap, roi: Roi, rim: Box?, balls: List<Detection>, hoops: List<Detection>,
         tracked: Detection?, phase: Phase, call: Result?, shotType: String, thumbSrc: Bitmap,
+        busy: Boolean = true, why: String = "",
     ) {
         lastT = t
         frameCount++
         writeFrame(t, roi, rim, balls, hoops, tracked, phase, call)
-        keepPicture(t, thumbSrc)
+        if (busy || picWindows.isNotEmpty()) keepPicture(t, thumbSrc) else picWindows.removeAll { t >= it.until }
 
         // Thumbnails at ~15 per second (every other frame), plus always the frame of a call.
         if (frameCount % 2L == 0L || call != null) {
@@ -139,7 +140,7 @@ class ReviewRecorder(private val dir: File) {
             val id = nextId++
             lastAutoId = id
             val label = "auto_" + call.name
-            event(t, label, shotType, id)
+            event(t, label, shotType, id, why)
             lastAutoT = t
             picRing.filter { t - it.t <= PIC_AUTO_BEFORE_MS }.forEach { savePic(it, fix = false) }
             picWindows += PicWindow(id, t + PIC_AUTO_AFTER_MS, fix = false)
@@ -245,8 +246,9 @@ class ReviewRecorder(private val dir: File) {
 
     private fun f(v: Float) = String.format(Locale.US, "%.1f", v)
 
-    private fun event(t: Long, kind: String, detail: String, id: Int) {
-        events.write("{\"t\":$t,\"e\":\"$kind\",\"d\":\"$detail\",\"id\":$id}\n")
+    private fun event(t: Long, kind: String, detail: String, id: Int, why: String = "") {
+        val w = if (why.isEmpty()) "" else ",\"why\":\"$why\""
+        events.write("{\"t\":$t,\"e\":\"$kind\",\"d\":\"$detail\",\"id\":$id$w}\n")
         events.flush()
     }
 

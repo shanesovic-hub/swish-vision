@@ -18,7 +18,8 @@ data class TrackPoint(val t: Long, val x: Float, val y: Float, val w: Float) {
  */
 data class TrackerConfig(
     val ringLineFrac: Float = 0.25f,   // the ring sits this far down the drawn box
-    val armAbove: Float = 0.10f,       // ball must be this far above the box top to arm
+    val armAbove: Float = -0.15f,      // ball this far above the box top arms a shot (-0.15 = level with the ring: low cameras see flat arcs)
+    val pickAbove: Float = 0.10f,      // a ball this far above the box top is a new shot (takes over from the tracked ball)
     val armHalfWidth: Float = 3.0f,    // ...and within this many U of the rim centre, sideways
     val ringTolerance: Float = 0.10f,  // extra width either side of the box still counted "inside"
     val dropMargin: Float = 0.15f,     // below box bottom by this much = the ball has come down
@@ -26,6 +27,7 @@ data class TrackerConfig(
     val popUp: Float = 0.30f,          // pending make cancelled if ball pops back above ring by this
     val rollOff: Float = 0.60f,        // pending make cancelled if ball drifts this far outside the rim
     val pendingLostMs: Long = 600,     // ball vanished into the net -> make
+    val openingLostMs: Long = 600,     // ball vanished right over the opening this long -> make
     val pendingMaxMs: Long = 1500,     // ball lingered in/around the net -> make
     val armedLostMs: Long = 900,       // lost near the rim while armed -> miss
     val armedTimeoutMs: Long = 3000,   // armed but nothing happened -> quietly reset
@@ -47,14 +49,20 @@ data class TrackerConfig(
     val fallMin: Float = 0.08f,
     val vanishMs: Long = 150,
     val underNet: Float = 0.70f,
+    val reacquireExit: Float = 0.45f,     // after vanishing at the rim, a make must reappear within this many U of the rim centre (shooter's side)
+    val reacquireExitFar: Float = 0.70f,  // ...on the far side (a make carries on away from the shooter)
+    val reacquireExitMid: Float = 0.60f,  // ...either side, when the shot came straight at the camera or straight away
     // Shot vs. carried ball: a shot drops fast near the rim. Measured in ball-widths per second,
     // so it doesn't matter how close the ball is to the camera.
-    val minFall: Float = 6f,           // ~1.4 m/s; a lowered or carried ball is slower
+    val minFall: Float = 3f,           // a lowered or carried ball is slower (6 missed soft shots that peak right at the rim)
     val missWindow: Float = 2.0f,      // a miss has to come down within this many U of the rim centre
     // In line with the camera, a rim-out that drops in front of the net looks like a make.
     // A ball in front of the rim (closer to the camera) looks bigger than it did on the way in.
     val frontRatio: Float = 1.25f,     // exit size vs approach size => in front of the rim => miss
-    val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim       // within this many U of the rim centre, below the net = came through it          // hidden this long mid-shot = "vanished" (not just a missed frame)        // "falling": moved down at least this many U between sightings
+    val frontAbs: Float = 1.10f,       // before calibration: in front if this many times the expected ball-at-the-rim size
+    val frontCal: Float = 1.18f,       // after calibration: in front if this many times the ball's usual size coming out of the net
+    val calMin: Int = 5,               // makes needed before the ball's usual size is trusted
+    val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim
 )
 
 /**
@@ -92,15 +100,52 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
     private val approachW = ArrayList<Float>() // ball size on the way in, above the ring
     private var crossX: Float? = null        // where it crossed the ring line going down
     private var bounced = false              // popped back up after reaching the rim
+    private var fromSide = 0                 // which side of the rim the shot came from (+1 right, -1 left, 0 straight on)
 
     private fun newShot() {
-        maxFall = 0f; approachW.clear(); crossX = null; bounced = false
+        maxFall = 0f; approachW.clear(); crossX = null; bounced = false; fromSide = 0
+    }
+
+    /** How far from the rim centre a ball may reappear and still have come through the net. */
+    private fun exitLimit(x: Float, rim: Box): Float {
+        val side = if (x > rim.cx) 1 else -1
+        return when {
+            fromSide == 0 -> cfg.reacquireExitMid
+            side == fromSide -> cfg.reacquireExit
+            else -> cfg.reacquireExitFar
+        }
     }
 
     private fun shotLike() = maxFall >= cfg.minFall
 
-    /** Ball looks bigger than on the way in: it's in front of the rim (bounced toward the camera). */
-    private fun inFront(w: Float): Boolean {
+    /** The ball came out under the rim: a make, unless it's in front of the rim (bounced toward the camera). */
+    private fun throughOrFront(w: Float, rim: Box, seenThrough: Boolean): Result {
+        if (inFront(w, rim, seenThrough)) return Result.MISS
+        makeWidths.addLast(w / rim.w)
+        while (makeWidths.size > 15) makeWidths.removeFirst()
+        return Result.MAKE
+    }
+
+    /** Ball width (in rim widths) coming out of the net on recent makes: how big a ball at the rim looks for this camera. */
+    private val makeWidths = ArrayDeque<Float>()
+
+    /**
+     * Is the ball in front of the rim (bounced toward the camera) rather than coming through the net?
+     * [seenThrough]: the ball stayed in view all the way past the rim. A ball going through the net usually
+     * drops out of view for a moment; one that stays in view the whole way may be falling in front of the net.
+     */
+    private fun inFront(w: Float, rim: Box, seenThrough: Boolean): Boolean {
+        if (seenThrough) {
+            val wu = w / rim.w
+            if (makeWidths.size >= cfg.calMin) {
+                // Bigger than the ball usually looks coming through this rim: it's closer to the camera.
+                val ref = makeWidths.sorted()[makeWidths.size / 2]
+                if (wu > cfg.frontCal * ref) return true
+            } else if (cfg.frontAbs > 0f && wu > cfg.frontAbs * cfg.ballToRim) {
+                return true
+            }
+        }
+        // Bigger than it looked on the way in.
         if (approachW.size < 2) return false
         val ref = approachW.sorted()[approachW.size / 2]
         return w / ref > (if (bounced) cfg.frontRatioAfterRim else cfg.frontRatio)
@@ -124,6 +169,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         reacquiring = false
         newShot()
         spots.clear()
+        makeWidths.clear()
         armedAt = 0L; pendingAt = 0L; cooldownUntil = 0L
         lastSeenAt = Long.MIN_VALUE / 2
     }
@@ -202,6 +248,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     phase = Phase.ARMED
                     armedAt = t
                     newShot()
+                    fromSide = if (x > rim.cx + 0.3f * u) 1 else if (x < rim.cx - 0.3f * u) -1 else 0
                     approachW += ball.w
                     lastAbove = TrackPoint(t, x, y, ball.w)
                 }
@@ -226,7 +273,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     if (same && y - c!!.y >= cfg.fallMin * u) {
                         reacquiring = false
                         candidate = null
-                        return decide(t, a, x, y, rim, reacquired = true) // connect last-seen-above to here
+                        return decide(t, a, x, y, rim, reacquired = true, exitX = c.x) // connect last-seen-above to here
                     }
                     if (same || abs(x - a.x) <= cfg.reacquireWidth * u) candidate = trail.last()
                     return null
@@ -235,13 +282,13 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                 if (y > rim.bottom + cfg.dropMargin * u) {
                     val where = crossX ?: x
                     if (!shotLike() || abs(where - rim.cx) > cfg.missWindow * u) { toIdle(); return null }
-                    return fire(t, Result.MISS)
+                    return fire(t, Result.MISS, "came down beside the rim")
                 }
             }
             Phase.PENDING_MAKE -> {
                 val dx = abs(x - rim.cx)
                 if (y > rim.bottom && dx < (0.5f + cfg.confirmSlack) * u) {
-                    return fire(t, if (inFront(recentW())) Result.MISS else Result.MAKE)
+                    return fire(t, throughOrFront(recentW(), rim, seenThrough = true), "came out under the net")
                 }
                 if (y < ringY - cfg.popUp * u || dx > (0.5f + cfg.rollOff) * u) {
                     bounced = true // hit the rim
@@ -249,8 +296,8 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     armedAt = t
                     return null
                 }
-                if (y > rim.bottom + cfg.dropMargin * u) return fire(t, Result.MISS)
-                if (t - pendingAt > cfg.pendingMaxMs) return fire(t, Result.MAKE)
+                if (y > rim.bottom + cfg.dropMargin * u) return fire(t, Result.MISS, "dropped outside the net")
+                if (t - pendingAt > cfg.pendingMaxMs) return fire(t, Result.MAKE, "stayed in the net")
             }
             Phase.COOLDOWN -> Unit
         }
@@ -258,23 +305,25 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
     }
 
     /** The ball went from [from] (above the ring) to (x, y) (below it): did that path go through the rim? */
-    private fun decide(t: Long, from: TrackPoint, x: Float, y: Float, rim: Box, reacquired: Boolean = false): Result? {
+    private fun decide(t: Long, from: TrackPoint, x: Float, y: Float, rim: Box, reacquired: Boolean = false, exitX: Float = x): Result? {
         val ringY = rim.y + cfg.ringLineFrac * rim.h
         val xc = xAtLine(from.x, from.y, x, y, ringY)
         // After it vanished, a ball dropping out of the bottom of the net, right under the rim, went through.
         if (!shotLike()) { toIdle(); return null } // came down too slowly: carried, not shot
         crossX = xc
         val outOfNet = reacquired && y > rim.bottom && abs(x - rim.cx) < cfg.underNet * rim.w
-        if (outOfNet || insideRing(xc, rim)) {
+        // After vanishing at the rim the path is a guess: a ball that reappears off to the side bounced out.
+        val exitOk = !reacquired || abs(exitX - rim.cx) <= exitLimit(exitX, rim) * rim.w
+        if (exitOk && (outOfNet || insideRing(xc, rim))) {
             if (!depthOk(rim)) { toIdle(); return null } // wrong size for a ball at the rim: not our shot
-            if (y > rim.bottom) return fire(t, if (inFront(recentW())) Result.MISS else Result.MAKE)
+            if (y > rim.bottom) return fire(t, throughOrFront(recentW(), rim, seenThrough = !reacquired), if (outOfNet) "reappeared under the net" else "went through the ring")
             phase = Phase.PENDING_MAKE
             pendingAt = t
             return null
         }
         if (y > rim.bottom + cfg.dropMargin * rim.w) {
             if (abs(xc - rim.cx) > cfg.missWindow * rim.w) { toIdle(); return null } // nowhere near this rim
-            return fire(t, Result.MISS)
+            return fire(t, Result.MISS, "crossed outside the ring")
         }
         return null
     }
@@ -291,7 +340,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         val gap = t - lastSeenAt
         val u = rim.w
         when (phase) {
-            Phase.PENDING_MAKE -> if (gap > cfg.pendingLostMs) return fire(t, Result.MAKE)
+            Phase.PENDING_MAKE -> if (gap > cfg.pendingLostMs) return fire(t, Result.MAKE, "vanished into the net")
             Phase.ARMED -> {
                 if (t - armedAt > cfg.armedTimeoutMs) { toIdle(); return null }
                 val c = candidate
@@ -301,7 +350,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     candidate = null
                     val xc = xAtLine(a.x, a.y, c.x, c.y, rim.y + cfg.ringLineFrac * rim.h)
                     if (shotLike() && insideRing(xc, rim) && c.y > rim.bottom && abs(c.x - rim.cx) < 0.9f * u) {
-                        return fire(t, if (inFront(c.w)) Result.MISS else Result.MAKE)
+                        return fire(t, throughOrFront(c.w, rim, seenThrough = false), "one sighting under the net")
                     }
                     return null
                 }
@@ -312,10 +361,10 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     val overOpening = last.x > rim.x && last.x < rim.right &&
                         last.y > rim.y - 0.5f * u && last.y < rim.bottom
                     // Vanished right over the opening while falling: it went into the net.
-                    if (descending && overOpening && shotLike()) return fire(t, Result.MAKE)
+                    if (descending && overOpening && shotLike() && gap > cfg.openingLostMs) return fire(t, Result.MAKE, "vanished over the opening")
                     // Lost beside the rim at rim height (bounced off the side, out of view): a miss.
                     val besideRim = last.y > rim.y - 0.5f * u && abs(last.x - rim.cx) in (0.6f * u)..(2f * u)
-                    if (gap > cfg.armedLostMs && besideRim && shotLike()) return fire(t, Result.MISS)
+                    if (gap > cfg.armedLostMs && besideRim && shotLike()) return fire(t, Result.MISS, "lost beside the rim")
                 }
             }
             else -> Unit
@@ -323,7 +372,12 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         return null
     }
 
-    private fun fire(t: Long, r: Result): Result {
+    /** Why the last call was made, for the review file. */
+    var lastWhy = ""
+        private set
+
+    private fun fire(t: Long, r: Result, why: String): Result {
+        lastWhy = why
         lastAbove = null
         candidate = null
         reacquiring = false
@@ -375,7 +429,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         if (rim != null && (phase == Phase.IDLE || phase == Phase.COOLDOWN)) {
             val u = rim.w
             fun inArmZone(d: Detection) =
-                d.cy < rim.y - cfg.armAbove * u && abs(d.cx - rim.cx) < cfg.armHalfWidth * u
+                d.cy < rim.y - cfg.pickAbove * u && abs(d.cx - rim.cx) < cfg.armHalfWidth * u
             if (tracked == null || !inArmZone(tracked)) {
                 val shot = dets.filter { inArmZone(it) }.maxByOrNull { it.score }
                 if (shot != null) {
