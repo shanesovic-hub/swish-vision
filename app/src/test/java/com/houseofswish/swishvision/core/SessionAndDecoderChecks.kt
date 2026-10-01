@@ -79,6 +79,23 @@ object SessionAndDecoderChecks {
         val hf2 = HoopFinder()
         repeat(20) { i -> hf2.find(if (i % 2 == 0) listOf(hoop) else emptyList()) }
         check(hf2.find(emptyList()) == null, "flickering hoop accepted", f)
+
+        // Announcer
+        val a = AnnouncerScript()
+        check(a.forMake(1, 1, "Blakely Sovic", false, 0.9, 0) == "1!", "plain make: ${a.forMake(1, 1, null, false, 0.9, 0)}", f)
+        check(a.forMake(7, 3, "Blakely Sovic", false, 0.0, 0) == "7! Blakely is heating up!", "heating up", f)
+        check(a.forMake(8, 4, null, false, 0.0, 0) == "8! On fire!", "on fire", f)
+        check(a.forMake(12, 5, "Kensley", false, 0.0, 0) == "12! Bonus!", "bonus", f)
+        check(a.forMake(20, 10, null, false, 0.0, 0) == "20! Double bonus!", "double bonus", f)
+        check(a.forMake(30, 15, null, false, 0.0, 0) == "30! Triple bonus!", "triple bonus", f)
+        check(AnnouncerScript.bonus(4) == "Quadruple bonus!" && AnnouncerScript.bonus(11) == "Bonus times 11!", "bonus words", f)
+        val flav = a.forMake(9, 6, null, true, 0.1, 3)
+        check(flav.startsWith("9! ") && flav.length > 3, "flavor call: $flav", f)
+        val b2 = AnnouncerScript()
+        val first = b2.forMake(2, 1, null, false, 0.0, 0)
+        val second = b2.forMake(3, 1, null, false, 0.0, 0)
+        check(first.substringAfter(" ") != second.substringAfter(" "), "same call twice in a row: $first / $second", f)
+        check(AnnouncerScript.firstName("  ") == null && AnnouncerScript.firstName("JMS") == "JMS", "first name", f)
         return f
     }
 }

@@ -81,6 +81,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
+        fun startTrackingFor(shotType: String, playerName: String) {
+            runOnUiThread {
+                tracker.launch(
+                    Intent(this@MainActivity, TrackerActivity::class.java)
+                        .putExtra(TrackerActivity.EXTRA_SHOT_TYPE, shotType)
+                        .putExtra(TrackerActivity.EXTRA_PLAYER, playerName)
+                )
+            }
+        }
+
+        @JavascriptInterface
         fun version(): String = BuildConfigLite.versionName(this@MainActivity)
     }
 

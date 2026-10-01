@@ -107,6 +107,9 @@ class TrackerActivity : AppCompatActivity() {
     private var soundOn = true
     // Game sounds: a net swish for makes, an arena buzzer for misses.
     private var sounds: SoundPool? = null
+    private var announcer: Announcer? = null
+    private var announcerOn = true
+    private var playerName: String? = null
     private var swishId = 0
     private var buzzerId = 0
     private var latestFps = 0f
@@ -147,6 +150,7 @@ class TrackerActivity : AppCompatActivity() {
             ShotType.THREE to findViewById<Button>(R.id.chipThree),
         )
         overlay.ringLineFrac = tracker.cfg.ringLineFrac
+        playerName = intent.getStringExtra(EXTRA_PLAYER)
         intent.getStringExtra(EXTRA_SHOT_TYPE)?.let { key ->
             ShotType.values().firstOrNull { it.key == key }?.let { shotType = it }
         }
@@ -184,6 +188,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.wrong).setOnClickListener {
             session.flipLast()?.let { shot ->
+                announcer?.quiet()
                 overlay.flash(shot.result)
                 if (shot.method == Method.AUTO) onAnalysis { recorder?.wrongCall() }
             }
@@ -200,6 +205,14 @@ class TrackerActivity : AppCompatActivity() {
             hint.visibility = View.VISIBLE
         }
         findViewById<Button>(R.id.end).setOnClickListener { endSession() }
+        val announcerBtn = findViewById<TextView>(R.id.announcerBtn)
+        announcerBtn.setOnClickListener {
+            announcerOn = !announcerOn
+            announcerBtn.alpha = if (announcerOn) 1f else 0.35f
+            if (!announcerOn) announcer?.quiet()
+            Toast.makeText(this, if (announcerOn) "Announcer on" else "Announcer off", Toast.LENGTH_SHORT).show()
+        }
+        announcer = runCatching { Announcer(this) }.getOrNull()
         soundBtn.setOnClickListener {
             soundOn = !soundOn
             soundBtn.text = if (soundOn) "🔊" else "🔇"
@@ -260,6 +273,8 @@ class TrackerActivity : AppCompatActivity() {
         analysisExecutor.shutdown()
         sounds?.release()
         sounds = null
+        announcer?.shutdown()
+        announcer = null
         super.onDestroy()
     }
 
@@ -486,6 +501,11 @@ class TrackerActivity : AppCompatActivity() {
         if (soundOn) {
             sounds?.play(if (result == Result.MAKE) swishId else buzzerId, 1f, 1f, 1, 0, 1f)
         }
+        if (result == Result.MAKE && announcerOn) {
+            announcer?.make(session.makes, session.currentStreak, playerName, shotType == ShotType.THREE)
+        } else {
+            announcer?.quiet()
+        }
         refresh()
     }
 
@@ -635,6 +655,7 @@ class TrackerActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "SwishVision"
         const val EXTRA_SHOT_TYPE = "shotType"
+        const val EXTRA_PLAYER = "playerName"
         const val EXTRA_RESULT = "sessionJson"
     }
 }

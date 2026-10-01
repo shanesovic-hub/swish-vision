@@ -18,7 +18,12 @@
     b.style.border = '2px solid #00b4c5';
     b.style.boxShadow = 'none';
     b.style.margin = '0 0 14px 0';
-    b.onclick = function () { window.SwishVisionNative.startTracking('ft'); };
+    b.onclick = function () {
+      var name = '';
+      try { name = (state && state.player && state.player.name) || ''; } catch (e) {}
+      if (window.SwishVisionNative.startTrackingFor) window.SwishVisionNative.startTrackingFor('ft', String(name));
+      else window.SwishVisionNative.startTracking('ft');
+    };
     return b;
   }
 
