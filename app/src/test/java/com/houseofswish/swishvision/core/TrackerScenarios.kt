@@ -31,7 +31,11 @@ object TrackerScenarios {
         fun nothing(ms: Long) { repeat((ms * fps / 1000).toInt()) { frame(null) } }
     }
 
-    /** Falling ball: starts 250 px above the ring line and reaches it at [ringX] after ~8 frames. */
+    /**
+     * Falling ball: starts 250 px above the ring line and reaches it at [ringX] after ~8 frames.
+     * Inside the rim the net slows it down (real makes come out of the net at ~2-6 rim widths/s,
+     * a ball falling past the net keeps speeding up).
+     */
     fun descent(ringX: Float, frames: Int = 22, vx: Float = 6f, fps: Int = 30): List<Pair<Float, Float>> {
         val k = 30f / fps // scale per-frame motion for other frame rates
         val g = 2.4f * k * k
@@ -40,7 +44,20 @@ object TrackerScenarios {
         // time (in frames) to fall from y=170 to y=420
         val n = (-vy0 + kotlin.math.sqrt(vy0 * vy0 + 2 * g * 250f)) / g
         val x0 = ringX - vxf * n
-        return (0 until frames).map { i -> Pair(x0 + vxf * i, 170f + vy0 * i + 0.5f * g * i * i) }
+        val inRim = kotlin.math.abs(ringX - RIM.cx) < RIM.w / 2
+        val netSpeed = 13f * k // ~4 rim widths/s
+        val out = ArrayList<Pair<Float, Float>>()
+        var x = x0
+        var y = 170f
+        var vy = vy0
+        repeat(frames) {
+            out += Pair(x, y)
+            val inNet = inRim && y > 420f && y < 540f
+            if (inNet) vy = kotlin.math.min(vy, netSpeed) else vy += g
+            x += if (inNet) vxf * 0.3f else vxf
+            y += vy
+        }
+        return out
     }
 
     /** Straight line from a to b over n frames (for bounces). */
@@ -80,7 +97,15 @@ object TrackerScenarios {
                 val d = descent(910f).take(10)
                 run(d)
                 run(line(d.last(), Pair(945f, 370f), 4))
-                run(line(Pair(945f, 370f), Pair(950f, 600f), 8))
+                run(line(Pair(945f, 370f), Pair(948f, 480f), 5))
+                run(line(Pair(948f, 480f), Pair(950f, 600f), 9)) // the net slows it down
+            }.calls
+        },
+        Scenario("side view: drops past the rim at full speed, not slowed by a net (miss)", listOf(Result.MISS)) {
+            Sim().apply {
+                val d = descent(950f).take(7)                  // comes down over the middle of the rim (on screen)
+                run(d)
+                run(line(d.last(), Pair(955f, 760f), 11))      // but keeps falling fast: it went past the net, not through it
             }.calls
         },
         Scenario("dribbling under the rim never counts", emptyList()) {

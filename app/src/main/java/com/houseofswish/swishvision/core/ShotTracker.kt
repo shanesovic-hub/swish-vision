@@ -21,7 +21,8 @@ data class TrackerConfig(
     val armAbove: Float = -0.15f,      // ball this far above the box top arms a shot (-0.15 = level with the ring: low cameras see flat arcs)
     val pickAbove: Float = 0.10f,      // a ball this far above the box top is a new shot (takes over from the tracked ball)
     val armHalfWidth: Float = 3.0f,    // ...and within this many U of the rim centre, sideways
-    val ringTolerance: Float = 0.10f,  // extra width either side of the box still counted "inside"
+    val ringTolerance: Float = -0.15f, // extra width either side of the box still counted "inside" (negative: the ball's centre must
+                                       // pass through the middle of the rim; a ball crossing near the edge hits the rim)
     val dropMargin: Float = 0.15f,     // below box bottom by this much = the ball has come down
     val confirmSlack: Float = 0.30f,   // x slack when confirming a make below the net
     val popUp: Float = 0.30f,          // pending make cancelled if ball pops back above ring by this
@@ -62,6 +63,10 @@ data class TrackerConfig(
     val frontAbs: Float = 1.10f,       // before calibration: in front if this many times the expected ball-at-the-rim size
     val frontCal: Float = 1.18f,       // after calibration: in front if this many times the ball's usual size coming out of the net
     val calMin: Int = 5,               // makes needed before the ball's usual size is trusted
+    // The net slows a make down. A ball that keeps falling fast just under the rim went past the net, not through it.
+    val netMaxFall: Float = 9f,        // faster than this (rim widths/s) just under the rim = passed outside the net
+    val confirmMs: Long = 300,         // how long to wait for the next sighting before calling it a make anyway
+    val confirmZone: Float = 0.5f,     // only check balls this close under the rim box (further down they fall free anyway)
     val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim
 )
 
@@ -118,6 +123,32 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
 
     private fun shotLike() = maxFall >= cfg.minFall
 
+    // A make waiting for one more sighting: did the net slow the ball down?
+    private var confirming = false
+    private var confirmT = 0L
+    private var confirmY = 0f
+    private var confirmW = 0f
+    private var confirmWhy = ""
+
+    /** The ball came down through the rim: check it isn't in front of the rim, then (maybe) wait to see the net slow it. */
+    private fun madeIt(t: Long, y: Float, w: Float, rim: Box, seenThrough: Boolean, why: String): Result? {
+        if (inFront(w, rim, seenThrough)) return fire(t, Result.MISS, "in front of the rim")
+        if (cfg.netMaxFall > 0f && seenThrough && y < rim.bottom + cfg.confirmZone * rim.w) {
+            confirming = true
+            confirmT = t; confirmY = y; confirmW = w; confirmWhy = why
+            phase = Phase.PENDING_MAKE
+            pendingAt = t
+            return null
+        }
+        return made(t, w, rim, why)
+    }
+
+    private fun made(t: Long, w: Float, rim: Box, why: String): Result {
+        makeWidths.addLast(w / rim.w)
+        while (makeWidths.size > 15) makeWidths.removeFirst()
+        return fire(t, Result.MAKE, why)
+    }
+
     /** The ball came out under the rim: a make, unless it's in front of the rim (bounced toward the camera). */
     private fun throughOrFront(w: Float, rim: Box, seenThrough: Boolean): Result {
         if (inFront(w, rim, seenThrough)) return Result.MISS
@@ -170,6 +201,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         newShot()
         spots.clear()
         makeWidths.clear()
+        confirming = false
         armedAt = 0L; pendingAt = 0L; cooldownUntil = 0L
         lastSeenAt = Long.MIN_VALUE / 2
     }
@@ -286,9 +318,17 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                 }
             }
             Phase.PENDING_MAKE -> {
+                if (confirming) {
+                    val dt = t - confirmT
+                    if (dt <= 0) return null
+                    confirming = false
+                    val fall = (y - confirmY) / u / (dt / 1000f)
+                    if (dt <= cfg.confirmMs && fall > cfg.netMaxFall) return fire(t, Result.MISS, "fell past the net")
+                    return made(t, confirmW, rim, confirmWhy)
+                }
                 val dx = abs(x - rim.cx)
                 if (y > rim.bottom && dx < (0.5f + cfg.confirmSlack) * u) {
-                    return fire(t, throughOrFront(recentW(), rim, seenThrough = true), "came out under the net")
+                    return madeIt(t, y, recentW(), rim, seenThrough = true, why = "came out under the net")
                 }
                 if (y < ringY - cfg.popUp * u || dx > (0.5f + cfg.rollOff) * u) {
                     bounced = true // hit the rim
@@ -316,7 +356,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         val exitOk = !reacquired || abs(exitX - rim.cx) <= exitLimit(exitX, rim) * rim.w
         if (exitOk && (outOfNet || insideRing(xc, rim))) {
             if (!depthOk(rim)) { toIdle(); return null } // wrong size for a ball at the rim: not our shot
-            if (y > rim.bottom) return fire(t, throughOrFront(recentW(), rim, seenThrough = !reacquired), if (outOfNet) "reappeared under the net" else "went through the ring")
+            if (y > rim.bottom) return madeIt(t, y, recentW(), rim, seenThrough = !reacquired, why = if (outOfNet) "reappeared under the net" else "went through the ring")
             phase = Phase.PENDING_MAKE
             pendingAt = t
             return null
@@ -330,6 +370,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
 
     private fun toIdle() {
         phase = Phase.IDLE
+        confirming = false
         lastAbove = null
         candidate = null
         reacquiring = false
@@ -340,7 +381,14 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
         val gap = t - lastSeenAt
         val u = rim.w
         when (phase) {
-            Phase.PENDING_MAKE -> if (gap > cfg.pendingLostMs) return fire(t, Result.MAKE, "vanished into the net")
+            Phase.PENDING_MAKE -> {
+                if (confirming) {
+                    // Not seen again: it's in the net.
+                    if (t - confirmT > cfg.confirmMs) { confirming = false; return made(t, confirmW, rim, confirmWhy) }
+                    return null
+                }
+                if (gap > cfg.pendingLostMs) return fire(t, Result.MAKE, "vanished into the net")
+            }
             Phase.ARMED -> {
                 if (t - armedAt > cfg.armedTimeoutMs) { toIdle(); return null }
                 val c = candidate
@@ -378,6 +426,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
 
     private fun fire(t: Long, r: Result, why: String): Result {
         lastWhy = why
+        confirming = false
         lastAbove = null
         candidate = null
         reacquiring = false

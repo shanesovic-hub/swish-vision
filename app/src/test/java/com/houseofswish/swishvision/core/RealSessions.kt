@@ -18,8 +18,9 @@ object RealSessions {
 
     /** Floors: today's results. A change may not make any session worse than this. */
     private val FLOORS = mapOf(
-        "basement_2026-10-01" to Pair(127, 2), // right calls of 145, extra calls allowed
-        "gym_test5" to Pair(27, 1),            // of 30
+        "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
+        "outdoor_layups_2026-10-01" to Pair(59, 1), // of 68
+        "gym_test5" to Pair(27, 1),                 // of 30
     )
 
     fun runAll(dir: File? = null, verbose: Boolean = false): List<String> {
