@@ -56,6 +56,13 @@ class Session(val startedAt: Long) {
             return n
         }
 
+    val missesInRow: Int
+        get() {
+            var n = 0
+            for (i in shots.indices.reversed()) if (shots[i].result == Result.MISS) n++ else break
+            return n
+        }
+
     val bestStreak: Int
         get() {
             var best = 0

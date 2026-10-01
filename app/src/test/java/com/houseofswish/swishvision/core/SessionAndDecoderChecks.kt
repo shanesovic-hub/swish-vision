@@ -81,21 +81,53 @@ object SessionAndDecoderChecks {
         check(hf2.find(emptyList()) == null, "flickering hoop accepted", f)
 
         // Announcer
-        val a = AnnouncerScript()
-        check(a.forMake(1, 1, "Blakely Sovic", false, 0.9, 0) == "1!", "plain make: ${a.forMake(1, 1, null, false, 0.9, 0)}", f)
-        check(a.forMake(7, 3, "Blakely Sovic", false, 0.0, 0) == "7! Blakely is heating up!", "heating up", f)
-        check(a.forMake(8, 4, null, false, 0.0, 0) == "8! On fire!", "on fire", f)
-        check(a.forMake(12, 5, "Kensley", false, 0.0, 0) == "12! Bonus!", "bonus", f)
-        check(a.forMake(20, 10, null, false, 0.0, 0) == "20! Double bonus!", "double bonus", f)
-        check(a.forMake(30, 15, null, false, 0.0, 0) == "30! Triple bonus!", "triple bonus", f)
+        val quiet = AnnouncerScript(kotlin.random.Random(1), callChance = 0.0, threeChance = 0.0)
+        check(quiet.forMake(1, 1, false) == AnnouncerScript.Call("1!"), "plain make: ${quiet.forMake(1, 1, false)}", f)
+        check(quiet.forMake(7, 3, false) == AnnouncerScript.Call("7!", clip = "streak_heating_up"), "heating up", f)
+        check(quiet.forMake(8, 4, true) == AnnouncerScript.Call("8!", clip = "streak_on_fire"), "on fire beats a three", f)
+        check(quiet.forMake(12, 5, false).clip == "bonus_1", "bonus", f)
+        check(quiet.forMake(20, 10, false).clip == "bonus_2", "double bonus", f)
+        check(quiet.forMake(30, 15, false).clip == "bonus_3", "triple bonus", f)
+        check(quiet.forMake(40, 20, false).clip == "bonus_4", "quadruple bonus", f)
+        check(quiet.forMake(50, 25, false).clip == "bonus_5", "quintuple bonus", f)
+        check(quiet.forMake(60, 30, false) == AnnouncerScript.Call("60!", say = "Sextuple bonus!"), "past the clips: phone voice", f)
         check(AnnouncerScript.bonus(4) == "Quadruple bonus!" && AnnouncerScript.bonus(11) == "Bonus times 11!", "bonus words", f)
-        val flav = a.forMake(9, 6, null, true, 0.1, 3)
-        check(flav.startsWith("9! ") && flav.length > 3, "flavor call: $flav", f)
-        val b2 = AnnouncerScript()
-        val first = b2.forMake(2, 1, null, false, 0.0, 0)
-        val second = b2.forMake(3, 1, null, false, 0.0, 0)
-        check(first.substringAfter(" ") != second.substringAfter(" "), "same call twice in a row: $first / $second", f)
+        check(quiet.forMake(9, 6, true).clip == null, "call with zero chance", f)
+
+        // Every clip the script can ask for has words for the phone voice to fall back on.
+        val all = AnnouncerScript.CALLS + AnnouncerScript.THREES + AnnouncerScript.HOT + AnnouncerScript.BONUS +
+            listOf(AnnouncerScript.HEATING_UP, AnnouncerScript.ON_FIRE, AnnouncerScript.NOT_SO_FAST,
+                AnnouncerScript.YOU_GOT_THIS, AnnouncerScript.START)
+        check(all.size == 35 && all.toSet().size == 35, "35 different clips: ${all.size}", f)
+        check(all.all { it in AnnouncerScript.TEXT }, "clip without words: ${all.filter { it !in AnnouncerScript.TEXT }}", f)
+
+        // Every call plays once before any repeats, and never the same one twice in a row.
+        val loud = AnnouncerScript(kotlin.random.Random(7), callChance = 1.0)
+        val heard = (1..60).map { loud.forMake(it, 1, false).clip!! }
+        check(heard.take(20).toSet() == AnnouncerScript.CALLS.toSet(), "first 20 calls not all different", f)
+        check(heard.drop(20).take(20).toSet() == AnnouncerScript.CALLS.toSet(), "second round not all different", f)
+        check(heard.zipWithNext().none { (x, y) -> x == y }, "same call twice in a row", f)
+        val threes = (1..200).mapNotNull { AnnouncerScript(kotlin.random.Random(it)).forMake(it, 1, true).clip }
+        check(threes.count { it.startsWith("three_") } > 80, "threes don't lean downtown: ${threes.count { it.startsWith("three_") }}", f)
+        check((1..200).none { AnnouncerScript(kotlin.random.Random(it)).forMake(it, 1, false).clip?.startsWith("three_") == true },
+            "downtown call on a two", f)
+        val hot = (1..300).mapNotNull { AnnouncerScript(kotlin.random.Random(it), callChance = 1.0).forMake(it, 7, false).clip }
+        check(hot.any { it.startsWith("streak_") && "fuego" in it }, "no en fuego on a long streak", f)
+        check((1..300).none { "fuego" in (AnnouncerScript(kotlin.random.Random(it), callChance = 1.0).forMake(it, 2, false).clip ?: "") },
+            "en fuego without a streak", f)
+
+        // Misses
+        check(quiet.forMiss(1, 4) == "miss_not_so_fast", "streak ended", f)
+        check(quiet.forMiss(1, 2) == null, "short streak ended: say nothing", f)
+        check(quiet.forMiss(3, 0) == "miss_you_got_this" && quiet.forMiss(6, 0) == "miss_you_got_this", "you got this", f)
+        check(quiet.forMiss(2, 0) == null && quiet.forMiss(4, 0) == null, "misses: say nothing", f)
         check(AnnouncerScript.firstName("  ") == null && AnnouncerScript.firstName("JMS") == "JMS", "first name", f)
+
+        // Session counters the announcer uses
+        val ms = Session(0)
+        ms.add(1, Result.MAKE, ShotType.FT, Method.AUTO); ms.add(2, Result.MISS, ShotType.FT, Method.AUTO)
+        ms.add(3, Result.MISS, ShotType.FT, Method.MANUAL)
+        check(ms.missesInRow == 2 && ms.currentStreak == 0, "misses in a row: ${ms.missesInRow}", f)
         return f
     }
 }

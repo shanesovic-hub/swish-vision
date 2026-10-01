@@ -109,6 +109,7 @@ class TrackerActivity : AppCompatActivity() {
     private var sounds: SoundPool? = null
     private var announcer: Announcer? = null
     private var announcerOn = true
+    private var introPlayed = false
     private var playerName: String? = null
     private var swishId = 0
     private var buzzerId = 0
@@ -165,6 +166,7 @@ class TrackerActivity : AppCompatActivity() {
             autoRim = false // the player placed it: stop auto-following
             rim = box
             resetTracker = true
+            playIntro()
             if (hint.visibility == View.VISIBLE) {
                 Toast.makeText(this, "Drag the box to move it, or a corner to resize", Toast.LENGTH_LONG).show()
             }
@@ -183,12 +185,14 @@ class TrackerActivity : AppCompatActivity() {
         findViewById<Button>(R.id.addMiss).setOnClickListener { addShot(Result.MISS, Method.MANUAL) }
         findViewById<Button>(R.id.undo).setOnClickListener {
             val undone = session.undo()
+            if (undone != null) announcer?.quiet()
             if (undone != null && undone.method == Method.AUTO && !undone.flipped) onAnalysis { recorder?.undoneAuto() }
             refresh()
         }
         findViewById<Button>(R.id.wrong).setOnClickListener {
             session.flipLast()?.let { shot ->
-                announcer?.quiet()
+                // A make taken back: "Not so fast, my friend."
+                if (shot.result == Result.MISS && announcerOn) announcer?.takeBack() else announcer?.quiet()
                 overlay.flash(shot.result)
                 if (shot.method == Method.AUTO) onAnalysis { recorder?.wrongCall() }
             }
@@ -482,6 +486,7 @@ class TrackerActivity : AppCompatActivity() {
         if (first) {
             autoRim = true
             resetTracker = true
+            playIntro()
             hint.visibility = View.GONE
             Toast.makeText(this, "Found the hoop. Drag the box to adjust it if needed.", Toast.LENGTH_LONG).show()
         }
@@ -489,9 +494,17 @@ class TrackerActivity : AppCompatActivity() {
 
     // ---------------- Session ----------------
 
+    /** "We talkin' bout practice" once, when tracking first gets going. */
+    private fun playIntro() {
+        if (introPlayed || session.shots.isNotEmpty()) return
+        introPlayed = true
+        if (announcerOn) announcer?.intro()
+    }
+
     private fun addShot(result: Result, method: Method) {
         val now = System.currentTimeMillis()
         if (session.shots.isEmpty() && session.phantoms == 0) session = Session(now) // clock starts at the first shot
+        val endedStreak = if (result == Result.MISS) session.currentStreak else 0
         session.add(now, result, shotType, method)
         if (method == Method.MANUAL) {
             val key = shotType.key
@@ -501,10 +514,10 @@ class TrackerActivity : AppCompatActivity() {
         if (soundOn) {
             sounds?.play(if (result == Result.MAKE) swishId else buzzerId, 1f, 1f, 1, 0, 1f)
         }
-        if (result == Result.MAKE && announcerOn) {
-            announcer?.make(session.makes, session.currentStreak, playerName, shotType == ShotType.THREE)
-        } else {
-            announcer?.quiet()
+        when {
+            !announcerOn -> announcer?.quiet()
+            result == Result.MAKE -> announcer?.make(session.makes, session.currentStreak, shotType == ShotType.THREE)
+            else -> announcer?.miss(session.missesInRow, endedStreak)
         }
         refresh()
     }
