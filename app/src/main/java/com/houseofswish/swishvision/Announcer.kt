@@ -195,13 +195,11 @@ class Announcer(context: Context) : TextToSpeech.OnInitListener {
 
     /** Play a recorded clip; if it can't be played, the phone voice says the words instead. */
     private fun play(clip: String?, say: String?) {
-        if (clip != null) {
-            val id = soundIds[clip]
-            val isLoaded = id != null && synchronized(loaded) { id in loaded }
-            if (isLoaded && pool != null) {
-                stream = runCatching { pool.play(id!!, 1f, 1f, 1, 0, 1f) }.getOrDefault(0)
-                if (stream != 0) return
-            }
+        val p = pool
+        val id = clip?.let { soundIds[it] }
+        if (p != null && id != null && synchronized(loaded) { id in loaded }) {
+            stream = runCatching { p.play(id, 1f, 1f, 1, 0, 1f) }.getOrDefault(0)
+            if (stream != 0) return
         }
         val words = say ?: clip?.let { AnnouncerScript.TEXT[it] } ?: return
         if (ready) runCatching { tts.speak(words, TextToSpeech.QUEUE_FLUSH, null, "say$token") }
