@@ -20,6 +20,7 @@ object RealSessions {
     private val FLOORS = mapOf(
         "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
         "outdoor_layups_2026-10-01" to Pair(59, 1), // of 68
+        "dusk_layups_2026-10-01" to Pair(81, 1),    // of 94 (the extra one is a miss the player logged 6 s late)
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 

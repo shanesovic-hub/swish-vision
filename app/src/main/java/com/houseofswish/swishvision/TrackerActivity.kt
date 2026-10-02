@@ -672,9 +672,9 @@ class TrackerActivity : AppCompatActivity() {
             recorder = null
             val name = rec?.finish(app, summaryJson)
             if (name != null) {
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(app, "Review files saved to Downloads/SwishVision", Toast.LENGTH_LONG).show()
-                }
+                val msg = if (rec?.trainSaved == true) "Saved 2 files to Downloads/SwishVision: review + training pictures"
+                else "Review file saved to Downloads/SwishVision"
+                Handler(Looper.getMainLooper()).post { Toast.makeText(app, msg, Toast.LENGTH_LONG).show() }
             }
         }
     }

@@ -67,6 +67,8 @@ data class TrackerConfig(
     val netMaxFall: Float = 9f,        // faster than this (rim widths/s) just under the rim = passed outside the net
     val confirmMs: Long = 300,         // how long to wait for the next sighting before calling it a make anyway
     val confirmZone: Float = 0.5f,     // only check balls this close under the rim box (further down they fall free anyway)
+    // A shot we never saw go up (e.g. a dark ball against a dark evening sky) but saw come down beside the rim.
+    val unseenFall: Float = 6f,        // falling at least this fast (ball widths/s), first seen at rim height beside the net -> miss
     val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim
 )
 
@@ -283,6 +285,8 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     fromSide = if (x > rim.cx + 0.3f * u) 1 else if (x < rim.cx - 0.3f * u) -1 else 0
                     approachW += ball.w
                     lastAbove = TrackPoint(t, x, y, ball.w)
+                } else if (cfg.unseenFall > 0f && cameDownUnseen(t, rim)) {
+                    return fire(t, Result.MISS, "came down beside the rim (not seen going up)")
                 }
             }
             Phase.ARMED -> {
@@ -366,6 +370,37 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
             return fire(t, Result.MISS, "crossed outside the ring")
         }
         return null
+    }
+
+    /**
+     * The ball first turned up at rim height, beside the net, already falling fast, and kept falling: a shot came
+     * down off the rim that we didn't see go up (dark ball against a dark sky, sun glare...). Under the net it
+     * could be a make, so only misses are called this way.
+     */
+    private fun cameDownUnseen(t: Long, rim: Box): Boolean {
+        val pts = trail.toList()
+        if (pts.size < 3) return false
+        val u = rim.w
+        val ringY = rim.y + cfg.ringLineFrac * rim.h
+        val first = pts.first()
+        val last = pts.last()
+        if (t - first.t > 600) return false                                  // a fresh sighting, not a ball that's been around
+        if (first.y < ringY || first.y > rim.bottom + 1.0f * u) return false   // first seen at rim height (it came from above)
+        if (abs(first.x - rim.cx) !in (0.4f * u)..(2f * u)) return false      // beside the net, not under it
+        if (abs(last.x - rim.cx) !in (0.4f * u)..(2.2f * u)) return false
+        if (last.y < rim.bottom + cfg.dropMargin * u) return false            // has come down below the rim
+        for (i in 1 until pts.size) {
+            val a = pts[i - 1]
+            val b = pts[i]
+            if (b.t - a.t > 200) return false                     // seen continuously
+            if (b.y - a.y < 0.05f * u) return false               // falling every step
+            if (abs(b.x - a.x) > 0.5f * u) return false           // one smooth path (not hopping between objects)
+        }
+        val bw = max(1f, pts.map { it.w }.sorted()[pts.size / 2])
+        val fall = (last.y - first.y) / bw / ((last.t - first.t) / 1000f)
+        if (fall < cfg.unseenFall) return false
+        val ref = if (makeWidths.size >= cfg.calMin) makeWidths.sorted()[makeWidths.size / 2] else cfg.ballToRim
+        return bw / (ref * u) in 0.6f..1.5f                                   // ball-sized for this rim, not something near the camera
     }
 
     private fun toIdle() {

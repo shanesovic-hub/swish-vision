@@ -108,6 +108,18 @@ object TrackerScenarios {
                 run(line(d.last(), Pair(955f, 760f), 11))      // but keeps falling fast: it went past the net, not through it
             }.calls
         },
+        Scenario("dark sky: never seen going up, comes down off the side of the rim (miss)", listOf(Result.MISS)) {
+            Sim().apply {
+                nothing(800)                                              // the shot is invisible against the sky
+                run(line(Pair(1000f, 440f), Pair(1060f, 700f), 9))        // first seen at rim height beside the net, falling
+            }.calls
+        },
+        Scenario("dark sky: first seen dropping out under the net is not called (could be a make)", emptyList()) {
+            Sim().apply {
+                nothing(800)
+                run(line(Pair(950f, 500f), Pair(952f, 700f), 9))
+            }.calls
+        },
         Scenario("dribbling under the rim never counts", emptyList()) {
             Sim().apply {
                 repeat(6) {

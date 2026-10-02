@@ -101,11 +101,13 @@ class ReviewRecorder(private val dir: File) {
     private val picWindows = ArrayList<PicWindow>()
     private val picSaved = HashSet<Long>()
     private val jpgBuf = ByteArrayOutputStream(96 * 1024)
-    private var lastPicT = Long.MIN_VALUE
+    private var lastPicT = Long.MIN_VALUE / 2 // (not MIN_VALUE: t - MIN_VALUE overflows and no picture is ever taken)
     private var lastAutoT = 0L
     private var autoPicBytes = 0L
     private var fixPicBytes = 0L
     var pictures = 0
+        private set
+    var trainSaved = false
         private set
 
     private val filter = Paint(Paint.FILTER_BITMAP_FLAG)
@@ -206,13 +208,19 @@ class ReviewRecorder(private val dir: File) {
         open.clear()
         runCatching { frames.close() }
         runCatching { events.close() }
-        if (summaryJson != null) runCatching { File(dir, "summary.json").writeText(summaryJson) }
+        if (summaryJson != null) runCatching {
+            val sum = org.json.JSONObject(summaryJson)
+                .put("appVersion", BuildConfigLite.versionName(context))
+                .put("trainingPictures", pictures)
+            File(dir, "summary.json").writeText(sum.toString())
+        }
         val stamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.US).format(Date())
         val name = "swishvision-review_$stamp.zip"
         val record = dir.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
         val ok = runCatching { exportZip(context, name, record, "") }.getOrDefault(false)
         val pics = picDir.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
-        if (pics.isNotEmpty()) runCatching { exportZip(context, "swishvision-train_$stamp.zip", pics, "$TRAIN/") }
+        trainSaved = pics.isNotEmpty() &&
+            runCatching { exportZip(context, "swishvision-train_$stamp.zip", pics, "$TRAIN/") }.getOrDefault(false)
         dir.deleteRecursively()
         return if (ok) name else null
     }
