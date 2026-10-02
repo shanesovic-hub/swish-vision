@@ -24,7 +24,7 @@ data class TrackerConfig(
     val ringTolerance: Float = -0.15f, // extra width either side of the box still counted "inside" (negative: the ball's centre must
                                        // pass through the middle of the rim; a ball crossing near the edge hits the rim)
     val dropMargin: Float = 0.15f,     // below box bottom by this much = the ball has come down
-    val confirmSlack: Float = 0.30f,   // x slack when confirming a make below the net
+    val confirmSlack: Float = -0.10f,  // x slack when confirming a make below the net (negative: must come out within 0.4 rim widths of centre)
     val popUp: Float = 0.30f,          // pending make cancelled if ball pops back above ring by this
     val rollOff: Float = 0.60f,        // pending make cancelled if ball drifts this far outside the rim
     val pendingLostMs: Long = 600,     // ball vanished into the net -> make
