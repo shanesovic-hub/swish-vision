@@ -101,10 +101,11 @@ object SessionAndDecoderChecks {
 
         // A call after every make; every call once before any repeats; never the same one back to back.
         val r = AnnouncerScript(kotlin.random.Random(7))
-        val heard = (1..60).map { r.forMake(it, if (it % 2 == 0) 1 else 2, false).clip }
+        val nCalls = AnnouncerScript.CALLS.size
+        val heard = (1..nCalls * 3).map { r.forMake(it, if (it % 2 == 0) 1 else 2, false).clip }
         check(heard.all { it != null && it in AnnouncerScript.CALLS }, "make without a call, or a wrong kind: $heard", f)
-        check(heard.take(20).toSet() == AnnouncerScript.CALLS.toSet(), "first 20 calls not all different", f)
-        check(heard.drop(20).take(20).toSet() == AnnouncerScript.CALLS.toSet(), "second round not all different", f)
+        check(heard.take(nCalls).toSet() == AnnouncerScript.CALLS.toSet(), "first round of calls not all different", f)
+        check(heard.drop(nCalls).take(nCalls).toSet() == AnnouncerScript.CALLS.toSet(), "second round not all different", f)
         check(heard.zipWithNext().none { (x, y) -> x == y }, "same call twice in a row", f)
 
         // Mixed shooting: threes, twos and long streaks. Nothing repeats until everything that fits has played,
@@ -135,8 +136,9 @@ object SessionAndDecoderChecks {
         check(a.forMiss(1, 4).clip == "miss_not_so_fast", "streak ended", f)
         check(a.forMiss(3, 0).clip == "miss_you_got_this" && a.forMiss(6, 0).clip == "miss_you_got_this", "you got this", f)
         val misses = AnnouncerScript(kotlin.random.Random(5))
-        val mh = (1..28).map { misses.forMiss(if (it % 3 == 0) 1 else 2, 0).clip!! }
-        check(mh.take(14).toSet() == AnnouncerScript.MISSES.toSet(), "first 14 miss comments not all different: $mh", f)
+        val nMiss = AnnouncerScript.MISSES.size
+        val mh = (1..nMiss * 2).map { misses.forMiss(if (it % 3 == 0) 1 else 2, 0).clip!! }
+        check(mh.take(nMiss).toSet() == AnnouncerScript.MISSES.toSet(), "first round of miss comments not all different: $mh", f)
         check(mh.zipWithNext().none { (x, y) -> x == y }, "same miss comment twice in a row", f)
         check(AnnouncerScript.firstName("  ") == null && AnnouncerScript.firstName("JMS") == "JMS", "first name", f)
 
