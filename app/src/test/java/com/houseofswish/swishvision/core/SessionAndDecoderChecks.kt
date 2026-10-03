@@ -95,14 +95,14 @@ object SessionAndDecoderChecks {
         // Every clip the script can ask for has words for the phone voice to fall back on.
         val all = AnnouncerScript.CALLS + AnnouncerScript.THREES + AnnouncerScript.HOT + AnnouncerScript.BONUS +
             AnnouncerScript.MISSES + listOf(AnnouncerScript.HEATING_UP, AnnouncerScript.ON_FIRE,
-                AnnouncerScript.NOT_SO_FAST, AnnouncerScript.YOU_GOT_THIS, AnnouncerScript.START)
+                AnnouncerScript.NOT_SO_FAST, AnnouncerScript.YOU_GOT_THIS, AnnouncerScript.START, AnnouncerScript.SIX_SEVEN)
         check(all.toSet().size == all.size, "a clip is listed twice", f)
         check(all.all { it in AnnouncerScript.TEXT }, "clip without words: ${all.filter { it !in AnnouncerScript.TEXT }}", f)
 
         // A call after every make; every call once before any repeats; never the same one back to back.
         val r = AnnouncerScript(kotlin.random.Random(7))
         val nCalls = AnnouncerScript.CALLS.size
-        val heard = (1..nCalls * 3).map { r.forMake(it, if (it % 2 == 0) 1 else 2, false).clip }
+        val heard = (1..nCalls * 3).map { r.forMake(it + 100, if (it % 2 == 0) 1 else 2, false).clip } // (+100: stay clear of make 67)
         check(heard.all { it != null && it in AnnouncerScript.CALLS }, "make without a call, or a wrong kind: $heard", f)
         check(heard.take(nCalls).toSet() == AnnouncerScript.CALLS.toSet(), "first round of calls not all different", f)
         check(heard.drop(nCalls).take(nCalls).toSet() == AnnouncerScript.CALLS.toSet(), "second round not all different", f)
@@ -132,6 +132,11 @@ object SessionAndDecoderChecks {
         val fuego = (1..50).count { "fuego" in (AnnouncerScript(kotlin.random.Random(it)).forMake(9, 7, false).clip ?: "") }
         check(fuego in 20..45, "long streaks don't lean en fuego: $fuego/50", f)
 
+        // "Six seven" plays on the 67th make, whatever the streak, and never anywhere else.
+        val sx = AnnouncerScript(kotlin.random.Random(9))
+        val sixSevens = (1..300).map { n -> n to sx.forMake(n, if (n % 5 == 0) 5 else n % 4 + 1, n % 3 == 0).clip }.filter { it.second == AnnouncerScript.SIX_SEVEN }
+        check(sixSevens.map { it.first } == listOf(67), "six seven played at ${sixSevens.map { it.first }}", f)
+        check(AnnouncerScript(kotlin.random.Random(1)).forMake(67, 10, false).clip == AnnouncerScript.SIX_SEVEN, "six seven beats a bonus", f)
         // Misses: a comment after every miss.
         check(a.forMiss(1, 4).clip == "miss_not_so_fast", "streak ended", f)
         check(a.forMiss(3, 0).clip == "miss_you_got_this" && a.forMiss(6, 0).clip == "miss_you_got_this", "you got this", f)

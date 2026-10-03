@@ -29,7 +29,7 @@ class AnnouncerScript(
             "call_buckets", "call_dagger", "call_hocus_pocus", "call_straight_cash", "call_boom_dynamite",
             "call_cool_pillow", "call_rye_bread", "call_popcorn", "call_it_might_be", "call_no_regard",
             "call_abracadabra", "call_entertained", "call_triple_double_rap", "call_great_scott", "call_the_force", "call_plan_together", "call_inconceivable", "call_like_a_glove",
-            "call_mashed_potatoes", "call_dont_need_roads", "call_show_me_money", "call_infinity_beyond", "call_six_seven", "call_sixty_percent", "call_your_mama",
+            "call_mashed_potatoes", "call_dont_need_roads", "call_show_me_money", "call_infinity_beyond", "call_sixty_percent", "call_your_mama",
         )
         val THREES = listOf("three_downtown", "three_parking_lot", "three_way_downtown")
         val HOT = listOf("streak_en_fuego", "streak_dare_en_fuego")
@@ -44,6 +44,7 @@ class AnnouncerScript(
         )
         /** Miss comments Shane recorded (the rest are spoken by the phone voice). */
         val RECORDED_MISSES = listOf("miss_houston", "miss_bit_outside", "miss_theres_a_chance", "miss_killing_me_smalls")
+        const val SIX_SEVEN = "call_six_seven" // only ever on the 67th make
         const val NOT_SO_FAST = "miss_not_so_fast"
         const val YOU_GOT_THIS = "miss_you_got_this"
         const val START = "start_practice"
@@ -142,6 +143,7 @@ class AnnouncerScript(
      */
     fun forMake(makes: Int, streak: Int, isThree: Boolean): Call {
         val count = "$makes!"
+        if (makes == 67) return Call(count, clip = SIX_SEVEN) // always, and only, on the 67th make
         if (streak >= 5 && streak % 5 == 0) {
             val level = streak / 5
             return if (level <= BONUS.size) Call(count, clip = BONUS[level - 1]) else Call(count, say = bonus(level))
