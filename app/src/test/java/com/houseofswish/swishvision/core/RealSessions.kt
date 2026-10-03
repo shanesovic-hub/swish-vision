@@ -22,6 +22,7 @@ object RealSessions {
         "outdoor_layups_2026-10-01" to Pair(61, 1), // of 68
         "dusk_layups_2026-10-01" to Pair(81, 1),    // of 94 (the extra one is a miss the player logged 6 s late)
         "outdoor_ft_2026-10-02" to Pair(44, 1),     // of 50
+        "night_ft_2026-10-02" to Pair(90, 1),       // of 98
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 
