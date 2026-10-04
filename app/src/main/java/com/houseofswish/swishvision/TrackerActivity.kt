@@ -79,6 +79,7 @@ class TrackerActivity : AppCompatActivity() {
     // --- analysis thread state (only touched on analysisExecutor) ---
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var detector: BallDetector? = null
+    @Volatile private var experimental = false // the retrained detector, opt-in
     private val tracker = ShotTracker()
     private val hoopFinder = HoopFinder()
     private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
@@ -213,6 +214,26 @@ class TrackerActivity : AppCompatActivity() {
             hint.visibility = View.VISIBLE
         }
         findViewById<Button>(R.id.end).setOnClickListener { endSession() }
+        experimental = getSharedPreferences("swishvision", MODE_PRIVATE).getBoolean("experimentalCamera", false)
+        val expBtn = findViewById<TextView>(R.id.expBtn)
+        expBtn.alpha = if (experimental) 1f else 0.35f
+        expBtn.setOnClickListener {
+            val on = !experimental
+            experimental = on
+            getSharedPreferences("swishvision", MODE_PRIVATE).edit().putBoolean("experimentalCamera", on).apply()
+            expBtn.alpha = if (on) 1f else 0.35f
+            onAnalysis {
+                // Swap detectors on the analysis thread (the GPU delegate lives there).
+                runCatching {
+                    val d = BallDetector(this, on)
+                    detector?.close()
+                    detector = d
+                    backend = d.backend
+                    recorder?.note("camera", d.modelName)
+                }.onFailure { Log.e(TAG, "detector swap failed", it) }
+            }
+            Toast.makeText(this, if (on) "Experimental camera ON (new trained detector)" else "Experimental camera off (standard detector)", Toast.LENGTH_LONG).show()
+        }
         val announcerBtn = findViewById<TextView>(R.id.announcerBtn)
         announcerBtn.setOnClickListener {
             announcerOn = !announcerOn
@@ -248,7 +269,7 @@ class TrackerActivity : AppCompatActivity() {
         // Build the detector on the analysis thread: the GPU delegate must run where it was created.
         analysisExecutor.execute {
             try {
-                val d = BallDetector(this)
+                val d = BallDetector(this, experimental)
                 detector = d
                 backend = d.backend
                 recorder = runCatching {
@@ -568,7 +589,7 @@ class TrackerActivity : AppCompatActivity() {
             status.text = when {
                 err != null -> "Model error"
                 detector == null -> "Loading…"
-                else -> "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
+                else -> (if (experimental) "🧪 " else "") + "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
             }
             status.setTextColor(ContextCompat.getColor(this@TrackerActivity, if (hot || err != null) R.color.miss else R.color.muted))
             setupCheck()
@@ -614,7 +635,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         s.endedAt = now
         val avgFps = if (fpsCount > 0) fpsSum / fpsCount else 0f
-        val json = s.toJson(now, avgFps, BallDetector.MODEL_NAME)
+        val json = s.toJson(now, avgFps, detector?.modelName ?: BallDetector.MODEL_NAME)
         val saved = runCatching {
             val dir = File(getExternalFilesDir(null), "sessions").apply { mkdirs() }
             File(dir, "session-${s.startedAt}.json").apply { writeText(json) }
@@ -652,7 +673,7 @@ class TrackerActivity : AppCompatActivity() {
             .setTitle("Discard this session?")
             .setMessage("${s.makes} of ${s.attempts} won't be saved to Swish Quest.")
             .setPositiveButton("Discard") { _, _ ->
-                saveReview(s.toJson(System.currentTimeMillis(), 0f, BallDetector.MODEL_NAME))
+                saveReview(s.toJson(System.currentTimeMillis(), 0f, detector?.modelName ?: BallDetector.MODEL_NAME))
                 setResult(RESULT_CANCELED)
                 finish()
             }

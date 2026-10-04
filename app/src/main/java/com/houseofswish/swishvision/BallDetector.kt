@@ -29,10 +29,13 @@ import java.nio.channels.FileChannel
  */
 data class Found(val balls: List<Detection>, val hoops: List<Detection>)
 
-class BallDetector(context: Context) : AutoCloseable {
+class BallDetector(context: Context, val experimental: Boolean = false) : AutoCloseable {
     companion object {
         const val MODEL_FILE = "bball_640.tflite"
         const val MODEL_NAME = "yolov8n-basketball-hoop-640"
+        // Retrained on Shane's driveway (day + night) and basement pictures. Opt-in while it's being tested.
+        const val MODEL_V2_FILE = "bball_640_v2.tflite"
+        const val MODEL_V2_NAME = "swish-v2-640"
         const val INPUT = 640
         const val ANCHORS = 8400
         const val CLASSES = 2
@@ -45,6 +48,7 @@ class BallDetector(context: Context) : AutoCloseable {
     private val interpreter: Interpreter
     private var gpu: GpuDelegate? = null
     val backend: String
+    val modelName = if (experimental) MODEL_V2_NAME else MODEL_NAME
 
     private val plane = INPUT * INPUT
     private val chw = FloatArray(3 * plane)
@@ -89,7 +93,7 @@ class BallDetector(context: Context) : AutoCloseable {
     }
 
     private fun loadModel(context: Context): MappedByteBuffer {
-        context.assets.openFd(MODEL_FILE).use { fd ->
+        context.assets.openFd(if (experimental) MODEL_V2_FILE else MODEL_FILE).use { fd ->
             FileInputStream(fd.fileDescriptor).use { stream ->
                 return stream.channel.map(FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength)
             }
