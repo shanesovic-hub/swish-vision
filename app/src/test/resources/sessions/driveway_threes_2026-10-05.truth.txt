@@ -1,0 +1,13 @@
+# t kind truth
+# Driveway, afternoon, experimental camera: threes then layups. The player tapped +Miss 10-16 s after
+# the shot (walking back to the phone), so manual misses are logged at shot time + 1.5 s.
+459805360 manual MISS
+459831913 auto MAKE
+459843940 auto MISS
+459868090 manual MISS
+459894578 auto MISS
+459904140 manual MISS
+459934590 manual MISS
+459960874 auto MISS
+460017709 manual MISS
+460044061 manual MISS

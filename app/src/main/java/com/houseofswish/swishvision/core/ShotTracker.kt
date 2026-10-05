@@ -71,6 +71,10 @@ data class TrackerConfig(
     // A shot we never saw go up (e.g. a dark ball against a dark evening sky) but saw come down beside the rim.
     val unseenFall: Float = 6f,        // falling at least this fast (ball widths/s), first seen at rim height beside the net -> miss
     val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim
+    // A long shot that hits the rim can fly off far to the side. If the ball got to the rim first, it's still a
+    // miss when it comes down (or is lost) this many U away, well outside the usual miss window.
+    val rimOutWindow: Float = 4f,
+    val rimOutSpeed: Float = 4f,       // ...and only if it flew off the rim at least this fast sideways (U/s), not carried away
 ) {
     companion object {
         /**
@@ -119,9 +123,19 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
     private var crossX: Float? = null        // where it crossed the ring line going down
     private var bounced = false              // popped back up after reaching the rim
     private var fromSide = 0                 // which side of the rim the shot came from (+1 right, -1 left, 0 straight on)
+    private var reachedRim = false           // the ball got to the rim (just above or level with it, over it)
+    private var atRimT = 0L                  // last time it was there
 
     private fun newShot() {
-        maxFall = 0f; approachW.clear(); crossX = null; bounced = false; fromSide = 0
+        maxFall = 0f; approachW.clear(); crossX = null; bounced = false; fromSide = 0; reachedRim = false
+    }
+
+    /** How far from the rim a ball may come down and still be this shot's miss. */
+    private fun missReach(t: Long, x: Float, rim: Box): Float {
+        if (!reachedRim || cfg.rimOutWindow <= cfg.missWindow) return cfg.missWindow
+        val away = abs(x - rim.cx) / rim.w - 0.6f
+        val secs = max(0.033f, (t - atRimT) / 1000f)
+        return if (away / secs >= cfg.rimOutSpeed) cfg.rimOutWindow else cfg.missWindow
     }
 
     /** How far from the rim centre a ball may reappear and still have come through the net. */
@@ -288,6 +302,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
             val fall = (y - p0.y) / bw / ((t - p0.t) / 1000f)
             if (fall > maxFall) maxFall = fall
         }
+        if ((phase == Phase.ARMED || phase == Phase.PENDING_MAKE) && abs(x - rim.cx) < 0.6f * u && y > rim.y - 0.6f * u && y < rim.bottom) { reachedRim = true; atRimT = t }
 
         when (phase) {
             Phase.IDLE -> {
@@ -330,8 +345,8 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                 if (p0 != null && p0.y <= ringY) return decide(t, p0, x, y, rim)
                 if (y > rim.bottom + cfg.dropMargin * u) {
                     val where = crossX ?: x
-                    if (!shotLike() || abs(where - rim.cx) > cfg.missWindow * u) { toIdle(); return null }
-                    return fire(t, Result.MISS, "came down beside the rim")
+                    if (!shotLike() || abs(where - rim.cx) > missReach(t, x, rim) * u) { toIdle(); return null }
+                    return fire(t, Result.MISS, if (abs(where - rim.cx) > cfg.missWindow * u) "bounced off the rim" else "came down beside the rim")
                 }
             }
             Phase.PENDING_MAKE -> {
@@ -383,8 +398,8 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
             return null
         }
         if (y > rim.bottom + cfg.dropMargin * rim.w) {
-            if (abs(xc - rim.cx) > cfg.missWindow * rim.w) { toIdle(); return null } // nowhere near this rim
-            return fire(t, Result.MISS, "crossed outside the ring")
+            if (abs(xc - rim.cx) > missReach(t, x, rim) * rim.w) { toIdle(); return null } // nowhere near this rim
+            return fire(t, Result.MISS, if (abs(xc - rim.cx) > cfg.missWindow * rim.w) "bounced off the rim" else "crossed outside the ring")
         }
         return null
     }
@@ -463,7 +478,7 @@ class ShotTracker(val cfg: TrackerConfig = TrackerConfig()) {
                     // Vanished right over the opening while falling: it went into the net.
                     if (descending && overOpening && shotLike() && gap > cfg.openingLostMs) return fire(t, Result.MAKE, "vanished over the opening")
                     // Lost beside the rim at rim height (bounced off the side, out of view): a miss.
-                    val besideRim = last.y > rim.y - 0.5f * u && abs(last.x - rim.cx) in (0.6f * u)..(2f * u)
+                    val besideRim = last.y > rim.y - 0.5f * u && abs(last.x - rim.cx) in (0.6f * u)..(max(2f, missReach(last.t, last.x, rim)) * u)
                     if (gap > cfg.armedLostMs && besideRim && shotLike()) return fire(t, Result.MISS, "lost beside the rim")
                 }
             }

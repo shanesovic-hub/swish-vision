@@ -18,16 +18,18 @@ object RealSessions {
 
     /** Floors: today's results. A change may not make any session worse than this. */
     /** Sessions recorded with the retrained (experimental) detector: replayed with its settings. */
-    private val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04")
+    private val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04", "driveway_mixed_2026-10-05", "driveway_threes_2026-10-05")
 
     private val FLOORS = mapOf(
-        "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
-        "outdoor_layups_2026-10-01" to Pair(61, 1), // of 68
-        "dusk_layups_2026-10-01" to Pair(81, 1),    // of 94 (the extra one is a miss the player logged 6 s late)
-        "outdoor_ft_2026-10-02" to Pair(44, 1),     // of 50
-        "night_ft_2026-10-02" to Pair(90, 1),       // of 98
-        "basement_mid_2026-10-03" to Pair(87, 1),   // of 104
+        "basement_2026-10-01" to Pair(132, 2),      // right calls of 145, extra calls allowed
+        "outdoor_layups_2026-10-01" to Pair(62, 1), // of 68
+        "dusk_layups_2026-10-01" to Pair(82, 1),    // of 94 (the extra one is a miss the player logged 6 s late)
+        "outdoor_ft_2026-10-02" to Pair(45, 1),     // of 50
+        "night_ft_2026-10-02" to Pair(91, 1),       // of 98
+        "basement_mid_2026-10-03" to Pair(88, 1),   // of 104
         "driveway_ft_v2_2026-10-04" to Pair(129, 1), // of 145, recorded with the experimental camera
+        "driveway_mixed_2026-10-05" to Pair(17, 0),  // of 19, experimental camera, layups/mid/free throws
+        "driveway_threes_2026-10-05" to Pair(7, 0),  // of 10, experimental camera, threes (long rim bounces)
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 

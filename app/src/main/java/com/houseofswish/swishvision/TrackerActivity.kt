@@ -52,6 +52,7 @@ import com.houseofswish.swishvision.core.Roi
 import com.houseofswish.swishvision.core.Session
 import com.houseofswish.swishvision.core.ShotTracker
 import com.houseofswish.swishvision.core.ShotType
+import com.houseofswish.swishvision.core.SpotFinder
 import com.houseofswish.swishvision.core.TrackerConfig
 import java.io.File
 import java.nio.ByteBuffer
@@ -95,6 +96,10 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var peopleShown: List<Detection> = emptyList()
     private var lastPersonAt = Long.MIN_VALUE / 2
     private var frameNoted = ""
+    private val spotFinder = SpotFinder()        // where each shot was taken from (analysis thread)
+    private var prevPhase = Phase.IDLE
+    private var shotStartT = Long.MIN_VALUE / 2  // camera time the current shot went up
+    private var lastFrameT = 0L
     private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
     private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
     private var frameBmp: Bitmap? = null
@@ -122,6 +127,9 @@ class TrackerActivity : AppCompatActivity() {
     // --- main thread state ---
     private var session = Session(System.currentTimeMillis())
     private var shotType = ShotType.FT
+    private var autoSpots = false     // the camera picks the shot type from where the shooter stands
+    private var ftSpotSet = false
+    private var lastSpotText = ""
     private var soundOn = true
     // Game sounds: a net swish for makes, an arena buzzer for misses.
     private var sounds: SoundPool? = null
@@ -195,8 +203,52 @@ class TrackerActivity : AppCompatActivity() {
             btn.setOnClickListener {
                 shotType = type
                 shotTypeKey = type.key
-                onAnalysis { recorder?.note("shot_type", type.key) }
+                if (autoSpots) {
+                    // Auto spots: tapping a chip fixes where the last shot was taken from.
+                    val last = session.shots.lastOrNull()
+                    if (last != null && last.type != type) {
+                        session.retypeLast(type)
+                        onAnalysis { recorder?.note("retype", type.key) }
+                        Toast.makeText(this, "Last shot changed to ${type.label}", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    onAnalysis { recorder?.note("shot_type", type.key) }
+                }
                 refresh()
+            }
+        }
+        val prefs = getSharedPreferences("swishvision", MODE_PRIVATE)
+        autoSpots = prefs.getBoolean("autoSpots", false)
+        val autoBtn = findViewById<Button>(R.id.autoSpots)
+        val ftBtn = findViewById<Button>(R.id.setFtSpot)
+        autoBtn.setOnClickListener {
+            autoSpots = !autoSpots
+            prefs.edit().putBoolean("autoSpots", autoSpots).apply()
+            val on = autoSpots
+            onAnalysis { recorder?.note("auto_spots", if (on) "on" else "off") }
+            Toast.makeText(this,
+                if (on) "Auto spot ON: the camera picks the shot type from where you stand. Wrong? Tap the right chip." +
+                    (if (ftSpotSet) "" else " Stand on the free-throw line and tap SET FT SPOT so it knows free throws.")
+                else "Auto spot off: pick the shot type with the chips", Toast.LENGTH_LONG).show()
+            refresh()
+        }
+        ftBtn.setOnClickListener {
+            ftBtn.isEnabled = false
+            onAnalysis {
+                val r = rim
+                val ok = r != null && spotFinder.setFreeThrowSpot(lastFrameT, r)
+                if (ok) recorder?.note("ft_spot", "%.2f".format(java.util.Locale.US, spotFinder.scale))
+                ui.post {
+                    ftBtn.isEnabled = true
+                    if (ok) ftSpotSet = true
+                    Toast.makeText(this,
+                        when {
+                            ok -> "Free-throw spot set"
+                            r == null -> "Find the rim first"
+                            else -> "Couldn't see you. Stand on the free-throw line with your whole body (feet too) in view, then tap again."
+                        }, Toast.LENGTH_LONG).show()
+                    refresh()
+                }
             }
         }
         findViewById<Button>(R.id.addMake).setOnClickListener { addShot(Result.MAKE, Method.MANUAL) }
@@ -538,16 +590,27 @@ class TrackerActivity : AppCompatActivity() {
             else -> null
         }
         val call = tracker.update(tMs, balls, r)
+        lastFrameT = tMs
         val people = peopleFound.getAndSet(null)
+        if (people != null) spotFinder.add(people.first, people.second, w, h)
+        val phaseNow = tracker.phase
+        if (prevPhase == Phase.IDLE && phaseNow != Phase.IDLE) shotStartT = tMs
+        prevPhase = phaseNow
+        val spot = if (call != null && r != null) {
+            // Where the shooter stood just before the ball went up.
+            val start = if (tMs - shotStartT in 0..6000) shotStartT else tMs - 1500
+            runCatching { spotFinder.spotAt(start, r) }.getOrNull()
+        } else null
         recorder?.let { rec ->
             runCatching {
-                val size = "${w}x$h"
-                if (frameNoted != size) { frameNoted = size; rec.note("frame", size) }
                 rec.onFrame(tMs, frame, roi, r, balls, found.hoops, tracker.lastBall, tracker.phase, call, shotTypeKey, det.modelInput,
                     busy = tracker.phase != Phase.IDLE || tMs - lastNearRimAt < 800, why = if (call != null) tracker.lastWhy else "",
                     people = people)
+                val size = "${w}x$h"
+                if (frameNoted != size) { frameNoted = size; rec.note("frame", size) }
             }.onFailure { Log.w(TAG, "review recorder", it) }
         }
+        if (spot != null) recorder?.note("spot", "${spot.type.key} %.1f ft".format(java.util.Locale.US, spot.feet))
         findPeople(frame, tMs, r)
         if (frame !== frameBmp) frame.recycle()
 
@@ -564,7 +627,7 @@ class TrackerActivity : AppCompatActivity() {
             overlay.update(snap)
             latestFps = fps
             if (r != null && fps > 0f) { fpsSum += fps; fpsCount++ }
-            if (call != null && r === rim) addShot(call, Method.AUTO)
+            if (call != null && r === rim) addShot(call, Method.AUTO, spot)
             if (autoBox != null) applyAutoRim(autoBox, first = r == null)
         }
     }
@@ -593,13 +656,17 @@ class TrackerActivity : AppCompatActivity() {
         if (announcerOn) announcer?.intro()
     }
 
-    private fun addShot(result: Result, method: Method) {
+    private fun addShot(result: Result, method: Method, spot: SpotFinder.Spot? = null) {
         val now = System.currentTimeMillis()
         if (session.shots.isEmpty() && session.phantoms == 0) session = Session(now) // clock starts at the first shot
         val endedStreak = if (result == Result.MISS) session.currentStreak else 0
-        session.add(now, result, shotType, method)
+        // Auto spot: where the camera saw the shooter. If it couldn't see them (or the player added the shot),
+        // assume the same spot as the last shot.
+        val type = if (autoSpots) spot?.type ?: session.shots.lastOrNull()?.type ?: shotType else shotType
+        lastSpotText = if (!autoSpots) "" else if (spot != null) "📍 ${spot.type.label} ${spot.feet.toInt()} ft" else "📍 ${type.label} (same spot)"
+        session.add(now, result, type, method)
         if (method == Method.MANUAL) {
-            val key = shotType.key
+            val key = type.key
             onAnalysis { recorder?.manualShot(result == Result.MAKE, key) } // the camera missed this one
         }
         overlay.flash(result)
@@ -608,7 +675,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         when {
             !announcerOn -> announcer?.quiet()
-            result == Result.MAKE -> announcer?.make(session.makes, session.currentStreak, shotType == ShotType.THREE)
+            result == Result.MAKE -> announcer?.make(session.makes, session.currentStreak, type == ShotType.THREE)
             else -> announcer?.miss(session.missesInRow, endedStreak)
         }
         refresh()
@@ -621,12 +688,21 @@ class TrackerActivity : AppCompatActivity() {
         pctTv.text = if (s.attempts == 0) "–" else "${s.pct}"
         val secs = if (s.shots.isEmpty()) 0L else (System.currentTimeMillis() - s.startedAt) / 1000
         val last10 = s.last10Pct?.let { "$it%" } ?: "–"
-        subline.text = "Streak ${s.currentStreak} · Best ${s.bestStreak} · Last 10 $last10 · ${secs / 60}:${"%02d".format(secs % 60)}"
+        subline.text = "Streak ${s.currentStreak} · Best ${s.bestStreak} · Last 10 $last10 · ${secs / 60}:${"%02d".format(secs % 60)}" +
+            if (lastSpotText.isNotEmpty() && s.shots.isNotEmpty()) " · $lastSpotText" else ""
         val lines = s.byType()
+        val autoBtn = findViewById<Button>(R.id.autoSpots)
+        autoBtn.setBackgroundResource(if (autoSpots) R.drawable.chip_on else R.drawable.btn_ghost)
+        autoBtn.setTextColor(ContextCompat.getColor(this, if (autoSpots) R.color.amber else R.color.net))
+        val ftBtn = findViewById<Button>(R.id.setFtSpot)
+        ftBtn.visibility = if (autoSpots) View.VISIBLE else View.GONE
+        ftBtn.text = if (ftSpotSet) "FT SPOT ✓" else "SET FT SPOT"
+        // In auto mode the lit chip is where the last shot came from (tap another to fix it).
+        val litType = if (autoSpots) s.shots.lastOrNull()?.type else shotType
         chips.forEach { (type, btn) ->
             val l = lines.getValue(type)
             btn.text = if (l.attempted == 0) type.label else "${type.label} ${l.made}/${l.attempted}"
-            val on = type == shotType
+            val on = type == litType
             btn.setBackgroundResource(if (on) R.drawable.chip_on else R.drawable.btn_ghost)
             btn.setTextColor(ContextCompat.getColor(this, if (on) R.color.amber else R.color.net))
         }

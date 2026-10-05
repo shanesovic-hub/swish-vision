@@ -147,6 +147,26 @@ object SessionAndDecoderChecks {
         check(mh.zipWithNext().none { (x, y) -> x == y }, "same miss comment twice in a row", f)
         check(AnnouncerScript.firstName("  ") == null && AnnouncerScript.firstName("JMS") == "JMS", "first name", f)
 
+        // Shot spots, from a real driveway session (1920 x 1080, camera beside the court)
+        val sRim = Box(1250f, 270f, 110f, 66f)
+        fun person(cx: Float, feet: Float, h: Float) = Detection(cx, feet - h / 2f, h * 0.4f, h, 0.8f)
+        val sf = SpotFinder()
+        fun at(t: Long, p: Detection): SpotFinder.Spot? { sf.add(t, listOf(p), 1920, 1080); return sf.spotAt(t, sRim) }
+        check(at(1_000, person(1041f, 708f, 358f))?.type == ShotType.LAYUP, "layup spot", f)
+        check(at(5_000, person(574f, 756f, 368f))?.type == ShotType.MID, "mid-range spot", f)
+        check(at(9_000, person(300f, 690f, 250f))?.type == ShotType.THREE, "three spot", f)
+        val ftBefore = at(13_000, person(203f, 880f, 498f))
+        check(ftBefore?.type == ShotType.MID && !sf.calibrated, "free throw before the spot is set: mid-range", f)
+        check(sf.setFreeThrowSpot(13_200, sRim) && sf.scale in 0.85f..1.0f, "set free-throw spot (scale ${sf.scale})", f)
+        check(at(17_000, person(221f, 873f, 487f))?.type == ShotType.FT, "free throw after the spot is set", f)
+        check(at(21_000, person(574f, 756f, 368f))?.type == ShotType.MID, "mid-range away from the line stays mid", f)
+        check(at(25_000, person(926f, 1075f, 752f)) == null, "feet cut off: no guess", f)
+        check(at(40_000, person(574f, 756f, 368f)).let { it != null && it.t == 40_000L }, "uses the latest sighting", f)
+        val stale = SpotFinder(); stale.add(0, listOf(person(574f, 756f, 368f)), 1920, 1080)
+        check(stale.spotAt(10_000, sRim) == null, "no guess from a sighting long before the shot", f)
+        val s2 = Session(0); s2.add(1, Result.MAKE, ShotType.MID, Method.AUTO); s2.retypeLast(ShotType.FT)
+        check(s2.byType()[ShotType.FT] == TypeLine(1, 1) && s2.byType()[ShotType.MID] == TypeLine(0, 0), "retype last shot", f)
+
         // Session counters the announcer uses
         val ms = Session(0)
         ms.add(1, Result.MAKE, ShotType.FT, Method.AUTO); ms.add(2, Result.MISS, ShotType.FT, Method.AUTO)

@@ -152,6 +152,15 @@
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
 
+            <Button android:id="@+id/autoSpots" style="@style/Chip" android:text="📍 AUTO SPOT" />
+            <Button android:id="@+id/setFtSpot" style="@style/Chip" android:text="SET FT SPOT" android:visibility="gone" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
             <Button android:id="@+id/chipLayup" style="@style/Chip" android:text="LAYUP" />
             <Button android:id="@+id/chipMid" style="@style/Chip" android:text="MID" />
         </LinearLayout>

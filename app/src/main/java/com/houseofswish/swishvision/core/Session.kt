@@ -13,7 +13,7 @@ enum class Method { AUTO, MANUAL }
 data class Shot(
     val t: Long,
     var result: Result,
-    val type: ShotType,
+    var type: ShotType,           // auto spots: the player can fix it by tapping the right chip
     val method: Method,
     var flipped: Boolean = false, // auto call the player marked as wrong
 )
@@ -36,6 +36,9 @@ class Session(val startedAt: Long) {
         if (s.method == Method.AUTO && !s.flipped) phantoms++
         return s
     }
+
+    /** The last shot was taken from somewhere else (auto spots guessed wrong). */
+    fun retypeLast(type: ShotType): Shot? = shots.lastOrNull()?.also { it.type = type }
 
     /** "Wrong call": flip the last shot. Pressing again flips it back. */
     fun flipLast(): Shot? {

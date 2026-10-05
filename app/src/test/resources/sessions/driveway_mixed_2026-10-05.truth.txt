@@ -1,0 +1,21 @@
+# t kind truth
+# Driveway, afternoon, experimental camera: layups, mid-range, free throws (camera at the side of the court).
+459408504 auto MAKE
+459414367 auto MAKE
+459420064 auto MAKE
+459430058 auto MAKE
+459439453 auto MAKE
+459465272 auto MISS
+459478165 auto MAKE
+459486260 auto MAKE
+459496021 auto MISS
+459515710 auto MAKE
+459522640 auto MAKE
+459538231 auto MISS
+459551390 auto MISS
+459573544 auto MAKE
+459588369 auto MAKE
+459619052 auto MAKE
+459644638 auto MAKE
+459653899 auto MAKE
+459662961 auto MAKE
