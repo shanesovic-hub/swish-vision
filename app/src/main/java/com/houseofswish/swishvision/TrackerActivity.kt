@@ -51,6 +51,7 @@ import com.houseofswish.swishvision.core.Roi
 import com.houseofswish.swishvision.core.Session
 import com.houseofswish.swishvision.core.ShotTracker
 import com.houseofswish.swishvision.core.ShotType
+import com.houseofswish.swishvision.core.TrackerConfig
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
@@ -80,7 +81,7 @@ class TrackerActivity : AppCompatActivity() {
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var detector: BallDetector? = null
     @Volatile private var experimental = false // the retrained detector, opt-in
-    private val tracker = ShotTracker()
+    @Volatile private var tracker = ShotTracker()
     private val hoopFinder = HoopFinder()
     private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
     private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
@@ -228,6 +229,7 @@ class TrackerActivity : AppCompatActivity() {
                     val d = BallDetector(this, on)
                     detector?.close()
                     detector = d
+                    tracker = ShotTracker(TrackerConfig.forCamera(on)) // each detector has its own tuned rules
                     backend = d.backend
                     recorder?.note("camera", d.modelName)
                 }.onFailure { Log.e(TAG, "detector swap failed", it) }
@@ -271,6 +273,7 @@ class TrackerActivity : AppCompatActivity() {
             try {
                 val d = BallDetector(this, experimental)
                 detector = d
+                tracker = ShotTracker(TrackerConfig.forCamera(experimental))
                 backend = d.backend
                 recorder = runCatching {
                     ReviewRecorder(File(cacheDir, "review/" + System.currentTimeMillis()).apply { mkdirs() })

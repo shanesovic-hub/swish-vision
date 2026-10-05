@@ -71,7 +71,17 @@ data class TrackerConfig(
     // A shot we never saw go up (e.g. a dark ball against a dark evening sky) but saw come down beside the rim.
     val unseenFall: Float = 6f,        // falling at least this fast (ball widths/s), first seen at rim height beside the net -> miss
     val frontRatioAfterRim: Float = 1.12f, // stricter if it already bounced on the rim
-)
+) {
+    companion object {
+        /**
+         * Settings for each detector. The retrained detector (experimental camera) keeps seeing the ball through
+         * the net, so a make doesn't look as slowed down, and the ball's size on the way in is measured more
+         * reliably: looser net-speed and size limits. Tuned on its first session (driveway, 145 free throws).
+         */
+        fun forCamera(experimental: Boolean): TrackerConfig =
+            if (experimental) TrackerConfig(netMaxFall = 11f, frontRatio = 1.4f, frontRatioAfterRim = 1.25f) else TrackerConfig()
+    }
+}
 
 /**
  * Turns a stream of ball detections into MAKE / MISS calls.

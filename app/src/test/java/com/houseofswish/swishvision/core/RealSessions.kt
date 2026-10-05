@@ -17,6 +17,9 @@ object RealSessions {
     data class Score(val name: String, val right: Int, val total: Int, val extra: Int, val wrong: List<String>)
 
     /** Floors: today's results. A change may not make any session worse than this. */
+    /** Sessions recorded with the retrained (experimental) detector: replayed with its settings. */
+    private val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04")
+
     private val FLOORS = mapOf(
         "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
         "outdoor_layups_2026-10-01" to Pair(61, 1), // of 68
@@ -24,6 +27,7 @@ object RealSessions {
         "outdoor_ft_2026-10-02" to Pair(44, 1),     // of 50
         "night_ft_2026-10-02" to Pair(90, 1),       // of 98
         "basement_mid_2026-10-03" to Pair(87, 1),   // of 104
+        "driveway_ft_v2_2026-10-04" to Pair(129, 1), // of 145, recorded with the experimental camera
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 
@@ -47,7 +51,7 @@ object RealSessions {
 
     fun score(name: String, dir: File? = null): Score {
         val calls = ArrayList<Triple<Long, Result, String>>()
-        val tracker = ShotTracker()
+        val tracker = ShotTracker(TrackerConfig.forCamera(name in EXPERIMENTAL))
         GZIPInputStream(open("$name.replay.gz", dir)).bufferedReader().useLines { lines ->
             for (ln in lines) {
                 if (ln.isBlank()) continue
