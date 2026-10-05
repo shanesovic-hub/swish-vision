@@ -43,6 +43,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.houseofswish.swishvision.core.Box
+import com.houseofswish.swishvision.core.Detection
 import com.houseofswish.swishvision.core.HoopFinder
 import com.houseofswish.swishvision.core.Method
 import com.houseofswish.swishvision.core.Phase
@@ -56,6 +57,8 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -83,6 +86,15 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var experimental = false // the retrained detector, opt-in
     @Volatile private var tracker = ShotTracker()
     private val hoopFinder = HoopFinder()
+    // Shooter spots (shadow mode): a person finder runs a few times a second on its own thread and the
+    // review record keeps where everyone stood. The shot-type chips stay the answer for now.
+    private val personExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    @Volatile private var personDet: PersonDetector? = null
+    private val personBusy = AtomicBoolean(false)
+    private val peopleFound = AtomicReference<Pair<Long, List<Detection>>?>(null)
+    @Volatile private var peopleShown: List<Detection> = emptyList()
+    private var lastPersonAt = Long.MIN_VALUE / 2
+    private var frameNoted = ""
     private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
     private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
     private var frameBmp: Bitmap? = null
@@ -278,6 +290,7 @@ class TrackerActivity : AppCompatActivity() {
                 recorder = runCatching {
                     ReviewRecorder(File(cacheDir, "review/" + System.currentTimeMillis()).apply { mkdirs() })
                 }.getOrNull()
+                personDet = runCatching { PersonDetector(this) }.onFailure { Log.w(TAG, "person finder", it) }.getOrNull()
             } catch (t: Throwable) {
                 Log.e(TAG, "Detector failed", t)
                 detectorError = t.message ?: t.javaClass.simpleName
@@ -301,6 +314,10 @@ class TrackerActivity : AppCompatActivity() {
             recorder = null
             detector?.close()
             detector = null
+            val pd = personDet
+            personDet = null
+            if (pd != null) runCatching { personExecutor.execute { pd.close() } }
+            personExecutor.shutdown()
         }
         analysisExecutor.shutdown()
         sounds?.release()
@@ -432,6 +449,39 @@ class TrackerActivity : AppCompatActivity() {
         return bmp
     }
 
+    /**
+     * Where is everyone standing? Between shots only (a shot in the air gets the phone's full attention),
+     * about 4 times a second (2 when the phone is warm, 1 when it's hot). The frame is shrunk here and the
+     * person finder runs on its own thread, so ball tracking never waits for it.
+     */
+    private fun findPeople(frame: Bitmap, tMs: Long, r: Box?) {
+        val pd = personDet ?: return
+        if (r == null || tracker.phase != Phase.IDLE) return
+        val gap = if (critical) 1000L else if (hot) 500L else 250L
+        if (tMs - lastPersonAt < gap || !personBusy.compareAndSet(false, true)) return
+        lastPersonAt = tMs
+        val input = try {
+            pd.prepare(frame)
+        } catch (t: Throwable) {
+            personBusy.set(false); return
+        }
+        try {
+            personExecutor.execute {
+                try {
+                    val found = pd.run(input)
+                    peopleFound.set(tMs to found)
+                    peopleShown = found
+                } catch (t: Throwable) {
+                    Log.w(TAG, "person finder", t)
+                } finally {
+                    personBusy.set(false)
+                }
+            }
+        } catch (t: Throwable) {
+            personBusy.set(false) // shutting down
+        }
+    }
+
     private fun analyze(proxy: ImageProxy) {
         val det = detector
         frameNo++
@@ -488,12 +538,17 @@ class TrackerActivity : AppCompatActivity() {
             else -> null
         }
         val call = tracker.update(tMs, balls, r)
+        val people = peopleFound.getAndSet(null)
         recorder?.let { rec ->
             runCatching {
+                val size = "${w}x$h"
+                if (frameNoted != size) { frameNoted = size; rec.note("frame", size) }
                 rec.onFrame(tMs, frame, roi, r, balls, found.hoops, tracker.lastBall, tracker.phase, call, shotTypeKey, det.modelInput,
-                    busy = tracker.phase != Phase.IDLE || tMs - lastNearRimAt < 800, why = if (call != null) tracker.lastWhy else "")
+                    busy = tracker.phase != Phase.IDLE || tMs - lastNearRimAt < 800, why = if (call != null) tracker.lastWhy else "",
+                    people = people)
             }.onFailure { Log.w(TAG, "review recorder", it) }
         }
+        findPeople(frame, tMs, r)
         if (frame !== frameBmp) frame.recycle()
 
         val now = SystemClock.elapsedRealtime()
@@ -503,7 +558,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         lastFrameAt = now
 
-        val snap = OverlayView.Snapshot(w, h, balls, tracker.lastBall, tracker.trail.toList(), tracker.phase, roi)
+        val snap = OverlayView.Snapshot(w, h, balls, tracker.lastBall, tracker.trail.toList(), tracker.phase, roi, if (r != null) peopleShown else emptyList())
         val fps = fpsEma
         runOnUiThread {
             overlay.update(snap)

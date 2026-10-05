@@ -36,6 +36,7 @@ class OverlayView @JvmOverloads constructor(
         val trail: List<TrackPoint>,
         val phase: Phase,
         val roi: Roi?,
+        val people: List<Detection> = emptyList(),
     )
 
     var onRimDrawn: ((Box) -> Unit)? = null
@@ -90,6 +91,9 @@ class OverlayView @JvmOverloads constructor(
         setShadowLayer(12f, 0f, 4f, Color.BLACK)
     }
     private val flashBg = Paint()
+    private val feetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 2f * density; color = Color.argb(150, 125, 211, 252)
+    }
 
     fun update(s: Snapshot) {
         snap = s
@@ -235,6 +239,11 @@ class OverlayView @JvmOverloads constructor(
         }
 
         if (s != null) {
+            // Where each player is standing: a small ring at their feet.
+            for (p in s.people) {
+                val fx = vx(p.cx); val fy = vy(p.cy + p.h / 2f)
+                c.drawOval(fx - 14f * density, fy - 5f * density, fx + 14f * density, fy + 5f * density, feetPaint)
+            }
             if (s.trail.size > 1) {
                 val p = Path()
                 s.trail.forEachIndexed { i, pt -> if (i == 0) p.moveTo(vx(pt.x), vy(pt.y)) else p.lineTo(vx(pt.x), vy(pt.y)) }

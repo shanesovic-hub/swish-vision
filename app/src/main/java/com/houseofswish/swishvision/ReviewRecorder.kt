@@ -35,7 +35,8 @@ import kotlin.math.min
 /**
  * Keeps a lightweight record of what the camera and tracker saw, so wrong calls can be reviewed.
  *
- * - frames.jsonl: every analysed frame (rim, search area, every ball/hoop detection, tracker phase, call)
+ * - frames.jsonl: every analysed frame (rim, search area, every ball/hoop detection, tracker phase, call),
+ *   plus a few times a second the people in the whole frame ("pp", found at time "pt") to learn shot spots
  * - events.jsonl: every call and every player correction (+Make, +Miss, Undo, Wrong call, shot type)
  * - NNN_<event>.jpg: a picture sheet of the ~2 s around each call / correction, each tile showing what
  *   the detector saw (ball circles, rim box) and what the tracker was thinking
@@ -123,10 +124,11 @@ class ReviewRecorder(private val dir: File) {
         t: Long, frame: Bitmap, roi: Roi, rim: Box?, balls: List<Detection>, hoops: List<Detection>,
         tracked: Detection?, phase: Phase, call: Result?, shotType: String, thumbSrc: Bitmap,
         busy: Boolean = true, why: String = "",
+        people: Pair<Long, List<Detection>>? = null,
     ) {
         lastT = t
         frameCount++
-        writeFrame(t, roi, rim, balls, hoops, tracked, phase, call)
+        writeFrame(t, roi, rim, balls, hoops, tracked, phase, call, people)
         if (busy || picWindows.isNotEmpty()) keepPicture(t, thumbSrc) else picWindows.removeAll { t >= it.until }
 
         // Thumbnails at ~15 per second (every other frame), plus always the frame of a call.
@@ -229,7 +231,7 @@ class ReviewRecorder(private val dir: File) {
 
     private fun writeFrame(
         t: Long, roi: Roi, rim: Box?, balls: List<Detection>, hoops: List<Detection>,
-        tracked: Detection?, phase: Phase, call: Result?,
+        tracked: Detection?, phase: Phase, call: Result?, people: Pair<Long, List<Detection>>? = null,
     ) {
         val sb = StringBuilder(160)
         sb.append("{\"t\":").append(t)
@@ -240,6 +242,8 @@ class ReviewRecorder(private val dir: File) {
         if (tracked != null) sb.append(",\"k\":").append(balls.indexOfFirst { it === tracked })
         sb.append(",\"p\":\"").append(phase.name).append('"')
         if (call != null) sb.append(",\"c\":\"").append(call.name).append('"')
+        // People found in the whole frame (taken at time "pt", a moment earlier): where the shooter stands.
+        if (people != null) { sb.append(",\"pt\":").append(people.first).append(",\"pp\":["); dets(sb, people.second); sb.append(']') }
         sb.append("}\n")
         frames.write(sb.toString())
     }
