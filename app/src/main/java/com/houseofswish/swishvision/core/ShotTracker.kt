@@ -80,10 +80,11 @@ data class TrackerConfig(
         /**
          * Settings for each detector. The retrained detector (experimental camera) keeps seeing the ball through
          * the net, so a make doesn't look as slowed down, and the ball's size on the way in is measured more
-         * reliably: looser net-speed and size limits. Tuned on its first session (driveway, 145 free throws).
+         * reliably: looser net-speed and size limits, and a ball must cross a little nearer the middle of the rim.
+         * Tuned on its four driveway sessions (345 shots).
          */
         fun forCamera(experimental: Boolean): TrackerConfig =
-            if (experimental) TrackerConfig(netMaxFall = 11f, frontRatio = 1.4f, frontRatioAfterRim = 1.25f) else TrackerConfig()
+            if (experimental) TrackerConfig(netMaxFall = 11f, frontRatio = 1.3f, frontRatioAfterRim = 1.25f, ringTolerance = -0.24f) else TrackerConfig()
     }
 }
 

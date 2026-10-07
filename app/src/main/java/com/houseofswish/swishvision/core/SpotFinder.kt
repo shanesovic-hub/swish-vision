@@ -59,30 +59,81 @@ class SpotFinder(
         return Pair((x - xr) * scale, (z - zr) * scale)
     }
 
-    /** Where the shooter stood for a shot that started (went up) at camera time [t]. */
-    fun spotAt(t: Long, rim: Box): Spot? {
-        // The latest moment before the shot with a usable player in view.
-        var anchor: Pair<Float, Float>? = null
-        var anchorT = 0L
-        for (s in samples.reversed()) {
-            if (s.t > t) continue
-            if (t - s.t > LOOK_BACK_MS) break
-            val best = s.people.sortedByDescending { it.score }.firstNotNullOfOrNull { ground(it, s, rim) } ?: continue
-            anchor = best; anchorT = s.t
-            break
+    /**
+     * Where the shooter stood for a shot that started (went up) at camera time [t].
+     * [ball]: the tracked ball's path around then. With more than one person in view (a rebounder under the
+     * hoop, someone walking past), the shooter is the one the ball came up from.
+     */
+    fun spotAt(t: Long, rim: Box, ball: List<TrackPoint> = emptyList()): Spot? {
+        val s = samples.lastOrNull { it.t <= t && t - it.t <= LOOK_BACK_MS && it.people.isNotEmpty() } ?: return null
+        val shooter = pickShooter(s, rim, releasePoint(ball, t, rim)) ?: return null
+        // Their spot over the second and a half before (the shooting motion stretches the box; feet may be out
+        // of view at the moment of the shot): same person = a box in about the same place in the picture.
+        val seen = ArrayList<Pair<Long, Pair<Float, Float>>>()
+        for (o in samples) {
+            if (o.t > s.t || s.t - o.t > SMOOTH_MS) continue
+            val same = o.people.filter { abs(it.cx - shooter.cx) < 0.5f * shooter.h && abs(top(it) - top(shooter)) < 0.5f * shooter.h }
+                .minByOrNull { abs(it.cx - shooter.cx) } ?: continue
+            val g = ground(same, o, rim) ?: continue
+            seen += o.t to g
         }
-        val a = anchor ?: return null
-        // Smooth it: the same player's spot over the second and a half before (shooting motion moves the box).
-        val xs = ArrayList<Float>(); val zs = ArrayList<Float>()
-        for (s in samples) {
-            if (s.t > anchorT || anchorT - s.t > SMOOTH_MS) continue
-            val g = s.people.mapNotNull { ground(it, s, rim) }.minByOrNull { hypot(it.first - a.first, it.second - a.second) } ?: continue
-            if (hypot(g.first - a.first, g.second - a.second) < SAME_PLAYER_M) { xs += g.first; zs += g.second }
-        }
-        val x = if (xs.isEmpty()) a.first else xs.sorted()[xs.size / 2]
-        val z = if (zs.isEmpty()) a.second else zs.sorted()[zs.size / 2]
+        if (seen.isEmpty()) return null // never saw where their feet were
+        // Where they were last seen standing, steadied by nearby sightings (not ones from walking up to the spot).
+        val (lastT, a) = seen.last()
+        val near = seen.map { it.second }.filter { hypot(it.first - a.first, it.second - a.second) < SAME_PLAYER_M }
+        val xs = near.map { it.first }; val zs = near.map { it.second }
+        val x = xs.sorted()[xs.size / 2]
+        val z = zs.sorted()[zs.size / 2]
         val feet = hypot(x, z) / FOOT
-        return Spot(classify(x, z, feet), feet, x, z, anchorT)
+        return Spot(classify(x, z, feet), feet, x, z, lastT)
+    }
+
+    private fun top(p: Detection) = p.cy - p.h / 2f
+
+    /**
+     * Where the ball left the shooter's hands, roughly: the start of its climb toward the rim, followed back
+     * while it keeps rising smoothly, then one step further back. Null if it wasn't seen well below the rim.
+     */
+    private fun releasePoint(ball: List<TrackPoint>, t: Long, rim: Box): Pair<Float, Float>? {
+        val u = rim.w
+        val pts = ball.filter { it.t <= t + 100 }.sortedBy { it.t }
+        if (pts.isEmpty()) return null
+        var i = pts.size - 1
+        while (i > 0) {
+            val cur = pts[i]; val prev = pts[i - 1]
+            if (cur.t - prev.t > 200) break
+            if (prev.y < cur.y - 0.05f * u) break                       // earlier must be lower (it was rising)
+            if (abs(prev.x - cur.x) > 1.5f * u || prev.y - cur.y > 2.5f * u) break // a jump: some other object
+            i--
+        }
+        val first = pts[i]
+        if (first.y < rim.y + 1.0f * u) return null                    // only seen near the rim: can't tell
+        val next = pts.getOrNull(i + 1)
+        return if (next != null && next.t - first.t in 1..200) {
+            Pair(first.x + (first.x - next.x), first.y + (first.y - next.y))
+        } else Pair(first.x, first.y)
+    }
+
+    private fun pickShooter(s: Sample, rim: Box, release: Pair<Float, Float>?): Detection? {
+        val people = s.people
+        if (people.size == 1) return people[0]
+        if (release != null) {
+            // Distance from the release point to each person's upper body (head to waist, arms' reach either side).
+            val (rx, ry) = release
+            val scored = people.map { p ->
+                val left = p.cx - p.w / 2f - 0.25f * p.h; val right = p.cx + p.w / 2f + 0.25f * p.h
+                val up = top(p) - 0.4f * p.h; val down = top(p) + 0.6f * p.h
+                val dx = if (rx < left) left - rx else if (rx > right) rx - right else 0f
+                val dy = if (ry < up) up - ry else if (ry > down) ry - down else 0f
+                p to hypot(dx, dy) / p.h
+            }.sortedBy { it.second }
+            val best = scored[0]
+            // Clear winner: close to them, and clearly closer than anyone else.
+            if (best.second < 0.8f && (scored.size < 2 || scored[1].second - best.second > 0.15f)) return best.first
+        }
+        // Can't tell from the ball: the one furthest from the rim (a rebounder waits under it).
+        return people.maxByOrNull { p -> ground(p, s, rim)?.let { hypot(it.first, it.second) } ?: -1f }
+            ?.takeIf { ground(it, s, rim) != null }
     }
 
     private fun classify(x: Float, z: Float, feet: Float): ShotType {

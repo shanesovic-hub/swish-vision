@@ -40,19 +40,40 @@
             android:text="@string/setup_hint"
             android:textColor="@color/net"
             android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/setFtSpot"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="10dp"
+            android:background="@drawable/btn_ghost"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:minHeight="0dp"
+            android:text="📍 SET FT SPOT"
+            android:textColor="@color/amber"
+            android:textSize="12dp"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </FrameLayout>
 
     <!-- Right-hand panel: scoreboard and controls -->
-    <LinearLayout
+    <ScrollView
         android:id="@+id/panel"
         android:layout_width="250dp"
         android:layout_height="0dp"
         android:background="@color/panel"
-        android:orientation="vertical"
-        android:padding="8dp"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -76,6 +97,14 @@
                 android:layout_height="wrap_content"
                 android:padding="4dp"
                 android:text="🔊"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/autoSpots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="📍"
                 android:textSize="14sp" />
 
             <TextView
@@ -152,15 +181,6 @@
             android:layout_marginTop="4dp"
             android:orientation="horizontal">
 
-            <Button android:id="@+id/autoSpots" style="@style/Chip" android:text="📍 AUTO SPOT" />
-            <Button android:id="@+id/setFtSpot" style="@style/Chip" android:text="SET FT SPOT" android:visibility="gone" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
             <Button android:id="@+id/chipLayup" style="@style/Chip" android:text="LAYUP" />
             <Button android:id="@+id/chipMid" style="@style/Chip" android:text="MID" />
         </LinearLayout>
@@ -205,4 +225,5 @@
             <Button android:id="@+id/end" style="@style/PanelButton" android:background="@drawable/btn_main" android:text="End" android:textColor="#141414" />
         </LinearLayout>
     </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

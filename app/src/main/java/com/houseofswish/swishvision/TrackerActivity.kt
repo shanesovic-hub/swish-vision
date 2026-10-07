@@ -53,6 +53,7 @@ import com.houseofswish.swishvision.core.Session
 import com.houseofswish.swishvision.core.ShotTracker
 import com.houseofswish.swishvision.core.ShotType
 import com.houseofswish.swishvision.core.SpotFinder
+import com.houseofswish.swishvision.core.TrackPoint
 import com.houseofswish.swishvision.core.TrackerConfig
 import java.io.File
 import java.nio.ByteBuffer
@@ -100,6 +101,7 @@ class TrackerActivity : AppCompatActivity() {
     private var prevPhase = Phase.IDLE
     private var shotStartT = Long.MIN_VALUE / 2  // camera time the current shot went up
     private var lastFrameT = 0L
+    private val ballPath = ArrayDeque<TrackPoint>() // the tracked ball over the last few seconds (finds the shooter)
     private var recorder: ReviewRecorder? = null // review record of what the camera saw (analysis thread)
     private var ballFrames = 0 // frames with a ball seen, counted per second by the ticker
     private var frameBmp: Bitmap? = null
@@ -219,7 +221,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         val prefs = getSharedPreferences("swishvision", MODE_PRIVATE)
         autoSpots = prefs.getBoolean("autoSpots", false)
-        val autoBtn = findViewById<Button>(R.id.autoSpots)
+        val autoBtn = findViewById<TextView>(R.id.autoSpots)
         val ftBtn = findViewById<Button>(R.id.setFtSpot)
         autoBtn.setOnClickListener {
             autoSpots = !autoSpots
@@ -228,28 +230,15 @@ class TrackerActivity : AppCompatActivity() {
             onAnalysis { recorder?.note("auto_spots", if (on) "on" else "off") }
             Toast.makeText(this,
                 if (on) "Auto spot ON: the camera picks the shot type from where you stand. Wrong? Tap the right chip." +
-                    (if (ftSpotSet) "" else " Stand on the free-throw line and tap SET FT SPOT so it knows free throws.")
+                    (if (ftSpotSet) "" else " Tap SET FT SPOT, then stand on the free-throw line so it knows free throws.")
                 else "Auto spot off: pick the shot type with the chips", Toast.LENGTH_LONG).show()
             refresh()
         }
         ftBtn.setOnClickListener {
+            // A 5 second countdown, so a player on their own can tap it and walk to the line.
             ftBtn.isEnabled = false
-            onAnalysis {
-                val r = rim
-                val ok = r != null && spotFinder.setFreeThrowSpot(lastFrameT, r)
-                if (ok) recorder?.note("ft_spot", "%.2f".format(java.util.Locale.US, spotFinder.scale))
-                ui.post {
-                    ftBtn.isEnabled = true
-                    if (ok) ftSpotSet = true
-                    Toast.makeText(this,
-                        when {
-                            ok -> "Free-throw spot set"
-                            r == null -> "Find the rim first"
-                            else -> "Couldn't see you. Stand on the free-throw line with your whole body (feet too) in view, then tap again."
-                        }, Toast.LENGTH_LONG).show()
-                    refresh()
-                }
-            }
+            for (i in 5 downTo 1) ui.postDelayed({ ftBtn.text = "Get on the line… $i" }, (5 - i) * 1000L)
+            ui.postDelayed({ measureFtSpot(ftBtn) }, 5000L)
         }
         findViewById<Button>(R.id.addMake).setOnClickListener { addShot(Result.MAKE, Method.MANUAL) }
         findViewById<Button>(R.id.addMiss).setOnClickListener { addShot(Result.MISS, Method.MANUAL) }
@@ -591,6 +580,8 @@ class TrackerActivity : AppCompatActivity() {
         }
         val call = tracker.update(tMs, balls, r)
         lastFrameT = tMs
+        tracker.lastBall?.let { b -> ballPath.addLast(TrackPoint(tMs, b.cx, b.cy, b.w)) }
+        while (ballPath.isNotEmpty() && tMs - ballPath.first().t > 4000) ballPath.removeFirst()
         val people = peopleFound.getAndSet(null)
         if (people != null) spotFinder.add(people.first, people.second, w, h)
         val phaseNow = tracker.phase
@@ -599,7 +590,7 @@ class TrackerActivity : AppCompatActivity() {
         val spot = if (call != null && r != null) {
             // Where the shooter stood just before the ball went up.
             val start = if (tMs - shotStartT in 0..6000) shotStartT else tMs - 1500
-            runCatching { spotFinder.spotAt(start, r) }.getOrNull()
+            runCatching { spotFinder.spotAt(start, r, ballPath.toList()) }.getOrNull()
         } else null
         recorder?.let { rec ->
             runCatching {
@@ -650,6 +641,27 @@ class TrackerActivity : AppCompatActivity() {
     // ---------------- Session ----------------
 
     /** "We talkin' bout practice" once, when tracking first gets going. */
+    /** The player is on the free-throw line now: measure where they stand. */
+    private fun measureFtSpot(ftBtn: Button) {
+        ftBtn.text = "Measuring…"
+        onAnalysis {
+            val r = rim
+            val ok = r != null && spotFinder.setFreeThrowSpot(lastFrameT, r)
+            if (ok) recorder?.note("ft_spot", "%.2f".format(java.util.Locale.US, spotFinder.scale))
+            ui.post {
+                ftBtn.isEnabled = true
+                if (ok) ftSpotSet = true
+                Toast.makeText(this,
+                    when {
+                        ok -> "Free-throw spot set"
+                        r == null -> "Find the rim first"
+                        else -> "Couldn't see you. Stand on the free-throw line with your whole body (feet too) in view, then tap again."
+                    }, Toast.LENGTH_LONG).show()
+                refresh()
+            }
+        }
+    }
+
     private fun playIntro() {
         if (introPlayed || session.shots.isNotEmpty()) return
         introPlayed = true
@@ -691,12 +703,11 @@ class TrackerActivity : AppCompatActivity() {
         subline.text = "Streak ${s.currentStreak} · Best ${s.bestStreak} · Last 10 $last10 · ${secs / 60}:${"%02d".format(secs % 60)}" +
             if (lastSpotText.isNotEmpty() && s.shots.isNotEmpty()) " · $lastSpotText" else ""
         val lines = s.byType()
-        val autoBtn = findViewById<Button>(R.id.autoSpots)
-        autoBtn.setBackgroundResource(if (autoSpots) R.drawable.chip_on else R.drawable.btn_ghost)
-        autoBtn.setTextColor(ContextCompat.getColor(this, if (autoSpots) R.color.amber else R.color.net))
+        findViewById<TextView>(R.id.autoSpots).alpha = if (autoSpots) 1f else 0.35f
         val ftBtn = findViewById<Button>(R.id.setFtSpot)
-        ftBtn.visibility = if (autoSpots) View.VISIBLE else View.GONE
-        ftBtn.text = if (ftSpotSet) "FT SPOT ✓" else "SET FT SPOT"
+        // Shown while auto spots is on and the free-throw spot isn't set yet (or until the first shots).
+        ftBtn.visibility = if (autoSpots && (!ftSpotSet || s.shots.isEmpty())) View.VISIBLE else View.GONE
+        if (ftBtn.isEnabled) ftBtn.text = if (ftSpotSet) "📍 FT SPOT ✓" else "📍 SET FT SPOT"
         // In auto mode the lit chip is where the last shot came from (tap another to fix it).
         val litType = if (autoSpots) s.shots.lastOrNull()?.type else shotType
         chips.forEach { (type, btn) ->
