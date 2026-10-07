@@ -158,7 +158,9 @@ object SessionAndDecoderChecks {
         val ftBefore = at(13_000, person(203f, 880f, 498f))
         check(ftBefore?.type == ShotType.MID && !sf.calibrated, "free throw before the spot is set: mid-range", f)
         check(sf.setFreeThrowSpot(13_200, sRim) && sf.scale in 0.85f..1.0f, "set free-throw spot (scale ${sf.scale})", f)
-        check(at(17_000, person(221f, 873f, 487f))?.type == ShotType.FT, "free throw after the spot is set", f)
+        val ftShot = at(17_000, person(221f, 873f, 487f))
+        check(ftShot?.type == ShotType.FT, "free throw after the spot is set", f)
+        check(ftShot?.courtY != null && ftShot.courtY in 12f..15.5f && kotlin.math.abs(ftShot.courtX!!) < 1.5f, "free throw on the chart: straight out ~13.75 ft ($ftShot)", f)
         check(at(21_000, person(574f, 756f, 368f))?.type == ShotType.MID, "mid-range away from the line stays mid", f)
         check(at(25_000, person(926f, 1075f, 752f)) == null, "feet cut off: no guess", f)
         check(at(40_000, person(574f, 756f, 368f)).let { it != null && it.t == 40_000L }, "uses the latest sighting", f)
@@ -166,6 +168,23 @@ object SessionAndDecoderChecks {
         check(stale.spotAt(10_000, sRim) == null, "no guess from a sighting long before the shot", f)
         val s2 = Session(0); s2.add(1, Result.MAKE, ShotType.MID, Method.AUTO); s2.retypeLast(ShotType.FT)
         check(s2.byType()[ShotType.FT] == TypeLine(1, 1) && s2.byType()[ShotType.MID] == TypeLine(0, 0), "retype last shot", f)
+
+        // Shot chart zones (x = shooter's right, y = out from the rim, feet)
+        check(ShotChart.zoneOf(0f, 3f) == ShotChart.Zone.RIM, "zone: at the rim", f)
+        check(ShotChart.zoneOf(0f, 12f) == ShotChart.Zone.MID_CENTER, "zone: middle", f)
+        check(ShotChart.zoneOf(-8f, 8f) == ShotChart.Zone.MID_LEFT && ShotChart.zoneOf(8f, 8f) == ShotChart.Zone.MID_RIGHT, "zone: elbows", f)
+        check(ShotChart.zoneOf(14f, 1f) == ShotChart.Zone.MID_RIGHT_BASE, "zone: right baseline", f)
+        check(ShotChart.zoneOf(-19f, 2f) == ShotChart.Zone.THREE_LEFT_CORNER && ShotChart.zoneOf(0f, 20f) == ShotChart.Zone.THREE_TOP, "zone: threes", f)
+        val cs = Session(0)
+        cs.add(1, Result.MAKE, ShotType.MID, Method.AUTO).apply { courtX = 0f; courtY = 12f }
+        cs.add(2, Result.MISS, ShotType.MID, Method.AUTO).apply { courtX = 1f; courtY = 11f }
+        cs.add(3, Result.MAKE, ShotType.FT, Method.AUTO).apply { courtX = 0f; courtY = 13.7f }
+        cs.add(4, Result.MAKE, ShotType.LAYUP, Method.MANUAL)
+        check(ShotChart.zoneLines(cs.shots) == mapOf(ShotChart.Zone.MID_CENTER to TypeLine(1, 2)), "zone lines (FT and unplaced left out): ${ShotChart.zoneLines(cs.shots)}", f)
+        val cj = cs.toJson(10L, 0f, "m")
+        check(cj.contains("\"zones\": {\"mid_center\": {\"attempted\": 2, \"made\": 1}}") && cj.contains("\"x\": 0.0, \"y\": 12.0"), "json zones / positions: $cj", f)
+        val rt = Session(0); rt.add(1, Result.MAKE, ShotType.MID, Method.AUTO).apply { courtX = 0f; courtY = 12f }; rt.retypeLast(ShotType.THREE)
+        check(rt.shots[0].courtX == null, "retyped shot comes off the chart", f)
 
         // Session counters the announcer uses
         val ms = Session(0)

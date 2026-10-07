@@ -240,6 +240,7 @@ class TrackerActivity : AppCompatActivity() {
             for (i in 5 downTo 1) ui.postDelayed({ ftBtn.text = "Get on the line… $i" }, (5 - i) * 1000L)
             ui.postDelayed({ measureFtSpot(ftBtn) }, 5000L)
         }
+        for (id in listOf(R.id.makes, R.id.misses, R.id.pct)) findViewById<View>(id).setOnClickListener { showChart() }
         findViewById<Button>(R.id.addMake).setOnClickListener { addShot(Result.MAKE, Method.MANUAL) }
         findViewById<Button>(R.id.addMiss).setOnClickListener { addShot(Result.MISS, Method.MANUAL) }
         findViewById<Button>(R.id.undo).setOnClickListener {
@@ -676,7 +677,10 @@ class TrackerActivity : AppCompatActivity() {
         // assume the same spot as the last shot.
         val type = if (autoSpots) spot?.type ?: session.shots.lastOrNull()?.type ?: shotType else shotType
         lastSpotText = if (!autoSpots) "" else if (spot != null) "📍 ${spot.type.label} ${spot.feet.toInt()} ft" else "📍 ${type.label} (same spot)"
-        session.add(now, result, type, method)
+        val shot = session.add(now, result, type, method)
+        if (spot?.courtX != null && spot.courtY != null && !(autoSpots && spot.type != type)) {
+            shot.courtX = spot.courtX; shot.courtY = spot.courtY
+        }
         if (method == Method.MANUAL) {
             val key = type.key
             onAnalysis { recorder?.manualShot(result == Result.MAKE, key) } // the camera missed this one
@@ -802,7 +806,7 @@ class TrackerActivity : AppCompatActivity() {
         }
         AlertDialog.Builder(this)
             .setTitle("Session")
-            .setMessage(msg)
+            .setView(sessionView(msg, s))
             .setPositiveButton("Save to Swish Quest") { _, _ ->
                 saveReview(json)
                 setResult(RESULT_OK, Intent().putExtra(EXTRA_RESULT, json))
@@ -810,6 +814,57 @@ class TrackerActivity : AppCompatActivity() {
             }
             .setNegativeButton("Keep going") { _, _ -> s.endedAt = null }
             .setNeutralButton("Discard") { _, _ -> confirmDiscard(s) }
+            .show()
+    }
+
+    /** The session summary next to its shot chart (landscape: side by side). */
+    private fun sessionView(msg: String, s: Session): View {
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        val row = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+            setPadding(pad, pad / 2, pad, 0)
+        }
+        val chartBox = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.VERTICAL }
+        chartBox.addView(ShotChartView(this).apply { setShots(s.shots) })
+        chartBox.addView(TextView(this).apply {
+            textSize = 11f
+            text = chartNote(s)
+        })
+        row.addView(chartBox, android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1.1f))
+        row.addView(TextView(this).apply {
+            text = msg
+            textSize = 14f
+            setPadding(pad, 0, 0, 0)
+        }, android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        return android.widget.ScrollView(this).apply { addView(row) }
+    }
+
+    private fun chartNote(s: Session): String {
+        val onChart = com.houseofswish.swishvision.core.ShotChart.charted(s.shots).size
+        val fts = s.byType().getValue(ShotType.FT)
+        val ft = if (fts.attempted > 0) "Free throws ${fts.made}/${fts.attempted} (not on the chart). " else ""
+        return when {
+            !ftSpotSet && onChart == 0 -> "${ft}Turn on 📍 and set the FT spot to see where each shot came from."
+            onChart < s.attempts - fts.attempted -> "$ft${s.attempts - fts.attempted - onChart} shots aren't on the chart (camera couldn't see where the shooter stood)."
+            else -> ft
+        }
+    }
+
+    /** Tap the score during a session: the shot chart so far. */
+    private fun showChart() {
+        val s = session
+        AlertDialog.Builder(this)
+            .setTitle("Shot chart · ${s.makes}/${s.attempts}")
+            .setView(android.widget.ScrollView(this).apply {
+                val pad = (16 * resources.displayMetrics.density).toInt()
+                addView(android.widget.LinearLayout(this@TrackerActivity).apply {
+                    orientation = android.widget.LinearLayout.VERTICAL
+                    setPadding(pad, pad / 2, pad, 0)
+                    addView(ShotChartView(this@TrackerActivity).apply { setShots(s.shots) })
+                    addView(TextView(this@TrackerActivity).apply { textSize = 11f; text = chartNote(s) })
+                })
+            })
+            .setPositiveButton("Close", null)
             .show()
     }
 

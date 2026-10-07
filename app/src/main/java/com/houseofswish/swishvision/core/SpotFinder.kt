@@ -23,7 +23,24 @@ class SpotFinder(
     val ftRadiusFt: Float = 3f,      // this close to the free-throw spot: free throw (once it's set)
     val focal: Float = 0.64f,        // camera focal length / picture width (phone main cameras ~0.6-0.75)
 ) {
-    data class Spot(val type: ShotType, val feet: Float, val x: Float, val z: Float, val t: Long)
+    /**
+     * [x], [z]: metres from the rim in the camera's view (sideways, away from the camera).
+     * [courtX], [courtY]: feet from the rim on the court (shooter's right, out toward the free-throw line);
+     * only once the free-throw spot is set, since that's what shows which way the court faces.
+     */
+    data class Spot(val type: ShotType, val feet: Float, val x: Float, val z: Float, val t: Long,
+                    val courtX: Float? = null, val courtY: Float? = null)
+
+    /** Camera-view position (metres from the rim) to court position (feet): the free-throw spot is straight out. */
+    fun toCourt(x: Float, z: Float): Pair<Float, Float>? {
+        val ft = ftSpot ?: return null
+        val n = hypot(ft.first, ft.second)
+        if (n < 0.01f) return null
+        val ux = ft.first / n; val uz = ft.second / n
+        val out = x * ux + z * uz           // toward the free-throw line
+        val right = -x * uz + z * ux        // to the right of a shooter facing the hoop
+        return Pair(right / FOOT, out / FOOT)
+    }
 
     private class Sample(val t: Long, val people: List<Detection>, val frameW: Int, val frameH: Int)
     private val samples = ArrayDeque<Sample>()
@@ -85,7 +102,8 @@ class SpotFinder(
         val x = xs.sorted()[xs.size / 2]
         val z = zs.sorted()[zs.size / 2]
         val feet = hypot(x, z) / FOOT
-        return Spot(classify(x, z, feet), feet, x, z, lastT)
+        val court = toCourt(x, z)
+        return Spot(classify(x, z, feet), feet, x, z, lastT, court?.first, court?.second)
     }
 
     private fun top(p: Detection) = p.cy - p.h / 2f

@@ -16,6 +16,10 @@ data class Shot(
     var type: ShotType,           // auto spots: the player can fix it by tapping the right chip
     val method: Method,
     var flipped: Boolean = false, // auto call the player marked as wrong
+    // Where on the court (feet from the middle of the rim: x to the shooter's right, y out toward the
+    // free-throw line), when the camera saw the shooter and the free-throw spot was set. For the shot chart.
+    var courtX: Float? = null,
+    var courtY: Float? = null,
 )
 
 data class TypeLine(val made: Int, val attempted: Int)
@@ -38,7 +42,10 @@ class Session(val startedAt: Long) {
     }
 
     /** The last shot was taken from somewhere else (auto spots guessed wrong). */
-    fun retypeLast(type: ShotType): Shot? = shots.lastOrNull()?.also { it.type = type }
+    fun retypeLast(type: ShotType): Shot? = shots.lastOrNull()?.also {
+        it.type = type
+        it.courtX = null; it.courtY = null // the camera had the spot wrong: leave it off the chart
+    }
 
     /** "Wrong call": flip the last shot. Pressing again flips it back. */
     fun flipLast(): Shot? {
@@ -132,6 +139,15 @@ class Session(val startedAt: Long) {
                 .append(", \"made\": ").append(line.made).append("}")
         }
         sb.append("},\n")
+        val zones = ShotChart.zoneLines(shots)
+        if (zones.isNotEmpty()) {
+            sb.append("  \"zones\": {")
+            zones.entries.forEachIndexed { i, (z, l) ->
+                if (i > 0) sb.append(", ")
+                sb.append("\"").append(z.key).append("\": {\"attempted\": ").append(l.attempted).append(", \"made\": ").append(l.made).append("}")
+            }
+            sb.append("},\n")
+        }
         sb.append("  \"log\": [")
         shots.forEachIndexed { i, s ->
             if (i > 0) sb.append(",")
@@ -139,7 +155,10 @@ class Session(val startedAt: Long) {
                 .append(", \"r\": \"").append(if (s.result == Result.MAKE) "make" else "miss")
                 .append("\", \"type\": \"").append(s.type.key)
                 .append("\", \"m\": \"").append(if (s.method == Method.AUTO) "auto" else "manual")
-                .append("\"").append(if (s.flipped) ", \"flipped\": true" else "").append("}")
+                .append("\"").append(if (s.flipped) ", \"flipped\": true" else "")
+            val cx = s.courtX; val cy = s.courtY
+            if (cx != null && cy != null) sb.append(String.format(java.util.Locale.US, ", \"x\": %.1f, \"y\": %.1f", cx, cy))
+            sb.append("}")
         }
         sb.append(if (shots.isEmpty()) "]\n" else "\n  ]\n")
         sb.append("}\n")
