@@ -18,7 +18,7 @@ object RealSessions {
 
     /** Floors: today's results. A change may not make any session worse than this. */
     /** Sessions recorded with the retrained (experimental) detector: replayed with its settings. */
-    val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04", "driveway_mixed_2026-10-05", "driveway_threes_2026-10-05", "driveway_close_2026-10-06")
+    val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04", "driveway_mixed_2026-10-05", "driveway_threes_2026-10-05", "driveway_close_2026-10-06", "driveway_evening_2026-10-09")
 
     private val FLOORS = mapOf(
         "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
@@ -31,6 +31,7 @@ object RealSessions {
         "driveway_mixed_2026-10-05" to Pair(18, 0),  // of 19, experimental camera, layups/mid/free throws
         "driveway_threes_2026-10-05" to Pair(7, 0),  // of 10, experimental camera, threes (long rim bounces)
         "driveway_close_2026-10-06" to Pair(161, 0), // of 171, experimental camera, close shots, adult rebounding
+        "driveway_evening_2026-10-09" to Pair(138, 0), // of 143, experimental camera, adult rebounding under the hoop
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 

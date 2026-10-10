@@ -34,8 +34,8 @@ class BallDetector(context: Context, val experimental: Boolean = false) : AutoCl
         const val MODEL_FILE = "bball_640.tflite"
         const val MODEL_NAME = "yolov8n-basketball-hoop-640"
         // Retrained on Shane's driveway (day + night) and basement pictures. Opt-in while it's being tested.
-        const val MODEL_V2_FILE = "bball_640_v2.tflite"
-        const val MODEL_V2_NAME = "swish-v2-640"
+        const val MODEL_V2_FILE = "bball_640_v3.tflite" // retrained 2026-10-09: driveway sessions incl. heads under the hoop
+        const val MODEL_V2_NAME = "swish-v3-640"
         const val INPUT = 640
         const val ANCHORS = 8400
         const val CLASSES = 2
