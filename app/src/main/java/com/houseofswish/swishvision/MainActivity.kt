@@ -91,6 +91,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        /** With the player's grade (sets a typical height until the app has measured them). */
+        @JavascriptInterface
+        fun startTrackingWith(shotType: String, playerName: String, grade: String) {
+            runOnUiThread {
+                tracker.launch(
+                    Intent(this@MainActivity, TrackerActivity::class.java)
+                        .putExtra(TrackerActivity.EXTRA_SHOT_TYPE, shotType)
+                        .putExtra(TrackerActivity.EXTRA_PLAYER, playerName)
+                        .putExtra(TrackerActivity.EXTRA_GRADE, grade)
+                )
+            }
+        }
+
         @JavascriptInterface
         fun version(): String = BuildConfigLite.versionName(this@MainActivity)
 

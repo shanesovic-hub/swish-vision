@@ -131,6 +131,8 @@ class TrackerActivity : AppCompatActivity() {
     private var shotType = ShotType.FT
     private var autoSpots = false     // the camera picks the shot type from where the shooter stands
     private var ftSpotSet = false
+    @Volatile private var courtSetups = org.json.JSONArray() // remembered camera spots: where the rim was in the picture -> court direction
+    private var setupTried: Box? = null                       // analysis thread: rim we last looked up
     private var lastSpotText = ""
     private var soundOn = true
     // Game sounds: a net swish for makes, an arena buzzer for misses.
@@ -180,6 +182,12 @@ class TrackerActivity : AppCompatActivity() {
         )
         overlay.ringLineFrac = tracker.cfg.ringLineFrac
         playerName = intent.getStringExtra(EXTRA_PLAYER)
+        // How tall the shooter is (sets the distance scale): learned the last time the FT spot was set for this
+        // player, else a typical height for their grade. Court directions remembered for each camera spot.
+        val sp = getSharedPreferences("swishvision", MODE_PRIVATE)
+        val learned = sp.getFloat(heightKey(), 0f)
+        spotFinder.shooterHeightM = if (learned in 1.0f..2.3f) learned else gradeHeight(intent.getStringExtra(EXTRA_GRADE))
+        courtSetups = runCatching { org.json.JSONArray(sp.getString("courtSetups", "[]")) }.getOrDefault(org.json.JSONArray())
         intent.getStringExtra(EXTRA_SHOT_TYPE)?.let { key ->
             ShotType.values().firstOrNull { it.key == key }?.let { shotType = it }
         }
@@ -230,7 +238,7 @@ class TrackerActivity : AppCompatActivity() {
             onAnalysis { recorder?.note("auto_spots", if (on) "on" else "off") }
             Toast.makeText(this,
                 if (on) "Auto spot ON: the camera picks the shot type from where you stand. Wrong? Tap the right chip." +
-                    (if (ftSpotSet) "" else " Tap SET FT SPOT, then stand on the free-throw line so it knows free throws.")
+                    (if (ftSpotSet) "" else " For the shot chart at a new camera spot, set the FT spot once (any time in the session).")
                 else "Auto spot off: pick the shot type with the chips", Toast.LENGTH_LONG).show()
             refresh()
         }
@@ -588,6 +596,7 @@ class TrackerActivity : AppCompatActivity() {
         val phaseNow = tracker.phase
         if (prevPhase == Phase.IDLE && phaseNow != Phase.IDLE) shotStartT = tMs
         prevPhase = phaseNow
+        if (r != null && !spotFinder.calibrated && setupTried !== r) { setupTried = r; matchSetup(r, w, h) }
         val spot = if (call != null && r != null) {
             // Where the shooter stood just before the ball went up.
             val start = if (tMs - shotStartT in 0..6000) shotStartT else tMs - 1500
@@ -642,6 +651,83 @@ class TrackerActivity : AppCompatActivity() {
     // ---------------- Session ----------------
 
     /** "We talkin' bout practice" once, when tracking first gets going. */
+    private fun heightKey() = "height_" + (playerName?.trim()?.lowercase() ?: "")
+
+    /** Typical height for Swish Quest's grade bands (3rd-4th ... 9th-12th); adults 1.75 m. */
+    private fun gradeHeight(grade: String?): Float = when {
+        grade == null -> 1.75f
+        grade.startsWith("3") -> 1.33f
+        grade.startsWith("5") -> 1.46f
+        grade.startsWith("7") -> 1.60f
+        grade.startsWith("9") -> 1.72f
+        else -> 1.75f
+    }
+
+    /** Analysis thread: same camera spot as an earlier session (rim in the same place in the picture)? Reuse its court direction. */
+    private fun matchSetup(r: Box, w: Int, h: Int) {
+        val list = courtSetups
+        var best: org.json.JSONObject? = null
+        var bestD = Float.MAX_VALUE
+        for (i in 0 until list.length()) {
+            val o = list.optJSONObject(i) ?: continue
+            val dx = r.cx / w - o.optDouble("x").toFloat()
+            val dy = r.cy / h - o.optDouble("y").toFloat()
+            val dw = (r.w / w) / o.optDouble("w").toFloat()
+            if (kotlin.math.abs(dx) > 0.05f || kotlin.math.abs(dy) > 0.06f || dw !in 0.85f..1.18f) continue
+            val dist = dx * dx + dy * dy
+            if (dist < bestD) { bestD = dist; best = o }
+        }
+        val o = best ?: return
+        spotFinder.useCourtDirection(o.optDouble("ux").toFloat(), o.optDouble("uz").toFloat())
+        recorder?.note("court_direction", "remembered")
+        replaceShots()
+        ui.post {
+            ftSpotSet = true
+            Toast.makeText(this, "Same camera spot as before: shot chart ready (no FT spot needed)", Toast.LENGTH_LONG).show()
+            refresh()
+        }
+    }
+
+    /** Remember this player's height and this camera spot's court direction (UI thread). */
+    private fun rememberSetup(r: Box, height: Float, dir: Pair<Float, Float>?) {
+        val sp = getSharedPreferences("swishvision", MODE_PRIVATE)
+        val e = sp.edit()
+        if (playerName != null && height in 1.0f..2.3f) e.putFloat(heightKey(), height)
+        val fw = frameW; val fh = frameH
+        if (dir != null && fw > 0 && fh > 0) {
+            val o = org.json.JSONObject().put("x", (r.cx / fw).toDouble()).put("y", (r.cy / fh).toDouble())
+                .put("w", (r.w / fw).toDouble()).put("ux", dir.first.toDouble()).put("uz", dir.second.toDouble())
+                .put("t", System.currentTimeMillis())
+            val old = courtSetups
+            val keep = org.json.JSONArray()
+            for (i in 0 until old.length()) {
+                val p = old.optJSONObject(i) ?: continue
+                val same = kotlin.math.abs(p.optDouble("x") - o.optDouble("x")) < 0.03 && kotlin.math.abs(p.optDouble("y") - o.optDouble("y")) < 0.04
+                if (!same) keep.put(p)
+            }
+            keep.put(o)
+            while (keep.length() > 12) keep.remove(0)
+            courtSetups = keep
+            e.putString("courtSetups", keep.toString())
+        }
+        e.apply()
+    }
+
+    /** Analysis thread: the court direction or scale just became known; put this session's earlier shots on the chart. */
+    private fun replaceShots() {
+        ui.post {
+            val shots = session.shots.toList()
+            val spots = shots.map { if (it.retyped) null else it.spot }
+            onAnalysis {
+                val courts = spots.map { s -> s?.let { spotFinder.courtOf(it) } }
+                ui.post {
+                    shots.forEachIndexed { i, shot -> courts[i]?.let { (x, y) -> shot.courtX = x; shot.courtY = y } }
+                    refresh()
+                }
+            }
+        }
+    }
+
     /** The player is on the free-throw line now: measure where they stand. */
     private fun measureFtSpot(ftBtn: Button) {
         ftBtn.text = "Measuring…"
@@ -649,6 +735,12 @@ class TrackerActivity : AppCompatActivity() {
             val r = rim
             val ok = r != null && spotFinder.setFreeThrowSpot(lastFrameT, r)
             if (ok) recorder?.note("ft_spot", "%.2f".format(java.util.Locale.US, spotFinder.scale))
+            if (ok && r != null) {
+                val height = spotFinder.learnedHeight()
+                val dir = spotFinder.courtDirection()
+                ui.post { rememberSetup(r, height, dir) }
+                replaceShots()
+            }
             ui.post {
                 ftBtn.isEnabled = true
                 if (ok) ftSpotSet = true
@@ -678,6 +770,7 @@ class TrackerActivity : AppCompatActivity() {
         val type = if (autoSpots) spot?.type ?: session.shots.lastOrNull()?.type ?: shotType else shotType
         lastSpotText = if (!autoSpots) "" else if (spot != null) "📍 ${spot.type.label} ${spot.feet.toInt()} ft" else "📍 ${type.label} (same spot)"
         val shot = session.add(now, result, type, method)
+        shot.spot = spot
         if (spot?.courtX != null && spot.courtY != null && !(autoSpots && spot.type != type)) {
             shot.courtX = spot.courtX; shot.courtY = spot.courtY
         }
@@ -844,7 +937,7 @@ class TrackerActivity : AppCompatActivity() {
         val fts = s.byType().getValue(ShotType.FT)
         val ft = if (fts.attempted > 0) "Free throws ${fts.made}/${fts.attempted} (not on the chart). " else ""
         return when {
-            !ftSpotSet && onChart == 0 -> "${ft}Turn on 📍 and set the FT spot to see where each shot came from."
+            !ftSpotSet && onChart == 0 -> "${ft}New camera spot: set the FT spot once (any time) and the chart fills in. The app remembers this spot after that."
             onChart < s.attempts - fts.attempted -> "$ft${s.attempts - fts.attempted - onChart} shots aren't on the chart (camera couldn't see where the shooter stood)."
             else -> ft
         }
@@ -904,6 +997,7 @@ class TrackerActivity : AppCompatActivity() {
         private const val TAG = "SwishVision"
         const val EXTRA_SHOT_TYPE = "shotType"
         const val EXTRA_PLAYER = "playerName"
+        const val EXTRA_GRADE = "playerGrade"
         const val EXTRA_RESULT = "sessionJson"
     }
 }

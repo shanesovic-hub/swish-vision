@@ -20,6 +20,8 @@ data class Shot(
     // free-throw line), when the camera saw the shooter and the free-throw spot was set. For the shot chart.
     var courtX: Float? = null,
     var courtY: Float? = null,
+    var spot: SpotFinder.Spot? = null, // where the camera saw the shooter (to re-place it if the court direction is learned later)
+    var retyped: Boolean = false,
 )
 
 data class TypeLine(val made: Int, val attempted: Int)
@@ -44,6 +46,7 @@ class Session(val startedAt: Long) {
     /** The last shot was taken from somewhere else (auto spots guessed wrong). */
     fun retypeLast(type: ShotType): Shot? = shots.lastOrNull()?.also {
         it.type = type
+        it.retyped = true
         it.courtX = null; it.courtY = null // the camera had the spot wrong: leave it off the chart
     }
 

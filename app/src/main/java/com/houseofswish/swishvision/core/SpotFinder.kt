@@ -17,7 +17,7 @@ import kotlin.math.hypot
  * Pure logic, no Android, so it can be tested.
  */
 class SpotFinder(
-    val shooterHeightM: Float = 1.75f,
+    var shooterHeightM: Float = 1.75f, // from the player's grade, or learned when the free-throw spot was set
     val layupMaxFt: Float = 7.3f,     // closer than this: layup
     val threeMinFt: Float = ShotChart.THREE_FT, // this far or further: three (the high school line)
     val ftRadiusFt: Float = 3f,      // this close to the free-throw spot: free throw (once it's set)
@@ -29,7 +29,26 @@ class SpotFinder(
      * only once the free-throw spot is set, since that's what shows which way the court faces.
      */
     data class Spot(val type: ShotType, val feet: Float, val x: Float, val z: Float, val t: Long,
-                    val courtX: Float? = null, val courtY: Float? = null)
+                    val courtX: Float? = null, val courtY: Float? = null, val scaleAt: Float = 1f)
+
+    /** The player's height as measured by setting the free-throw spot (to remember for next time). */
+    fun learnedHeight(): Float = shooterHeightM * scale
+
+    /** Which way the court faces (unit vector from the rim toward the free-throw line, camera view), once known. */
+    fun courtDirection(): Pair<Float, Float>? = ftSpot?.let { val n = hypot(it.first, it.second); if (n < 0.01f) null else Pair(it.first / n, it.second / n) }
+
+    /** Use a court direction remembered from an earlier session at the same camera spot. */
+    fun useCourtDirection(ux: Float, uz: Float) {
+        val n = hypot(ux, uz)
+        if (n < 0.01f) return
+        ftSpot = Pair(ux / n * FT_M, uz / n * FT_M)
+    }
+
+    /** Court position (feet) of an earlier spot, using what's known now (e.g. the free-throw spot set later). */
+    fun courtOf(spot: Spot): Pair<Float, Float>? {
+        val k = scale / spot.scaleAt
+        return toCourt(spot.x * k, spot.z * k)
+    }
 
     /** Camera-view position (metres from the rim) to court position (feet): the free-throw spot is straight out. */
     fun toCourt(x: Float, z: Float): Pair<Float, Float>? {
@@ -103,7 +122,7 @@ class SpotFinder(
         val z = zs.sorted()[zs.size / 2]
         val feet = hypot(x, z) / FOOT
         val court = toCourt(x, z)
-        return Spot(classify(x, z, feet), feet, x, z, lastT, court?.first, court?.second)
+        return Spot(classify(x, z, feet), feet, x, z, lastT, court?.first, court?.second, scale)
     }
 
     private fun top(p: Detection) = p.cy - p.h / 2f

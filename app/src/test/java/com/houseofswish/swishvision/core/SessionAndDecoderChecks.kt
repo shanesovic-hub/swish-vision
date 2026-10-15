@@ -167,6 +167,24 @@ object SessionAndDecoderChecks {
         check(at(21_000, person(574f, 756f, 368f))?.type == ShotType.MID, "mid-range away from the line stays mid", f)
         check(at(25_000, person(926f, 1075f, 752f)) == null, "feet cut off: no guess", f)
         check(at(40_000, person(574f, 756f, 368f)).let { it != null && it.t == 40_000L }, "uses the latest sighting", f)
+        // No FT spot at the start: a shot is placed later once the court direction is known (set any time, or remembered).
+        val late = SpotFinder()
+        late.add(1_000, listOf(person(574f, 756f, 368f)), 1920, 1080)
+        val early = late.spotAt(1_000, sRim)
+        check(early != null && early.courtX == null && late.courtOf(early) == null, "no court position before the direction is known", f)
+        late.add(5_000, listOf(person(203f, 880f, 498f)), 1920, 1080)
+        check(late.setFreeThrowSpot(5_100, sRim), "late free-throw spot", f)
+        val placed = early?.let { late.courtOf(it) }
+        val direct = sf.spotAt(21_000, sRim) // same person position measured after calibration in the earlier finder
+        check(placed != null && direct?.courtX != null && kotlin.math.abs(placed.first - direct.courtX!!) < 0.6f && kotlin.math.abs(placed.second - direct.courtY!!) < 0.6f,
+            "late placement matches ($placed vs ${direct?.courtX},${direct?.courtY})", f)
+        val dir = late.courtDirection()!!
+        val again = SpotFinder(); again.useCourtDirection(dir.first, dir.second)
+        again.add(1_000, listOf(person(574f, 756f, 368f)), 1920, 1080)
+        check(again.spotAt(1_000, sRim)?.courtX != null, "remembered court direction places shots", f)
+        val kid = SpotFinder(shooterHeightM = 1.44f); kid.add(1_000, listOf(person(574f, 756f, 368f)), 1920, 1080)
+        val adult = SpotFinder(); adult.add(1_000, listOf(person(574f, 756f, 368f)), 1920, 1080)
+        check(kid.spotAt(1_000, sRim)!!.feet != adult.spotAt(1_000, sRim)!!.feet, "player height changes the distance", f)
         val stale = SpotFinder(); stale.add(0, listOf(person(574f, 756f, 368f)), 1920, 1080)
         check(stale.spotAt(10_000, sRim) == null, "no guess from a sighting long before the shot", f)
         val s2 = Session(0); s2.add(1, Result.MAKE, ShotType.MID, Method.AUTO); s2.retypeLast(ShotType.FT)

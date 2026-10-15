@@ -19,9 +19,10 @@
     b.style.boxShadow = 'none';
     b.style.margin = '0 0 14px 0';
     b.onclick = function () {
-      var name = '';
-      try { name = (state && state.player && state.player.name) || ''; } catch (e) {}
-      if (window.SwishVisionNative.startTrackingFor) window.SwishVisionNative.startTrackingFor('ft', String(name));
+      var name = '', grade = '';
+      try { name = (state && state.player && state.player.name) || ''; grade = (state && state.player && state.player.grade) || ''; } catch (e) {}
+      if (window.SwishVisionNative.startTrackingWith) window.SwishVisionNative.startTrackingWith('ft', String(name), String(grade));
+      else if (window.SwishVisionNative.startTrackingFor) window.SwishVisionNative.startTrackingFor('ft', String(name));
       else window.SwishVisionNative.startTracking('ft');
     };
     return b;
