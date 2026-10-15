@@ -13,8 +13,8 @@ import java.util.Locale
 /**
  * The announcer. After the swish, the phone's voice says the make count, then one of Shane's
  * recorded calls plays (heating up, on fire, bonus, from downtown, Bang ...). After the buzzer, a miss
- * comment. See [AnnouncerScript] for which call plays when. Comments that aren't recorded yet are
- * spoken by the phone voice. A new shot, Undo or Wrong call cuts off whatever is still playing.
+ * comment. See [AnnouncerScript] for which call plays when. If a clip can't be played, the phone
+ * voice says its words instead. A new shot, Undo or Wrong call cuts off whatever is still playing.
  */
 class Announcer(context: Context) : TextToSpeech.OnInitListener {
 
@@ -57,9 +57,7 @@ class Announcer(context: Context) : TextToSpeech.OnInitListener {
             "call_triple_double_rap" to R.raw.call_triple_double_rap,
             "call_great_scott" to R.raw.call_great_scott,
             "call_the_force" to R.raw.call_the_force,
-            "call_plan_together" to R.raw.call_plan_together,
             "call_inconceivable" to R.raw.call_inconceivable,
-            "call_like_a_glove" to R.raw.call_like_a_glove,
             "call_mashed_potatoes" to R.raw.call_mashed_potatoes,
             "call_dont_need_roads" to R.raw.call_dont_need_roads,
             "call_show_me_money" to R.raw.call_show_me_money,

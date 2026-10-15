@@ -11,8 +11,7 @@ import kotlin.random.Random
  *   otherwise   -> a call. Every call plays once before any call repeats. Threes lean toward the
  *                  downtown calls, and long streaks (6+) toward "En fuego" / "Dare I say en fuego".
  * Every miss: "Not so fast my friend" when it ends a streak of 3+, "You got this" every 3 misses in a row,
- *   otherwise a miss comment (each once before any repeats). Miss comments without a recording yet are
- *   spoken by the phone voice.
+ *   otherwise one of the recorded miss comments (each once before any repeats).
  * When tracking starts: "We talkin' bout practice".
  */
 class AnnouncerScript(
@@ -28,7 +27,7 @@ class AnnouncerScript(
             "call_bottom_of_net", "call_splash", "call_money", "call_boomshakalaka", "call_booyah",
             "call_buckets", "call_dagger", "call_hocus_pocus", "call_straight_cash", "call_boom_dynamite",
             "call_cool_pillow", "call_rye_bread", "call_popcorn", "call_it_might_be", "call_no_regard",
-            "call_abracadabra", "call_entertained", "call_triple_double_rap", "call_great_scott", "call_the_force", "call_plan_together", "call_inconceivable", "call_like_a_glove",
+            "call_abracadabra", "call_entertained", "call_triple_double_rap", "call_great_scott", "call_the_force", "call_inconceivable",
             "call_mashed_potatoes", "call_dont_need_roads", "call_show_me_money", "call_infinity_beyond", "call_sixty_percent", "call_your_mama",
         )
         val THREES = listOf("three_downtown", "three_parking_lot", "three_way_downtown")
@@ -36,14 +35,8 @@ class AnnouncerScript(
         const val HEATING_UP = "streak_heating_up"
         const val ON_FIRE = "streak_on_fire"
         val BONUS = listOf("bonus_1", "bonus_2", "bonus_3", "bonus_4", "bonus_5") // index = level - 1
-        val MISSES = listOf(
-            "miss_no_good", "miss_brick", "miss_clank", "miss_not_this_time", "miss_off_the_mark",
-            "miss_shake_it_off", "miss_next_one", "miss_keep_shooting", "miss_so_close", "miss_reload",
-            "miss_stay_with_it", "miss_nope", "miss_line_it_up", "miss_short_memory",
-            "miss_houston", "miss_bit_outside", "miss_theres_a_chance", "miss_killing_me_smalls",
-        )
-        /** Miss comments Shane recorded (the rest are spoken by the phone voice). */
-        val RECORDED_MISSES = listOf("miss_houston", "miss_bit_outside", "miss_theres_a_chance", "miss_killing_me_smalls")
+        /** Miss comments: only Shane's recordings (the phone-voice ones were taken out). */
+        val MISSES = listOf("miss_houston", "miss_bit_outside", "miss_theres_a_chance", "miss_killing_me_smalls")
         const val SIX_SEVEN = "call_six_seven" // only ever on the 67th make
         const val NOT_SO_FAST = "miss_not_so_fast"
         const val YOU_GOT_THIS = "miss_you_got_this"
@@ -67,20 +60,12 @@ class AnnouncerScript(
             "bonus_4" to "Quadruple bonus!", "bonus_5" to "Quintuple bonus!",
             "miss_not_so_fast" to "Not so fast, my friend!", "miss_you_got_this" to "You got this!",
             "start_practice" to "We talkin' bout practice!",
-            "miss_no_good" to "No good!", "miss_brick" to "Brick!", "miss_clank" to "Clank!",
-            "miss_not_this_time" to "Not this time!", "miss_off_the_mark" to "Off the mark!",
-            "miss_shake_it_off" to "Shake it off!", "miss_next_one" to "Next one's going down!",
-            "miss_keep_shooting" to "Keep shooting!", "miss_so_close" to "So close!", "miss_reload" to "Reload!",
-            "miss_stay_with_it" to "Stay with it!", "miss_nope" to "Nope!", "miss_line_it_up" to "Line it up again!",
-            "miss_short_memory" to "Short memory!",
-            "call_abracadabra" to "Abracadabra!",
+                        "call_abracadabra" to "Abracadabra!",
             "call_entertained" to "Are you not entertained?",
             "call_triple_double_rap" to "Get me on the court and I'm trouble, last week messed around and got a triple double!",
             "call_great_scott" to "Great Scott!",
             "call_the_force" to "I am one with the Force, and the Force is with me!",
-            "call_plan_together" to "I love it when a plan comes together!",
             "call_inconceivable" to "Inconceivable!",
-            "call_like_a_glove" to "Like a glove!",
             "call_mashed_potatoes" to "Mashed potatoes!",
             "call_dont_need_roads" to "Roads? Where we're going, we don't need roads.",
             "call_show_me_money" to "Show me the money!",
@@ -163,6 +148,6 @@ class AnnouncerScript(
     fun forMiss(missesInRow: Int, endedStreak: Int): Call = when {
         endedStreak >= 3 -> Call(clip = NOT_SO_FAST)
         missesInRow >= 3 && missesInRow % 3 == 0 -> Call(clip = YOU_GOT_THIS)
-        else -> Call(clip = missCalls.draw(MISSES, lean = RECORDED_MISSES)) // recorded ones come up more often
+        else -> Call(clip = missCalls.draw(MISSES))
     }
 }

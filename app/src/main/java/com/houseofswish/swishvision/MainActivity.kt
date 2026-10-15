@@ -93,11 +93,29 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun version(): String = BuildConfigLite.versionName(this@MainActivity)
+
+        /** Camera sessions saved on this phone that have shot positions (for the Stats shot chart), as a JSON array. */
+        @JavascriptInterface
+        fun savedChartSessions(): String {
+            val out = JSONArray()
+            runCatching {
+                val dir = java.io.File(getExternalFilesDir(null), "sessions")
+                dir.listFiles()?.filter { it.name.endsWith(".json") }?.sortedBy { it.name }?.forEach { f ->
+                    runCatching {
+                        val txt = f.readText()
+                        if (txt.contains("\"x\":")) out.put(JSONObject(txt))
+                    }
+                }
+            }
+            return out.toString()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        bridgeJs = assets.open("bridge.js").bufferedReader().use { it.readText() }
+        // bridge.js: camera buttons + saving; stats.js: shot charts and progress graph on the Stats screen.
+        bridgeJs = assets.open("bridge.js").bufferedReader().use { it.readText() } + "\n;\n" +
+            assets.open("stats.js").bufferedReader().use { it.readText() }
 
         // Same colour as Swish Quest's bottom bar, so the strip above the phone's gesture bar blends in.
         root = FrameLayout(this).apply { setBackgroundColor(Color.parseColor("#111111")) }

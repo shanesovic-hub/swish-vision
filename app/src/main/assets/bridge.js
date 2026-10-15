@@ -108,6 +108,8 @@
         var ids = appliedIds(); ids.push(id);
         localStorage.setItem('sv_applied', JSON.stringify(ids.slice(-100)));
       }
+      // Shot positions for the Stats shot chart (stats.js), kept for this player.
+      try { if (window.__svRecordChart) window.__svRecordChart(d, _activeProfileId); } catch (e) {}
       return 'saved';
     } catch (e) {
       return 'error: ' + e.message;

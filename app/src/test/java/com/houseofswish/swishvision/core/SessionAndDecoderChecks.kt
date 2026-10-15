@@ -137,6 +137,9 @@ object SessionAndDecoderChecks {
         val sixSevens = (1..300).map { n -> n to sx.forMake(n, if (n % 5 == 0) 5 else n % 4 + 1, n % 3 == 0).clip }.filter { it.second == AnnouncerScript.SIX_SEVEN }
         check(sixSevens.map { it.first } == listOf(67), "six seven played at ${sixSevens.map { it.first }}", f)
         check(AnnouncerScript(kotlin.random.Random(1)).forMake(67, 10, false).clip == AnnouncerScript.SIX_SEVEN, "six seven beats a bonus", f)
+        // Only recorded miss comments (no phone-voice ones); two make calls taken out at the player's request.
+        check(AnnouncerScript.MISSES.size == 4 && AnnouncerScript.MISSES.all { it in listOf("miss_houston", "miss_bit_outside", "miss_theres_a_chance", "miss_killing_me_smalls") }, "miss comments: ${AnnouncerScript.MISSES}", f)
+        check("call_like_a_glove" !in AnnouncerScript.CALLS && "call_plan_together" !in AnnouncerScript.CALLS, "removed make calls still listed", f)
         // Misses: a comment after every miss.
         check(a.forMiss(1, 4).clip == "miss_not_so_fast", "streak ended", f)
         check(a.forMiss(3, 0).clip == "miss_you_got_this" && a.forMiss(6, 0).clip == "miss_you_got_this", "you got this", f)
