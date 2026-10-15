@@ -113,9 +113,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // bridge.js: camera buttons + saving; stats.js: shot charts and progress graph on the Stats screen.
+        // bridge.js: camera buttons + saving. svstats.js (shared with the website, web/public/js): shot chart
+        // and progress cards on Stats; the website loads it too, and whichever runs first installs it.
         bridgeJs = assets.open("bridge.js").bufferedReader().use { it.readText() } + "\n;\n" +
-            assets.open("stats.js").bufferedReader().use { it.readText() }
+            assets.open("svstats.js").bufferedReader().use { it.readText() }
 
         // Same colour as Swish Quest's bottom bar, so the strip above the phone's gesture bar blends in.
         root = FrameLayout(this).apply { setBackgroundColor(Color.parseColor("#111111")) }

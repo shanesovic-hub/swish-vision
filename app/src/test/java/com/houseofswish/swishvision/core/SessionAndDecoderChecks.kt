@@ -177,7 +177,7 @@ object SessionAndDecoderChecks {
         check(ShotChart.zoneOf(0f, 12f) == ShotChart.Zone.MID_CENTER, "zone: middle", f)
         check(ShotChart.zoneOf(-8f, 8f) == ShotChart.Zone.MID_LEFT && ShotChart.zoneOf(8f, 8f) == ShotChart.Zone.MID_RIGHT, "zone: elbows", f)
         check(ShotChart.zoneOf(14f, 1f) == ShotChart.Zone.MID_RIGHT_BASE, "zone: right baseline", f)
-        check(ShotChart.zoneOf(-19f, 2f) == ShotChart.Zone.THREE_LEFT_CORNER && ShotChart.zoneOf(0f, 20f) == ShotChart.Zone.THREE_TOP, "zone: threes", f)
+        check(ShotChart.zoneOf(-20.5f, -2f) == ShotChart.Zone.THREE_LEFT_CORNER && ShotChart.zoneOf(-19f, 2f) == ShotChart.Zone.MID_LEFT_BASE && ShotChart.zoneOf(0f, 18f) == ShotChart.Zone.MID_CENTER && ShotChart.zoneOf(0f, 20f) == ShotChart.Zone.THREE_TOP, "zone: threes", f)
         val cs = Session(0)
         cs.add(1, Result.MAKE, ShotType.MID, Method.AUTO).apply { courtX = 0f; courtY = 12f }
         cs.add(2, Result.MISS, ShotType.MID, Method.AUTO).apply { courtX = 1f; courtY = 11f }

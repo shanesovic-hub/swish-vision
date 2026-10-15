@@ -17,6 +17,9 @@ android {
         versionName = "0.1.$buildNumber"
     }
 
+    // The shot chart / progress script is shared with the Swish Quest website (web/public/js/svstats.js).
+    sourceSets["main"].assets.srcDirs("src/main/assets", "../web/public/js")
+
     // One fixed key so every new build installs over the last one.
     // Personal sideload key for a private repo, not a store key.
     signingConfigs {

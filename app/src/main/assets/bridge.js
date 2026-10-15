@@ -108,15 +108,60 @@
         var ids = appliedIds(); ids.push(id);
         localStorage.setItem('sv_applied', JSON.stringify(ids.slice(-100)));
       }
-      // Shot positions for the Stats shot chart (stats.js), kept for this player.
-      try { if (window.__svRecordChart) window.__svRecordChart(d, _activeProfileId); } catch (e) {}
+      // Where each shot was taken from, saved with the session (so the shot chart shows on every device).
+      attachShots(state.sessions[state.sessions.length - 1], d, true);
       return 'saved';
     } catch (e) {
       return 'error: ' + e.message;
     }
   };
 
+  // ---- Shot chart data ----
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dayOf(ms) { var t = new Date(ms); return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()); }
+
+  // Put a camera session's shot positions on its Swish Quest session (session.sv) and save.
+  function attachShots(sess, d, save) {
+    try {
+      if (!sess || sess.sv || !window.svEncodeShots) return false;
+      var enc = window.svEncodeShots(d.log);
+      if (!enc.p && !enc.ft[1]) return false; // free-throw spot not set: nothing to chart
+      sess.sv = { v: 1, t: Number(d.startedAt) || 0, p: enc.p, ft: enc.ft };
+      if (save) saveState();
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // Camera sessions saved on this phone before positions were stored with the session: find the matching
+  // Swish Quest session (same day, same shots and makes) for whichever player is open, and attach them.
+  var lastScan = '';
+  function migrateShots() {
+    try {
+      if (!questReady() || !window.SwishVisionNative.savedChartSessions || !window.svEncodeShots) return;
+      var key = _activeProfileId + ':' + state.sessions.length;
+      if (key === lastScan) return;
+      lastScan = key;
+      var done = JSON.parse(localStorage.getItem('sv_migrated') || '[]');
+      var files = JSON.parse(window.SwishVisionNative.savedChartSessions());
+      var changed = false;
+      files.forEach(function (d) {
+        if (!d.startedAt || done.indexOf(d.startedAt) >= 0) return;
+        var days = [dayOf(d.startedAt), dayOf(d.endedAt || d.startedAt)];
+        var match = state.sessions.filter(function (s) {
+          return s && !s.sv && s.shots === d.shots && s.makes === d.makes && days.indexOf(s.date) >= 0;
+        });
+        if (match.length === 1 && attachShots(match[0], d, false)) { done.push(d.startedAt); changed = true; }
+      });
+      if (changed) {
+        localStorage.setItem('sv_migrated', JSON.stringify(done.slice(-500)));
+        saveState();
+        if (window.svStatsRender) window.svStatsRender();
+      }
+    } catch (e) {}
+  }
+
   install();
   // Screens are static in v1.7.x, but re-check in case the page re-renders.
   setInterval(install, 2000);
+  setInterval(migrateShots, 5000);
 })();

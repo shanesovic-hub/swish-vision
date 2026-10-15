@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swish Quest — Admin Dashboard</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0d0d14;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+    .admin-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 20px 24px;
+      border-bottom: 2px solid #00b4c5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: #00b4c5;
+      letter-spacing: 3px;
+    }
+    .admin-subtitle {
+      font-size: 12px;
+      color: #888;
+    }
+    .admin-user {
+      font-size: 13px;
+      color: #888;
+    }
+    .admin-signout {
+      background: none;
+      border: 1px solid #ff6b6b;
+      color: #ff6b6b;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 12px;
+    }
+
+    /* Auth screen */
+    .auth-container {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .auth-container h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: #00b4c5;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .auth-container p {
+      color: #888;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 12px;
+      font-family: 'Outfit', sans-serif;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #00b4c5, #fc577e);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+    .auth-error {
+      color: #ff6b6b;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    /* Dashboard */
+    .admin-body {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      color: #00b4c5;
+    }
+    .stat-card-label {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 10px 16px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+    }
+    .search-btn {
+      padding: 10px 20px;
+      background: #00b4c5;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+
+    /* Table */
+    .players-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .players-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #1a1a2e;
+      color: #00b4c5;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      border-bottom: 2px solid #333;
+      position: sticky;
+      top: 0;
+    }
+    .players-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #222;
+      vertical-align: top;
+    }
+    .players-table tr:hover {
+      background: rgba(0,180,197,0.04);
+    }
+    .player-name-cell {
+      font-weight: 600;
+      color: #fff;
+    }
+    .tag-badge {
+      display: inline-block;
+      background: rgba(0,180,197,0.15);
+      color: #00b4c5;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    /* Edit modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: #00b4c5;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .modal-field {
+      margin-bottom: 12px;
+    }
+    .modal-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 8px 12px;
+      background: #0d0d14;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .modal-save {
+      padding: 10px 24px;
+      background: #00b4c5;
+      border: none;
+      border-radius: 6px;
+      color: #000;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+    .modal-cancel {
+      padding: 10px 24px;
+      background: none;
+      border: 1px solid #555;
+      border-radius: 6px;
+      color: #888;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 8px 20px;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #888;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #00b4c5;
+      color: #000;
+      border-color: #00b4c5;
+    }
+    .leads-note {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+    .export-btn {
+      padding: 8px 16px;
+      background: none;
+      border: 1px solid #00b4c5;
+      color: #00b4c5;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 768px) {
+      .players-table { font-size: 12px; }
+      .players-table th, .players-table td { padding: 8px 6px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Screen -->
+  <div id="admin-auth" class="auth-container">
+    <h2>🏀 ADMIN LOGIN</h2>
+    <p>Sign in with your admin account</p>
+    <div id="admin-auth-error" class="auth-error"></div>
+    <input id="admin-email" class="auth-input" type="email" placeholder="Email">
+    <input id="admin-password" class="auth-input" type="password" placeholder="Password">
+    <button class="auth-btn" onclick="adminSignIn()">SIGN IN</button>
+  </div>
+
+  <!-- Dashboard (hidden until auth) -->
+  <div id="admin-dashboard" style="display:none;">
+    <div class="admin-header">
+      <div>
+        <div class="admin-title">SWISH QUEST ADMIN</div>
+        <div class="admin-subtitle">House of Swish — Player Management</div>
+      </div>
+      <div style="display:flex; align-items:center;">
+        <span id="admin-user-email" class="admin-user"></span>
+        <button class="admin-signout" onclick="adminSignOut()">SIGN OUT</button>
+      </div>
+    </div>
+
+    <div class="admin-body">
+      <!-- Summary Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div id="stat-total-players" class="stat-card-value">—</div>
+          <div class="stat-card-label">Total Players</div>
+        </div>
+        <div class="stat-card">
+          <div id="stat-total-sessions" class="stat-card-value">—</div>
+          <div class="stat-card-label">Total Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div id="stat-total-shots" class="stat-card-value">—</div>
+          <div class="stat-card-label">Total Shots</div>
+        </div>
+        <div class="stat-card">
+          <div id="stat-active-week" class="stat-card-value">—</div>
+          <div class="stat-card-label">Active This Week</div>
+        </div>
+        <div class="stat-card">
+          <div id="stat-total-leads" class="stat-card-value">—</div>
+          <div class="stat-card-label">Leads Captured</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('players')">PLAYERS</button>
+        <button class="tab-btn" onclick="showTab('leads')">LEADS</button>
+      </div>
+
+      <!-- Players Tab -->
+      <div id="tab-players">
+        <div class="search-bar">
+          <input id="player-search" class="search-input" placeholder="Search by name, email, or gamertag..." oninput="filterPlayers()">
+          <button id="rebuild-lb-btn" class="export-btn" onclick="rebuildLeaderboard()" style="border-color:#ffa500; color:#ffa500; white-space:nowrap;">🔄 REBUILD LEADERBOARD</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="players-table">
+            <thead>
+              <tr>
+                <th>PLAYER</th>
+                <th>GAMERTAG</th>
+                <th>GRADE</th>
+                <th>TIER</th>
+                <th>SESSIONS</th>
+                <th>LIFETIME FGA</th>
+                <th>LAST ACTIVE</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="players-tbody"></tbody>
+          </table>
+        </div>
+        <div id="players-loading" style="text-align:center; color:#888; padding:40px;">Loading players...</div>
+      </div>
+
+      <!-- Leads Tab -->
+      <div id="tab-leads" style="display:none;">
+        <div class="leads-note">Contact info captured from player signups. Export to CSV for outreach.</div>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <button class="export-btn" onclick="exportLeadsCSV()">📥 EXPORT TO CSV</button>
+          <button id="backfill-btn" class="export-btn" onclick="backfillLeads()" style="border-color:#ffa500; color:#ffa500;">🔄 BACKFILL FROM PLAYERS</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="players-table">
+            <thead>
+              <tr>
+                <th>PLAYER NAME</th>
+                <th>PARENT EMAIL</th>
+                <th>PHONE</th>
+                <th>GRADE</th>
+                <th>SIGNUP DATE</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+        <div id="leads-loading" style="text-align:center; color:#888; padding:40px;">Loading leads...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Player Modal -->
+  <div id="edit-modal" class="modal-overlay" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal">
+      <h3>✏️ EDIT PLAYER</h3>
+      <div id="edit-modal-uid" style="font-size:11px; color:#555; margin-bottom:12px;"></div>
+      <div class="modal-field">
+        <div class="modal-label">Player Name</div>
+        <input id="edit-name" class="modal-input">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Gamertag</div>
+        <input id="edit-tag" class="modal-input" maxlength="20">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Grade</div>
+        <select id="edit-grade" class="modal-input">
+          <option value="">—</option>
+          <option value="3rd-4th">3rd - 4th Grade</option>
+          <option value="5th-6th">5th - 6th Grade</option>
+          <option value="7th-8th">7th - 8th Grade</option>
+          <option value="9th-12th">9th - 12th Grade</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Goal: Days / Week</div>
+        <input id="edit-goal-days" class="modal-input" type="number" min="1" max="7">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Goal: Shots / Session</div>
+        <input id="edit-goal-shots" class="modal-input" type="number" min="25" max="1000">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Goal: Minutes / Day</div>
+        <input id="edit-goal-time" class="modal-input" type="number" min="5" max="120">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">Goal: Target FG%</div>
+        <input id="edit-goal-accuracy" class="modal-input" type="number" min="10" max="100">
+      </div>
+      <div id="edit-status" style="font-size:13px; margin-top:8px;"></div>
+      <div class="modal-actions">
+        <button class="modal-save" onclick="savePlayerEdit()">SAVE CHANGES</button>
+        <button class="modal-cancel" onclick="closeEditModal()">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =============================================
+  // FIREBASE INIT
+  // =============================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjbs6blOwe-sOJKhx9iXGT0a6XV1ekxKM",
+    authDomain: "swish-quest.firebaseapp.com",
+    projectId: "swish-quest",
+    storageBucket: "swish-quest.firebasestorage.app",
+    messagingSenderId: "292047437270",
+    appId: "1:292047437270:web:8cc3b93916ab879b3e7877",
+    measurementId: "G-45MN7H03HE"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // =============================================
+  // ADMIN AUTH
+  // =============================================
+  // Add your admin email(s) here
+  const ADMIN_EMAILS = [
+    'shanesovic@gmail.com'  // Shane's admin email — add more as needed
+  ];
+
+  let _allPlayers = [];
+  let _allLeads = [];
+  let _editingPlayer = null;
+
+  auth.onAuthStateChanged(user => {
+    if (user && ADMIN_EMAILS.includes(user.email)) {
+      document.getElementById('admin-auth').style.display = 'none';
+      document.getElementById('admin-dashboard').style.display = '';
+      document.getElementById('admin-user-email').textContent = user.email;
+      loadDashboard();
+    } else if (user) {
+      document.getElementById('admin-auth-error').textContent = 'Not an admin account.';
+      auth.signOut();
+    } else {
+      document.getElementById('admin-auth').style.display = '';
+      document.getElementById('admin-dashboard').style.display = 'none';
+    }
+  });
+
+  async function adminSignIn() {
+    const email = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value;
+    const errorEl = document.getElementById('admin-auth-error');
+    errorEl.textContent = '';
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch(e) {
+      errorEl.textContent = e.message;
+    }
+  }
+
+  function adminSignOut() {
+    auth.signOut();
+  }
+
+  // =============================================
+  // LOAD DATA
+  // =============================================
+  async function loadDashboard() {
+    await Promise.all([loadAllPlayers(), loadAllLeads()]);
+    renderStats();
+    renderPlayers();
+    renderLeads();
+  }
+
+  async function loadAllPlayers() {
+    try {
+      // Get all player parent docs (which have profileIds)
+      const playersSnap = await db.collection('players').get();
+      const players = [];
+
+      for (const parentDoc of playersSnap.docs) {
+        const parentData = parentDoc.data();
+        const uid = parentDoc.id;
+
+        // Try to load profiles subcollection
+        const profilesSnap = await db.collection('players').doc(uid).collection('profiles').get();
+
+        if (profilesSnap.empty) {
+          // Old flat format — treat parent doc as the player
+          if (parentData.player) {
+            players.push({
+              uid,
+              profileId: null,
+              docPath: 'players/' + uid,
+              ...parentData
+            });
+          }
+        } else {
+          profilesSnap.forEach(profDoc => {
+            const profData = profDoc.data();
+            if (profData.player) {
+              players.push({
+                uid,
+                profileId: profDoc.id,
+                docPath: 'players/' + uid + '/profiles/' + profDoc.id,
+                ...profData
+              });
+            }
+          });
+        }
+      }
+
+      _allPlayers = players;
+    } catch(e) {
+      console.error('Load players error:', e);
+      _allPlayers = [];
+    }
+  }
+
+  async function loadAllLeads() {
+    try {
+      const snap = await db.collection('leads').get();
+      _allLeads = [];
+      snap.forEach(doc => {
+        _allLeads.push({ id: doc.id, ...doc.data() });
+      });
+    } catch(e) {
+      console.error('Load leads error:', e);
+      _allLeads = [];
+    }
+  }
+
+  // =============================================
+  // RENDER
+  // =============================================
+  const TIER_NAMES = ['','Unranked','Prospect','Rookie','Starter','All-Star','All-Pro','MVP','Legend','Icon','G.O.A.T.'];
+  const TIER_BADGES = ['','⬜','🔵','🟢','🟡','⭐','🌟','🏆','💎','👑','🐐'];
+
+  function renderStats() {
+    const totalPlayers = _allPlayers.length;
+    const totalSessions = _allPlayers.reduce((t, p) => t + (p.sessions ? p.sessions.length : 0), 0);
+    const totalShots = _allPlayers.reduce((t, p) => t + (p.lifetimeFGA || 0), 0);
+
+    // Active this week
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekStr = weekAgo.toISOString().slice(0, 10);
+    const activeWeek = _allPlayers.filter(p => {
+      if (!p.sessions || p.sessions.length === 0) return false;
+      return p.sessions.some(s => s.date >= weekStr);
+    }).length;
+
+    document.getElementById('stat-total-players').textContent = totalPlayers;
+    document.getElementById('stat-total-sessions').textContent = totalSessions.toLocaleString();
+    document.getElementById('stat-total-shots').textContent = totalShots.toLocaleString();
+    document.getElementById('stat-active-week').textContent = activeWeek;
+    document.getElementById('stat-total-leads').textContent = _allLeads.length;
+  }
+
+  function renderPlayers(filter) {
+    document.getElementById('players-loading').style.display = 'none';
+    const tbody = document.getElementById('players-tbody');
+
+    let players = _allPlayers;
+    if (filter) {
+      const f = filter.toLowerCase();
+      players = players.filter(p => {
+        const name = (p.player ? p.player.name : '').toLowerCase();
+        const email = (p.player ? p.player.email : '').toLowerCase();
+        const tag = (p.gamertag || '').toLowerCase();
+        const authEmail = (p._email || '').toLowerCase();
+        return name.includes(f) || email.includes(f) || tag.includes(f) || authEmail.includes(f);
+      });
+    }
+
+    // Sort by lifetime FGA descending
+    players.sort((a, b) => (b.lifetimeFGA || 0) - (a.lifetimeFGA || 0));
+
+    tbody.innerHTML = players.map(p => {
+      const name = p.player ? p.player.name : '—';
+      const grade = p.player ? p.player.grade : '—';
+      const tier = p.tier || 1;
+      const sessions = p.sessions ? p.sessions.length : 0;
+      const fga = p.lifetimeFGA || 0;
+      const lastSession = p.sessions && p.sessions.length > 0 ? p.sessions[p.sessions.length - 1].date : '—';
+      const tag = p.gamertag ? '@' + esc(p.gamertag) : '<span style="color:#555">none</span>';
+      const key = p.profileId ? p.uid + '_' + p.profileId : p.uid;
+
+      return `<tr>
+        <td class="player-name-cell">${esc(name)}</td>
+        <td><span class="tag-badge">${tag}</span></td>
+        <td>${esc(grade)}</td>
+        <td>${TIER_BADGES[tier] || ''} ${TIER_NAMES[tier] || ''}</td>
+        <td>${sessions}</td>
+        <td>${fga.toLocaleString()}</td>
+        <td>${esc(lastSession)}</td>
+        <td><button onclick="openEditModal('${key}')" style="background:var(--teal,#00b4c5); border:none; color:#000; padding:4px 12px; border-radius:4px; font-size:12px; cursor:pointer;">Edit</button></td>
+      </tr>`;
+    }).join('');
+
+    if (players.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#666; padding:20px;">No players found</td></tr>';
+    }
+  }
+
+  function renderLeads() {
+    document.getElementById('leads-loading').style.display = 'none';
+    const tbody = document.getElementById('leads-tbody');
+
+    // Sort by signup date descending
+    const sorted = [..._allLeads].sort((a, b) => (b.signupDate || '').localeCompare(a.signupDate || ''));
+
+    tbody.innerHTML = sorted.map(l => {
+      const date = l.signupDate ? new Date(l.signupDate).toLocaleDateString() : '—';
+      return `<tr>
+        <td class="player-name-cell">${esc(l.playerName || '—')}</td>
+        <td>${esc(l.parentEmail || l.signupFormEmail || '—')}</td>
+        <td>${esc(l.phone || '—')}</td>
+        <td>${esc(l.grade || '—')}</td>
+        <td>${date}</td>
+      </tr>`;
+    }).join('');
+
+    if (sorted.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#666; padding:20px;">No leads yet</td></tr>';
+    }
+  }
+
+  function esc(str) {
+    if (!str || typeof str !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // =============================================
+  // TABS
+  // =============================================
+  function showTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'players') || (i === 1 && tab === 'leads'));
+    });
+    document.getElementById('tab-players').style.display = tab === 'players' ? '' : 'none';
+    document.getElementById('tab-leads').style.display = tab === 'leads' ? '' : 'none';
+  }
+
+  function filterPlayers() {
+    const val = document.getElementById('player-search').value.trim();
+    renderPlayers(val || null);
+  }
+
+  // =============================================
+  // EDIT PLAYER MODAL
+  // =============================================
+  function openEditModal(key) {
+    // key is uid or uid_profileId
+    const player = _allPlayers.find(p => {
+      const k = p.profileId ? p.uid + '_' + p.profileId : p.uid;
+      return k === key;
+    });
+    if (!player) return;
+
+    _editingPlayer = player;
+    document.getElementById('edit-modal-uid').textContent = 'UID: ' + player.uid + (player.profileId ? ' / Profile: ' + player.profileId : '');
+    document.getElementById('edit-name').value = player.player ? player.player.name : '';
+    document.getElementById('edit-tag').value = player.gamertag || '';
+    document.getElementById('edit-grade').value = player.player ? player.player.grade : '';
+    document.getElementById('edit-goal-days').value = player.goals ? player.goals.days : '';
+    document.getElementById('edit-goal-shots').value = player.goals ? player.goals.shots : '';
+    document.getElementById('edit-goal-time').value = player.goals ? player.goals.time : '';
+    document.getElementById('edit-goal-accuracy').value = player.goals ? player.goals.accuracy : '';
+    document.getElementById('edit-status').textContent = '';
+    document.getElementById('edit-modal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('active');
+    _editingPlayer = null;
+  }
+
+  async function savePlayerEdit() {
+    if (!_editingPlayer) return;
+    const statusEl = document.getElementById('edit-status');
+    statusEl.textContent = 'Saving...';
+    statusEl.style.color = '#888';
+
+    try {
+      const updates = {};
+
+      // Player info
+      const newName = document.getElementById('edit-name').value.trim();
+      const newGrade = document.getElementById('edit-grade').value;
+      if (newName) updates['player.name'] = newName;
+      if (newGrade) updates['player.grade'] = newGrade;
+
+      // Gamertag
+      const newTag = document.getElementById('edit-tag').value.trim();
+      const oldTag = _editingPlayer.gamertag;
+      if (newTag !== (oldTag || '')) {
+        updates['gamertag'] = newTag || null;
+        // Update gamertag collection
+        if (newTag) {
+          await db.collection('gamertags').doc(newTag.toLowerCase()).set({ uid: _editingPlayer.uid });
+        }
+        if (oldTag) {
+          try { await db.collection('gamertags').doc(oldTag.toLowerCase()).delete(); } catch(e) {}
+        }
+      }
+
+      // Goals
+      const days = parseInt(document.getElementById('edit-goal-days').value);
+      const shots = parseInt(document.getElementById('edit-goal-shots').value);
+      const time = parseInt(document.getElementById('edit-goal-time').value);
+      const accuracy = parseInt(document.getElementById('edit-goal-accuracy').value);
+      if (!isNaN(days)) updates['goals.days'] = days;
+      if (!isNaN(shots)) updates['goals.shots'] = shots;
+      if (!isNaN(time)) updates['goals.time'] = time;
+      if (!isNaN(accuracy)) updates['goals.accuracy'] = accuracy;
+
+      // Write to Firestore
+      const docPath = _editingPlayer.docPath;
+      const pathParts = docPath.split('/');
+      let ref;
+      if (pathParts.length === 2) {
+        ref = db.collection(pathParts[0]).doc(pathParts[1]);
+      } else if (pathParts.length === 4) {
+        ref = db.collection(pathParts[0]).doc(pathParts[1]).collection(pathParts[2]).doc(pathParts[3]);
+      }
+
+      if (ref && Object.keys(updates).length > 0) {
+        await ref.update(updates);
+      }
+
+      statusEl.textContent = '✓ Saved!';
+      statusEl.style.color = '#00b4c5';
+
+      // Refresh data
+      await loadAllPlayers();
+      renderPlayers();
+      renderStats();
+
+      setTimeout(closeEditModal, 1000);
+    } catch(e) {
+      console.error('Save error:', e);
+      statusEl.textContent = 'Error: ' + e.message;
+      statusEl.style.color = '#ff6b6b';
+    }
+  }
+
+  // =============================================
+  // EXPORT LEADS
+  // =============================================
+  function exportLeadsCSV() {
+    if (_allLeads.length === 0) {
+      alert('No leads to export.');
+      return;
+    }
+    const headers = ['Player Name', 'Parent Email', 'Phone', 'Grade', 'Signup Date', 'Source'];
+    const rows = _allLeads.map(l => [
+      l.playerName || '',
+      l.parentEmail || l.signupFormEmail || '',
+      l.phone || '',
+      l.grade || '',
+      l.signupDate || '',
+      l.source || ''
+    ]);
+
+    let csv = headers.join(',') + '\n';
+    rows.forEach(r => {
+      csv += r.map(v => '"' + (v || '').replace(/"/g, '""') + '"').join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'swish-quest-leads-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // =============================================
+  // REBUILD LEADERBOARD FROM ALL PLAYER DATA
+  // =============================================
+  async function rebuildLeaderboard() {
+    const btn = document.getElementById('rebuild-lb-btn');
+    if (!btn) { alert('Button not found'); return; }
+    
+    if (!confirm('This will rebuild the entire leaderboard from player data. Continue?')) return;
+    
+    btn.disabled = true;
+    btn.textContent = '🔄 STEP 1: CLEANING...';
+
+    let created = 0;
+    let cleaned = 0;
+    let errors = [];
+
+    try {
+      // Step 1: Delete all old leaderboard entries one by one
+      const oldSnap = await db.collection('leaderboardEntries').get();
+      btn.textContent = '🔄 CLEANING ' + oldSnap.size + ' OLD ENTRIES...';
+      
+      for (const doc of oldSnap.docs) {
+        try {
+          await doc.ref.delete();
+          cleaned++;
+        } catch(delErr) {
+          errors.push('Delete ' + doc.id + ': ' + delErr.message);
+        }
+      }
+
+      btn.textContent = '🔄 STEP 2: REBUILDING ' + _allPlayers.length + ' PLAYERS...';
+
+      // Step 2: Rebuild from player data
+      for (const player of _allPlayers) {
+        if (!player.sessions || player.sessions.length === 0) continue;
+
+        // Use the authoritative lifetimeFGA if available, otherwise sum sessions
+        let totalShots = player.lifetimeFGA || 0;
+        let totalMakes = 0, totalTime = 0;
+        player.sessions.forEach(s => {
+          totalMakes += (s.makes || 0);
+          totalTime += (s.time || 0);
+        });
+        // Fallback: if lifetimeFGA is 0 but sessions exist, sum from sessions
+        if (totalShots === 0) {
+          player.sessions.forEach(s => {
+            totalShots += (s.shots || s.fga || 0);
+          });
+        }
+
+        if (totalShots === 0) continue;
+
+        const docId = player.profileId
+          ? player.uid + '_' + player.profileId
+          : player.uid;
+
+        const displayName = player.gamertag || (player.player ? player.player.name : 'Player');
+        const grade = player.player ? player.player.grade : '';
+        const tier = player.tier || 1;
+
+        // Calculate streak
+        const dates = [...new Set(player.sessions.map(s => s.date))].sort().reverse();
+        let streak = 0;
+        if (dates.length > 0) {
+          const today = new Date().toISOString().slice(0, 10);
+          const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+          if (dates[0] === today || dates[0] === yesterday) {
+            streak = 1;
+            for (let i = 0; i < dates.length - 1; i++) {
+              const d1 = new Date(dates[i] + 'T00:00:00');
+              const d2 = new Date(dates[i + 1] + 'T00:00:00');
+              const diff = Math.round((d1 - d2) / (1000 * 60 * 60 * 24));
+              if (diff === 1) streak++;
+              else break;
+            }
+          }
+        }
+
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        const weekId = now.getFullYear() + '-W' + String(Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)).padStart(2, '0');
+        const monthId = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+        const dailyKey = 'daily_' + todayStr.replace(/-/g, '');
+        const weeklyKey = 'weekly_' + weekId.replace(/-/g, '');
+        const monthlyKey = 'monthly_' + monthId.replace(/-/g, '');
+
+        // Daily
+        const todaySessions = player.sessions.filter(s => s.date === todayStr);
+        const dailyData = { shots: 0, makes: 0, time: 0 };
+        todaySessions.forEach(s => { dailyData.shots += (s.shots||0); dailyData.makes += (s.makes||0); dailyData.time += (s.time||0); });
+        dailyData.accuracy = dailyData.shots > 0 ? Math.round((dailyData.makes / dailyData.shots) * 100) : 0;
+
+        // Weekly
+        const weekAgoStr = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+        const weekSessions = player.sessions.filter(s => s.date >= weekAgoStr);
+        const weeklyData = { shots: 0, makes: 0, time: 0, sessionsCount: weekSessions.length };
+        weekSessions.forEach(s => { weeklyData.shots += (s.shots||0); weeklyData.makes += (s.makes||0); weeklyData.time += (s.time||0); });
+        weeklyData.accuracy = weeklyData.shots > 0 ? Math.round((weeklyData.makes / weeklyData.shots) * 100) : 0;
+
+        // Monthly
+        const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+        const monthSessions = player.sessions.filter(s => s.date && s.date.startsWith(monthStr));
+        const monthlyData = { shots: 0, makes: 0, time: 0, sessionsCount: monthSessions.length };
+        monthSessions.forEach(s => { monthlyData.shots += (s.shots||0); monthlyData.makes += (s.makes||0); monthlyData.time += (s.time||0); });
+        monthlyData.accuracy = monthlyData.shots > 0 ? Math.round((monthlyData.makes / monthlyData.shots) * 100) : 0;
+
+        const TIER_BADGES = ['','⬜','🔵','🟢','🟡','⭐','🌟','🏆','💎','👑','🐐'];
+
+        const entry = {
+          gamertag: displayName,
+          tierBadge: TIER_BADGES[tier] || '',
+          grade: grade,
+          tier: tier,
+          uid: player.uid,
+          [dailyKey]: dailyData,
+          [weeklyKey]: weeklyData,
+          [monthlyKey]: monthlyData,
+          allTime: {
+            totalShots: totalShots,
+            totalMakes: totalMakes,
+            totalTime: totalTime,
+            totalSessions: player.sessions.length,
+            bestStreak: streak,
+            bossesDefeated: (player.defeatedBosses || []).length
+          },
+          currentStreak: streak,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+          await db.collection('leaderboardEntries').doc(docId).set(entry);
+          created++;
+        } catch(writeErr) {
+          errors.push('Write ' + docId + ': ' + writeErr.message);
+        }
+      }
+
+      if (errors.length > 0) {
+        btn.textContent = `⚠️ ${created} created, ${cleaned} removed, ${errors.length} errors`;
+        btn.style.borderColor = '#ffa500';
+        btn.style.color = '#ffa500';
+        console.error('Rebuild errors:', errors);
+        alert('Rebuild completed with errors:\n' + errors.join('\n'));
+      } else {
+        btn.textContent = `✓ Done! ${created} entries, ${cleaned} old removed`;
+        btn.style.borderColor = '#00b4c5';
+        btn.style.color = '#00b4c5';
+      }
+
+    } catch(e) {
+      console.error('Rebuild error:', e);
+      btn.textContent = 'Error: ' + e.message;
+      btn.style.borderColor = '#ff6b6b';
+      btn.style.color = '#ff6b6b';
+      alert('Rebuild failed: ' + e.message);
+    }
+
+    btn.disabled = false;
+  }
+
+  // =============================================
+  // BACKFILL LEADS FROM EXISTING PLAYERS
+  // =============================================
+  async function backfillLeads() {
+    const btn = document.getElementById('backfill-btn');
+    btn.disabled = true;
+    btn.textContent = '🔄 BACKFILLING...';
+
+    let created = 0;
+    let skipped = 0;
+
+    try {
+      for (const player of _allPlayers) {
+        if (!player.player) { skipped++; continue; }
+
+        const p = player.player;
+        const docId = player.profileId
+          ? player.uid + '_' + player.profileId
+          : player.uid + '_default';
+
+        // Check if lead already exists
+        const existing = await db.collection('leads').doc(docId).get();
+        if (existing.exists) { skipped++; continue; }
+
+        const lead = {
+          playerName: p.name || '',
+          parentEmail: p.email || '',
+          signupFormEmail: p.email || '',
+          phone: p.phone || '',
+          grade: p.grade || '',
+          signupDate: p.joinDate ? new Date(p.joinDate + 'T00:00:00').toISOString() : new Date().toISOString(),
+          source: 'admin-backfill',
+          profileId: player.profileId || '',
+          uid: player.uid
+        };
+
+        await db.collection('leads').doc(docId).set(lead);
+        created++;
+      }
+
+      btn.textContent = `✓ Done! ${created} created, ${skipped} skipped`;
+      btn.style.borderColor = '#00b4c5';
+      btn.style.color = '#00b4c5';
+
+      // Reload leads
+      await loadAllLeads();
+      renderLeads();
+      renderStats();
+
+    } catch(e) {
+      console.error('Backfill error:', e);
+      btn.textContent = 'Error: ' + e.message;
+      btn.style.borderColor = '#ff6b6b';
+      btn.style.color = '#ff6b6b';
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+name: Publish Swish Quest website
+
+# Publishes web/public to Firebase Hosting (swish-quest.web.app) whenever the website changes.
+# Needs one repository secret: FIREBASE_SERVICE_ACCOUNT (the Firebase service account key, as JSON).
+# Only the website is published; Firestore rules and data are not touched.
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/web.yml']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the website parses
+        run: |
+          node -e "
+            const fs=require('fs'); const html=fs.readFileSync('web/public/index.html','utf8');
+            const scripts=[...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+            scripts.forEach((s,i)=>{ try{ new Function(s) }catch(e){ console.error('::error::script '+i+': '+e.message); process.exit(1) } });
+            console.log('index.html scripts OK:', scripts.length);"
+      - name: Check the key is there
+        id: key
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret (Firebase service account key) to publish the website."
+            exit 1
+          fi
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: swish-quest
+          channelId: live
+          entryPoint: web

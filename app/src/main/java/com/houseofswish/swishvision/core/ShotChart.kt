@@ -5,16 +5,28 @@ import kotlin.math.atan2
 import kotlin.math.hypot
 
 /**
- * Shot chart zones, like an NBA shot chart but sized to the app's own spot rules: inside 7.3 ft is
- * "at the rim", 7.3-17.5 ft is mid-range (5 zones), 17.5 ft and out is three (5 zones). Free throws
- * aren't on the chart (they get their own line).
+ * Shot chart zones on a high school half court, like an NBA shot chart: inside 7.3 ft is "at the rim"
+ * (the app's layup range), then mid-range out to the high school 3-point line (5 zones), then three
+ * (5 zones). Free throws aren't on the chart (they get their own line). Same rules as the website's
+ * shot chart (web/public/js/svstats.js).
  *
  * Court position: feet from the middle of the rim, x to the shooter's right (facing the hoop), y out
  * toward the free-throw line. Pure logic, no Android.
  */
 object ShotChart {
     const val RIM_FT = 7.3f
-    const val THREE_FT = 17.5f
+    const val THREE_FT = 19.75f   // high school 3-point line: 19 ft 9 in from the middle of the rim
+    const val CORNER_DEG = 78f     // threes further round than this are corner threes
+
+    /** Outside the high school 3-point line? It runs straight up from the baseline to level with the rim, then arcs. */
+    fun isThree(x: Float, y: Float): Boolean = if (y <= 0f) abs(x) >= THREE_FT else hypot(x, y) >= THREE_FT
+
+    /** Distance from the rim to the 3-point line in direction [a] (degrees from straight out). */
+    fun lineAt(a: Float): Float {
+        if (abs(a) <= 90f) return THREE_FT
+        val s = abs(kotlin.math.sin(Math.toRadians(a.toDouble()))).toFloat()
+        return if (s > 0.01f) THREE_FT / s else 200f
+    }
 
     enum class Zone(val key: String, val label: String) {
         RIM("rim", "At the rim"),
@@ -39,14 +51,14 @@ object ShotChart {
         val aa = abs(a)
         return when {
             d < RIM_FT -> Zone.RIM
-            d < THREE_FT -> when {
+            !isThree(x, y) -> when {
                 aa < 22.5f -> Zone.MID_CENTER
                 aa < 60f -> if (a < 0) Zone.MID_LEFT else Zone.MID_RIGHT
                 else -> if (a < 0) Zone.MID_LEFT_BASE else Zone.MID_RIGHT_BASE
             }
             else -> when {
                 aa < 25f -> Zone.THREE_TOP
-                aa < 68f -> if (a < 0) Zone.THREE_LEFT else Zone.THREE_RIGHT
+                aa < CORNER_DEG -> if (a < 0) Zone.THREE_LEFT else Zone.THREE_RIGHT
                 else -> if (a < 0) Zone.THREE_LEFT_CORNER else Zone.THREE_RIGHT_CORNER
             }
         }

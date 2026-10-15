@@ -3,6 +3,7 @@ name: Build Swish Vision
 on:
   push:
     branches: [main]
+    paths-ignore: ['web/**', '.github/workflows/web.yml']
   workflow_dispatch:
 
 permissions:

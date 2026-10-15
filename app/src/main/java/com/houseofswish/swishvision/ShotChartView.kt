@@ -42,7 +42,13 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
     private val bottom = 28f
 
     private val d = resources.displayMetrics.density
-    private val floor = Paint().apply { color = Color.parseColor("#2A2118") }
+    private val floor = Paint().apply { color = Color.parseColor("#36271A") }
+    private val dashed = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 1.5f * d; color = Color.argb(200, 240, 236, 228)
+        pathEffect = android.graphics.DashPathEffect(floatArrayOf(6f * d, 6f * d), 0f)
+    }
+    private val rimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2f * d; color = Color.parseColor("#FF7A3C") }
+    private companion object { const val LINE = -1f } // "follow the 3-point line" radius
     private val line = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.5f * d; color = Color.argb(200, 240, 236, 228) }
     private val zoneLine = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1f * d; color = Color.argb(120, 20, 20, 20) }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -73,18 +79,18 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
         c.save()
         c.clipRect(court)
 
-        // Zones
+        // Zones (radius LINE = follow the 3-point line)
         val far = 60f
         val r1 = ShotChart.RIM_FT
-        val r2 = ShotChart.THREE_FT
+        val cd = ShotChart.CORNER_DEG
         fun zone(z: Zone, a1: Float, a2: Float, rIn: Float, rOut: Float) {
             val l = lines[z]
             fill.color = when {
-                l == null -> Color.argb(70, 160, 160, 160)
+                l == null -> Color.argb(30, 255, 255, 255)
                 else -> when (ShotChart.heat(z, l)) {
-                    1 -> Color.argb(150, 34, 160, 80)
-                    0 -> Color.argb(150, 230, 200, 90)
-                    else -> Color.argb(150, 200, 60, 50)
+                    1 -> Color.argb(150, 34, 170, 90)
+                    0 -> Color.argb(150, 235, 200, 80)
+                    else -> Color.argb(150, 215, 60, 55)
                 }
             }
             val p = wedge(a1, a2, rIn, rOut)
@@ -92,23 +98,29 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
             c.drawPath(p, zoneLine)
         }
         zone(Zone.RIM, -180f, 180f, 0f, r1)
-        zone(Zone.MID_LEFT_BASE, -180f, -60f, r1, r2)
-        zone(Zone.MID_LEFT, -60f, -22.5f, r1, r2)
-        zone(Zone.MID_CENTER, -22.5f, 22.5f, r1, r2)
-        zone(Zone.MID_RIGHT, 22.5f, 60f, r1, r2)
-        zone(Zone.MID_RIGHT_BASE, 60f, 180f, r1, r2)
-        zone(Zone.THREE_LEFT_CORNER, -180f, -68f, r2, far)
-        zone(Zone.THREE_LEFT, -68f, -25f, r2, far)
-        zone(Zone.THREE_TOP, -25f, 25f, r2, far)
-        zone(Zone.THREE_RIGHT, 25f, 68f, r2, far)
-        zone(Zone.THREE_RIGHT_CORNER, 68f, 180f, r2, far)
+        zone(Zone.MID_LEFT_BASE, -180f, -60f, r1, LINE)
+        zone(Zone.MID_LEFT, -60f, -22.5f, r1, LINE)
+        zone(Zone.MID_CENTER, -22.5f, 22.5f, r1, LINE)
+        zone(Zone.MID_RIGHT, 22.5f, 60f, r1, LINE)
+        zone(Zone.MID_RIGHT_BASE, 60f, 180f, r1, LINE)
+        zone(Zone.THREE_LEFT_CORNER, -180f, -cd, LINE, far)
+        zone(Zone.THREE_LEFT, -cd, -25f, LINE, far)
+        zone(Zone.THREE_TOP, -25f, 25f, LINE, far)
+        zone(Zone.THREE_RIGHT, 25f, cd, LINE, far)
+        zone(Zone.THREE_RIGHT_CORNER, cd, 180f, LINE, far)
 
-        // Court lines: lane (12 ft wide, free-throw line 13.75 ft out), free-throw circle, backboard, rim.
+        // High school court lines: 12 ft lane, free-throw line 13.75 ft out with its circle (bottom half
+        // dashed), 3-point line (straight from the baseline to level with the rim, then the 19'9" arc).
         c.drawRect(px(-6f), py(top), px(6f), py(13.75f), line)
-        c.drawCircle(px(0f), py(13.75f), 6f * sc, line)
+        val ftc = RectF(px(-6f), py(13.75f - 6f), px(6f), py(13.75f + 6f))
+        c.drawArc(ftc, 180f, 180f, false, line)
+        c.drawArc(ftc, 0f, 180f, false, dashed)
+        val t3 = ShotChart.THREE_FT
+        c.drawLine(px(-t3), py(top), px(-t3), py(0f), line)
+        c.drawLine(px(t3), py(top), px(t3), py(0f), line)
+        c.drawArc(RectF(px(-t3), py(-t3), px(t3), py(t3)), 0f, 180f, false, line)
         c.drawLine(px(-3f), py(-1.25f), px(3f), py(-1.25f), line)
-        c.drawCircle(px(0f), py(0f), 0.75f * sc, line)
-        c.drawCircle(px(0f), py(0f), ShotChart.THREE_FT * sc, line) // the app's three-point distance
+        c.drawCircle(px(0f), py(0f), 0.75f * sc, rimPaint)
         c.drawRect(court, line)
         c.restore()
 
@@ -125,17 +137,14 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
         label.textSize = max(11f * d, 1.5f * sc)
         small.textSize = max(9f * d, 1.15f * sc)
         val spots = mapOf(
-            Zone.RIM to (0f to 4.5f),
-            Zone.MID_LEFT_BASE to (-78f to 12.5f), Zone.MID_LEFT to (-41f to 12.5f), Zone.MID_CENTER to (0f to 11f),
-            Zone.MID_RIGHT to (41f to 12.5f), Zone.MID_RIGHT_BASE to (78f to 12.5f),
-            Zone.THREE_LEFT_CORNER to (-80f to 21f), Zone.THREE_LEFT to (-46f to 22f), Zone.THREE_TOP to (0f to 22f),
-            Zone.THREE_RIGHT to (46f to 22f), Zone.THREE_RIGHT_CORNER to (80f to 21f),
+            Zone.RIM to (0f to 3.6f),
+            Zone.MID_LEFT_BASE to (-13.5f to 0.8f), Zone.MID_LEFT to (-9.5f to 10.5f), Zone.MID_CENTER to (0f to 10.4f),
+            Zone.MID_RIGHT to (9.5f to 10.5f), Zone.MID_RIGHT_BASE to (13.5f to 0.8f),
+            Zone.THREE_LEFT_CORNER to (-22.4f to -0.6f), Zone.THREE_LEFT to (-17.5f to 16.5f), Zone.THREE_TOP to (0f to 23.5f),
+            Zone.THREE_RIGHT to (17.5f to 16.5f), Zone.THREE_RIGHT_CORNER to (22.4f to -0.6f),
         )
         for ((z, l) in lines) {
-            val (a, r) = spots.getValue(z)
-            val rad = Math.toRadians(a.toDouble())
-            val fx = (r * sin(rad)).toFloat().coerceIn(left + 3f, right - 3f)
-            val fy = (r * cos(rad)).toFloat().coerceIn(top + 1.5f, bottom - 2f)
+            val (fx, fy) = spots.getValue(z)
             val pct = Math.round(100f * l.made / l.attempted)
             c.drawText("${l.made}/${l.attempted}", px(fx), py(fy), label)
             c.drawText("$pct%", px(fx), py(fy) + small.textSize * 1.15f, small)
@@ -149,14 +158,17 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
     private fun wedge(a1: Float, a2: Float, rIn: Float, rOut: Float): Path {
         val p = Path()
         val steps = 48
+        fun r(v: Float, deg: Float) = if (v == LINE) ShotChart.lineAt(deg) else v
         for (i in 0..steps) {
-            val a = Math.toRadians((a1 + (a2 - a1) * i / steps).toDouble())
-            val x = px((rOut * sin(a)).toFloat()); val y = py((rOut * cos(a)).toFloat())
+            val deg = a1 + (a2 - a1) * i / steps
+            val a = Math.toRadians(deg.toDouble()); val rr = r(rOut, deg)
+            val x = px((rr * sin(a)).toFloat()); val y = py((rr * cos(a)).toFloat())
             if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
         }
         for (i in steps downTo 0) {
-            val a = Math.toRadians((a1 + (a2 - a1) * i / steps).toDouble())
-            p.lineTo(px((rIn * sin(a)).toFloat()), py((rIn * cos(a)).toFloat()))
+            val deg = a1 + (a2 - a1) * i / steps
+            val a = Math.toRadians(deg.toDouble()); val rr = r(rIn, deg)
+            p.lineTo(px((rr * sin(a)).toFloat()), py((rr * cos(a)).toFloat()))
         }
         p.close()
         return p

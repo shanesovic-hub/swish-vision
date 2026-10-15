@@ -19,7 +19,7 @@ import kotlin.math.hypot
 class SpotFinder(
     val shooterHeightM: Float = 1.75f,
     val layupMaxFt: Float = 7.3f,     // closer than this: layup
-    val threeMinFt: Float = 17.5f,   // this far or further: three
+    val threeMinFt: Float = ShotChart.THREE_FT, // this far or further: three (the high school line)
     val ftRadiusFt: Float = 3f,      // this close to the free-throw spot: free throw (once it's set)
     val focal: Float = 0.64f,        // camera focal length / picture width (phone main cameras ~0.6-0.75)
 ) {

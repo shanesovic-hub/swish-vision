@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swish Quest — Profile Recovery</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #fff; font-family: 'Outfit', Arial, sans-serif; padding: 20px; }
+  h1 { color: #00b4c5; margin-bottom: 10px; font-size: 22px; }
+  h2 { color: #ffe66d; margin: 20px 0 10px; font-size: 18px; }
+  .status { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; margin: 10px 0; font-size: 14px; line-height: 1.6; }
+  .status.good { border-color: #00b4c5; }
+  .status.bad { border-color: #ff6b6b; }
+  .status.warn { border-color: #ffe66d; }
+  .profile-card { background: #1a1a2e; border: 1px solid #00b4c5; border-radius: 8px; padding: 16px; margin: 10px 0; }
+  .profile-name { font-size: 18px; font-weight: bold; color: #00b4c5; }
+  .profile-detail { font-size: 13px; color: #aaa; margin-top: 4px; }
+  button { background: linear-gradient(135deg, #00b4c5, #00d4aa); color: #000; border: none; padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin: 10px 0; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.danger { background: linear-gradient(135deg, #ff6b6b, #ff4444); color: #fff; }
+  #log { background: #0d0d1a; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-top: 16px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; }
+  .log-line { margin: 2px 0; }
+  .log-ok { color: #00d4aa; }
+  .log-err { color: #ff6b6b; }
+  .log-info { color: #ffe66d; }
+</style>
+</head>
+<body>
+
+<h1>🔧 SWISH QUEST RECOVERY</h1>
+<p style="color:#888; font-size:13px;">This page reads your local profiles and pushes them to Firestore.</p>
+
+<h2>Step 1: Check Local Data</h2>
+<div id="local-status" class="status">Checking localStorage...</div>
+<div id="profiles-list"></div>
+
+<h2>Step 2: Sign In</h2>
+<div id="auth-status" class="status">Checking auth...</div>
+<div id="auth-form" style="display:none;">
+  <input id="email" type="email" placeholder="Email" style="width:100%; padding:12px; margin:6px 0; background:#1a1a2e; border:1px solid #333; color:#fff; border-radius:6px; font-size:14px;">
+  <input id="password" type="password" placeholder="Password" style="width:100%; padding:12px; margin:6px 0; background:#1a1a2e; border:1px solid #333; color:#fff; border-radius:6px; font-size:14px;">
+  <button onclick="doSignIn()">SIGN IN</button>
+</div>
+
+<h2>Step 3: Push to Firestore</h2>
+<button id="push-btn" onclick="pushToFirestore()" disabled>⬆️ PUSH ALL PROFILES TO CLOUD</button>
+
+<h2>Log</h2>
+<div id="log"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjbs6blOwe-sOJKhx9iXGT0a6XV1ekxKM",
+    authDomain: "swish-quest.firebaseapp.com",
+    projectId: "swish-quest",
+    storageBucket: "swish-quest.firebasestorage.app",
+    messagingSenderId: "292047437270",
+    appId: "1:292047437270:web:8cc3b93916ab879b3e7877"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  let localProfiles = {};
+  let localActiveId = null;
+
+  function log(msg, type) {
+    const el = document.getElementById('log');
+    const cls = type === 'ok' ? 'log-ok' : type === 'err' ? 'log-err' : 'log-info';
+    el.innerHTML += `<div class="log-line ${cls}">${new Date().toLocaleTimeString()} — ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // Step 1: Read localStorage
+  function checkLocal() {
+    const statusEl = document.getElementById('local-status');
+    const listEl = document.getElementById('profiles-list');
+
+    try {
+      const raw = localStorage.getItem('swishquest_profiles');
+      if (!raw) {
+        statusEl.className = 'status bad';
+        statusEl.textContent = '❌ No swishquest_profiles found in localStorage!';
+        
+        // Check old format
+        const old = localStorage.getItem('swishquest');
+        if (old) {
+          statusEl.textContent += '\n\n✅ Found old-format "swishquest" data. This contains one profile.';
+          try {
+            const oldData = JSON.parse(old);
+            if (oldData && oldData.player) {
+              statusEl.className = 'status warn';
+              const id = 'p_recovered_' + Date.now();
+              localProfiles[id] = oldData;
+              localActiveId = id;
+              renderProfile(listEl, id, oldData);
+            }
+          } catch(e) {}
+        }
+        return;
+      }
+
+      const data = JSON.parse(raw);
+      if (!data || !data.profiles) {
+        statusEl.className = 'status bad';
+        statusEl.textContent = '❌ localStorage exists but has no profiles object.';
+        return;
+      }
+
+      const ids = Object.keys(data.profiles);
+      localProfiles = data.profiles;
+      localActiveId = data.activeId;
+
+      statusEl.className = 'status good';
+      statusEl.textContent = `✅ Found ${ids.length} profile(s) in localStorage. Active: ${data.activeId || 'none'}`;
+
+      listEl.innerHTML = '';
+      ids.forEach(id => {
+        renderProfile(listEl, id, data.profiles[id]);
+      });
+
+      log(`Found ${ids.length} local profiles`, 'ok');
+    } catch(e) {
+      statusEl.className = 'status bad';
+      statusEl.textContent = '❌ Error reading localStorage: ' + e.message;
+      log('localStorage error: ' + e.message, 'err');
+    }
+  }
+
+  function renderProfile(container, id, profile) {
+    const card = document.createElement('div');
+    card.className = 'profile-card';
+    const name = profile.player ? profile.player.name : 'Unknown';
+    const grade = profile.player ? profile.player.grade : '?';
+    const gamertag = profile.gamertag || 'none';
+    const fga = profile.lifetimeFGA || 0;
+    const sessions = (profile.sessions || []).length;
+    const tier = profile.tier || 1;
+    const bosses = (profile.defeatedBosses || []).length;
+
+    card.innerHTML = `
+      <div class="profile-name">${name}</div>
+      <div class="profile-detail">Profile ID: ${id}</div>
+      <div class="profile-detail">Gamertag: @${gamertag} | Grade: ${grade}</div>
+      <div class="profile-detail">Lifetime FGA: ${fga.toLocaleString()} | Sessions: ${sessions} | Tier: ${tier} | Bosses: ${bosses}</div>
+    `;
+    container.appendChild(card);
+  }
+
+  // Step 2: Auth
+  function checkAuth() {
+    const statusEl = document.getElementById('auth-status');
+    const formEl = document.getElementById('auth-form');
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        statusEl.className = 'status good';
+        statusEl.textContent = `✅ Signed in as ${user.email} (UID: ${user.uid})`;
+        formEl.style.display = 'none';
+        document.getElementById('push-btn').disabled = Object.keys(localProfiles).length === 0;
+        log('Authenticated: ' + user.email, 'ok');
+      } else {
+        statusEl.className = 'status warn';
+        statusEl.textContent = '⚠️ Not signed in. Sign in below.';
+        formEl.style.display = 'block';
+        document.getElementById('push-btn').disabled = true;
+      }
+    });
+  }
+
+  async function doSignIn() {
+    const email = document.getElementById('email').value.trim();
+    const pw = document.getElementById('password').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, pw);
+      log('Sign in successful', 'ok');
+    } catch(e) {
+      log('Sign in failed: ' + e.message, 'err');
+      alert('Sign in failed: ' + e.message);
+    }
+  }
+
+  // Step 3: Push to Firestore
+  async function pushToFirestore() {
+    const user = auth.currentUser;
+    if (!user) { alert('Not signed in!'); return; }
+
+    const btn = document.getElementById('push-btn');
+    btn.disabled = true;
+    btn.textContent = 'PUSHING...';
+
+    const ids = Object.keys(localProfiles);
+    let success = 0;
+    let failed = 0;
+
+    for (const id of ids) {
+      const profile = localProfiles[id];
+      if (!profile.player) {
+        log(`Skipping ${id} — no player data`, 'info');
+        continue;
+      }
+
+      const name = profile.player.name || 'Unknown';
+      log(`Pushing ${name} (${id})...`, 'info');
+
+      try {
+        // Deep clone and add metadata
+        const data = JSON.parse(JSON.stringify(profile));
+        data._lastSync = new Date().toISOString();
+        data._uid = user.uid;
+        data._email = user.email;
+        data._profileId = id;
+
+        // Write to profiles subcollection
+        await db.collection('players').doc(user.uid).collection('profiles').doc(id).set(data);
+        log(`✅ ${name} pushed to players/${user.uid}/profiles/${id}`, 'ok');
+
+        // Update parent doc profileIds
+        await db.collection('players').doc(user.uid).set({
+          _lastSync: data._lastSync,
+          _email: user.email,
+          profileIds: firebase.firestore.FieldValue.arrayUnion(id)
+        }, { merge: true });
+
+        // Update public profile if gamertag exists
+        if (profile.gamertag) {
+          await db.collection('profiles').doc(user.uid).set({
+            uid: user.uid,
+            gamertag: profile.gamertag,
+            displayName: profile.player.name,
+            grade: profile.player.grade || '',
+            tier: profile.tier || 1,
+            tierLevel: profile.tierLevel || 1,
+            friendCode: profile.friendCode || null,
+            visibility: 'anyone',
+            lastActive: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+
+        success++;
+      } catch(e) {
+        log(`❌ Failed to push ${name}: ${e.message}`, 'err');
+        failed++;
+      }
+    }
+
+    log(`\nDone! ${success} pushed, ${failed} failed.`, success > 0 ? 'ok' : 'err');
+    btn.textContent = `✅ DONE — ${success} PROFILES PUSHED`;
+
+    if (success > 0) {
+      log('\nNow refresh the admin dashboard to see all players.', 'info');
+      log('Then you can delete the orphan "Shane Sovic" profile.', 'info');
+    }
+  }
+
+  // Init
+  checkLocal();
+  checkAuth();
+</script>
+</body>
+</html>
