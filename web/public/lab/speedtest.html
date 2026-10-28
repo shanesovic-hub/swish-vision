@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Swish Vision speed test</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --teal:#00b4c5; --pink:#f9629f; --gold:#ffe66d; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#0a0a0a; color:#ddd; font-family:Outfit,sans-serif; padding:20px 16px 40px; max-width:560px; margin:0 auto; }
+  h1 { font-family:'Bebas Neue',sans-serif; color:var(--gold); letter-spacing:2px; font-size:34px; }
+  p { color:#999; font-size:14px; line-height:1.5; margin:6px 0 14px; }
+  button { width:100%; padding:14px; border-radius:10px; border:none; margin:8px 0; cursor:pointer;
+    font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:2px; color:#000;
+    background:linear-gradient(135deg,var(--teal),var(--pink)); }
+  button.ghost { background:#151522; color:#ddd; border:1px solid #333; }
+  button:disabled { opacity:.45; }
+  .card { background:#111; border:2px solid #333; border-radius:10px; padding:14px; margin:12px 0; }
+  .big { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:1px; color:#fff; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #222; font-size:14px; }
+  .ok { color:#4ade80 } .meh { color:#ffe66d } .bad { color:#ff6b6b }
+  #stage { position:relative; width:100%; aspect-ratio:1; background:#000; border-radius:10px; overflow:hidden; display:none; margin-top:10px; }
+  #stage video, #stage canvas { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #fps { position:absolute; left:8px; top:8px; background:rgba(0,0,0,.6); padding:4px 8px; border-radius:6px; font-size:13px; }
+  textarea { width:100%; height:110px; background:#151522; color:#ccc; border:1px solid #333; border-radius:8px; padding:8px; font-size:12px; }
+</style></head>
+<body>
+  <h1>Swish Vision speed test</h1>
+  <p>Checks whether this phone can run the camera's ball spotter fast enough in the browser. It takes about 30 seconds and downloads about 25 MB the first time.</p>
+  <button id="run">Run the speed test</button>
+  <div id="out"></div>
+  <button id="cam" class="ghost" disabled>Then: try it on the camera</button>
+  <div id="stage"><video id="v" playsinline muted></video><canvas id="ov"></canvas><div id="fps"></div></div>
+  <div class="card" id="share" style="display:none">
+    <div style="font-size:13px;color:#999;margin-bottom:6px">Results to send to Shane:</div>
+    <textarea id="txt" readonly></textarea>
+    <button class="ghost" id="copy">Copy results</button>
+  </div>
+<script type="module">
+import { loadLiteRt, loadAndCompile, Tensor } from './litert.bundle.js';
+const $ = id => document.getElementById(id);
+const WASM = 'https://cdn.jsdelivr.net/npm/@litertjs/core@2.6.0/wasm/';
+const N = 8400, S = 640, P = S * S;
+const results = { device: navigator.userAgent, hasWebGPU: !!navigator.gpu, cores: navigator.hardwareConcurrency || 0 };
+let best = null; // { model, accel, ms }
+
+function line(label, value, cls) { return `<div class="row"><span>${label}</span><span class="${cls || ''}">${value}</span></div>`; }
+function verdict(ms) {
+  const fps = 1000 / ms;
+  if (fps >= 12) return ['ok', `${fps.toFixed(0)} checks/sec: fast enough`];
+  if (fps >= 6) return ['meh', `${fps.toFixed(0)} checks/sec: usable, may miss some fast shots`];
+  return ['bad', `${fps.toFixed(1)} checks/sec: too slow`];
+}
+function pixelsToChw(data, chw) {
+  for (let i = 0; i < P; i++) { chw[i] = data[i * 4] / 255; chw[P + i] = data[i * 4 + 1] / 255; chw[2 * P + i] = data[i * 4 + 2] / 255; }
+}
+async function infer(model, chw) {
+  const input = new Tensor(chw, [1, 3, S, S]);
+  const outs = await model.run(input);
+  const o = await outs[0].moveTo('wasm');
+  const a = o.toTypedArray().slice();
+  input.delete(); o.delete(); try { outs.forEach(t => t.delete && t.delete()); } catch (e) {}
+  let bs = 0, bi = 0;
+  for (let j = 0; j < N; j++) { const s = a[4 * N + j]; if (s > bs) { bs = s; bi = j; } }
+  return { score: bs, cx: a[bi] * S, cy: a[N + bi] * S, w: a[2 * N + bi] * S };
+}
+
+$('run').onclick = async () => {
+  $('run').disabled = true; const out = $('out');
+  out.innerHTML = '<div class="card">Loading…</div>';
+  try {
+    await loadLiteRt(WASM);
+    const img = new Image(); img.src = 'sample.jpg'; await img.decode();
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(img, 0, 0, S, S);
+    const chw = new Float32Array(3 * P); pixelsToChw(ctx.getImageData(0, 0, S, S).data, chw);
+    let html = '';
+    for (const accel of (navigator.gpu ? ['webgpu', 'wasm'] : ['wasm'])) {
+      out.innerHTML = `<div class="card">Testing ${accel === 'webgpu' ? 'graphics chip (WebGPU)' : 'processor (CPU)'}…</div>` + html;
+      try {
+        const t0 = performance.now();
+        const model = await loadAndCompile('bball_640_v3.tflite', { accelerator: accel });
+        const load = performance.now() - t0;
+        let r; for (let i = 0; i < 3; i++) r = await infer(model, chw);
+        const times = [];
+        for (let i = 0; i < 12; i++) { const t = performance.now(); r = await infer(model, chw); times.push(performance.now() - t); }
+        times.sort((a, b) => a - b); const ms = times[times.length >> 1];
+        const correct = r.score > 0.8 && Math.abs(r.cx - 483) < 6 && Math.abs(r.cy - 301) < 6;
+        const [cls, text] = verdict(ms);
+        results[accel] = { ms: Math.round(ms), load: Math.round(load), correct, score: +r.score.toFixed(2) };
+        html += `<div class="card"><div class="big">${accel === 'webgpu' ? 'Graphics chip' : 'Processor'}</div>` +
+          line('Time per check', Math.round(ms) + ' ms') + line('Speed', text, cls) +
+          line('Found the ball correctly', correct ? 'yes' : 'NO', correct ? 'ok' : 'bad') + '</div>';
+        if (correct && (!best || ms < best.ms)) { if (best) best.model.delete && best.model.delete(); best = { model, accel, ms }; }
+      } catch (e) {
+        results[accel] = { error: String(e.message || e).slice(0, 200) };
+        html += `<div class="card"><div class="big">${accel === 'webgpu' ? 'Graphics chip' : 'Processor'}</div>` + line("Didn't run", String(e.message || e).slice(0, 80), 'bad') + '</div>';
+      }
+    }
+    out.innerHTML = html;
+    $('cam').disabled = !best;
+  } catch (e) {
+    out.innerHTML = `<div class="card bad">Couldn't start: ${e.message || e}</div>`;
+    results.error = String(e.message || e);
+  }
+  $('share').style.display = 'block'; $('txt').value = JSON.stringify(results);
+};
+
+$('copy').onclick = async () => { try { await navigator.clipboard.writeText($('txt').value); $('copy').textContent = 'Copied'; } catch (e) { $('txt').select(); } };
+
+$('cam').onclick = async () => {
+  if (!best) return;
+  $('cam').disabled = true; $('stage').style.display = 'block';
+  try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch (e) {}
+  const v = $('v');
+  v.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  await v.play();
+  const ov = $('ov'), octx = ov.getContext('2d');
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  const chw = new Float32Array(3 * P);
+  let frames = 0, t0 = performance.now(), ms = 0;
+  async function loop() {
+    const vw = v.videoWidth, vh = v.videoHeight, side = Math.min(vw, vh);
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
+    ctx.drawImage(v, sx, sy, side, side, 0, 0, S, S);
+    pixelsToChw(ctx.getImageData(0, 0, S, S).data, chw);
+    const t = performance.now(); const r = await infer(best.model, chw); ms = ms * 0.8 + (performance.now() - t) * 0.2;
+    ov.width = ov.clientWidth; ov.height = ov.clientHeight;
+    const k = ov.width / S;
+    if (r.score > 0.4) { octx.strokeStyle = '#4ade80'; octx.lineWidth = 4; octx.beginPath(); octx.arc(r.cx * k, r.cy * k, r.w * k / 2 + 4, 0, Math.PI * 2); octx.stroke(); }
+    frames++; const el = (performance.now() - t0) / 1000;
+    $('fps').textContent = `${(frames / el).toFixed(1)} checks/sec · ${Math.round(ms)} ms · ${best.accel}` + (r.score > 0.4 ? ` · ball ${(r.score * 100).toFixed(0)}%` : '');
+    if (el > 10) { results.camera = { fps: +(frames / el).toFixed(1), ms: Math.round(ms), accel: best.accel }; $('txt').value = JSON.stringify(results); frames = 0; t0 = performance.now(); }
+    requestAnimationFrame(loop);
+  }
+  loop();
+};
+</script>
+</body></html>
