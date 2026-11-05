@@ -556,18 +556,17 @@
     /* Quests */
     .quests-container { flex: 0; }
     /* Progress ring (1.9) */
-    .dash-ring-wrap { display:flex; flex-direction:column; align-items:center; margin: 6px 0 22px; }
-    .dash-ring-wrap .level-badge { margin-bottom: 14px; }
+    .dash-ring-wrap { display:flex; flex-direction:column; align-items:center; margin: 10px 0 22px; }
     .dash-ring { position:relative; width: min(84vw, 46vh, 420px); aspect-ratio: 1; }
     .dash-ring svg { width:100%; height:100%; display:block; filter: drop-shadow(0 0 14px rgba(0,180,197,0.25)); }
     #dash-ring-arc { transition: stroke-dashoffset 1.2s ease-out; }
     .dash-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-    .dash-ring-emoji { font-size: clamp(30px, 7vh, 52px); line-height:1; }
-    .dash-ring-num { font-family:'Bebas Neue',sans-serif; font-size: clamp(80px, 17vh, 150px); line-height:0.9; color:#fff;
+    .dash-ring-label { font-family:'Bebas Neue',sans-serif; font-size: clamp(20px, 3.4vh, 30px); letter-spacing:6px; color:#888; padding-left:6px; }
+    .dash-ring-num { font-family:'Bebas Neue',sans-serif; font-size: clamp(90px, 18vh, 170px); line-height:0.85; color:#fff;
       background: linear-gradient(135deg, var(--teal), var(--pink)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-    .dash-ring-label { font-family:'Bebas Neue',sans-serif; font-size: clamp(16px, 2.6vh, 24px); letter-spacing:2px; color:#ff8a65; margin-top:4px; }
-    .dash-ring-xp { font-family:'Outfit',sans-serif; font-size:15px; color:#999; margin-top:12px; text-align:center; }
-    .dash-ring-xp b { color:#fff; font-weight:600; }
+    .dash-ring-rank { font-family:'Bebas Neue',sans-serif; font-size: clamp(24px, 4.2vh, 38px); letter-spacing:4px; padding-left:4px; margin-top:6px; color:#aaa; }
+    .dash-streak-chip { margin-top:16px; padding:8px 18px; border-radius:999px; background:rgba(255,138,101,0.12); border:1px solid rgba(255,138,101,0.35);
+      color:#ff8a65; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
     .quests-title {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 20px;
@@ -3193,7 +3192,6 @@
     <div id="dashboard" class="screen dashboard-screen">
       <!-- Progress ring: fills toward the next tier; the day streak in the middle (1.9) -->
       <div class="dash-ring-wrap">
-        <div id="dash-level" class="level-badge">UNRANKED · LEVEL 1</div>
         <div class="dash-ring">
           <svg viewBox="0 0 240 240" aria-hidden="true">
             <defs>
@@ -3206,12 +3204,12 @@
               stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="653.5" transform="rotate(-90 120 120)"/>
           </svg>
           <div class="dash-ring-center">
-            <div id="dash-streak-emoji" class="dash-ring-emoji">🔥</div>
-            <div id="dash-streak" class="dash-ring-num">0</div>
-            <div id="dash-streak-label" class="dash-ring-label">DAYS IN A ROW</div>
+            <div class="dash-ring-label">LEVEL</div>
+            <div id="dash-level-num" class="dash-ring-num">1</div>
+            <div id="dash-rank" class="dash-ring-rank">UNRANKED</div>
           </div>
         </div>
-        <div id="dash-xp-text" class="dash-ring-xp">0 / 100 FGA</div>
+        <div id="dash-streak" class="dash-streak-chip">🔥 0 days in a row</div>
       </div>
 
       <!-- Coach Goal Suggestion Card -->
@@ -3761,7 +3759,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.9.0';
+  const APP_VERSION = '1.9.1';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -5861,33 +5859,19 @@
     const level = state.tierLevel || 1;
     const streak = getStreak();
     
-    // Level & XP bar
+    // Progress ring: the level (percent of the way to the next rank), rank name, streak underneath
     const config = TIER_CONFIG[state.tier];
-    const fgaPct = (config && config.fgaRequired > 0) ? Math.min(100, Math.round((state.tierFGA / config.fgaRequired) * 100)) : 100;
-    const badge = document.getElementById('dash-level');
-    badge.textContent = `${tierName} · LEVEL ${level}`;
-    badge.style.cssText = getTierColorCSS(tier) + ' color: ' + (tier >= 5 ? '#000' : '#000') + '; padding: 4px 12px; font-size: 15px; border-radius: 6px; letter-spacing: 1px; white-space: nowrap;';
-    if (tier === 10) {
-      badge.classList.add('tier-rainbow');
-      badge.style.color = '#fff';
-      badge.style.webkitTextFillColor = 'transparent';
-    } else {
-      badge.classList.remove('tier-rainbow');
-      badge.style.webkitTextFillColor = '';
-    }
-    
-    // Progress ring toward the next tier, day streak in the middle
+    const lvl = Math.max(1, Math.min(100, level));
     const arc = document.getElementById('dash-ring-arc');
     const circ = 2 * Math.PI * 104;
     arc.style.strokeDasharray = circ.toFixed(1);
-    arc.style.strokeDashoffset = (circ * (1 - fgaPct / 100)).toFixed(1);
-    const nextTier = (config && config.fgaRequired > 0 && TIER_NAMES[tier + 1]) ? TIER_NAMES[tier + 1].toUpperCase() : null;
-    document.getElementById('dash-xp-text').innerHTML = (config && config.fgaRequired > 0)
-      ? `<b>${state.tierFGA.toLocaleString()}</b> / ${config.fgaRequired.toLocaleString()} shots${nextTier ? ' to ' + nextTier : ''}`
-      : 'MAX TIER';
-    document.getElementById('dash-streak-emoji').textContent = getStreakEmoji(streak);
-    document.getElementById('dash-streak').textContent = streak;
-    document.getElementById('dash-streak-label').textContent = streak === 1 ? 'DAY IN A ROW' : 'DAYS IN A ROW';
+    arc.style.strokeDashoffset = (circ * (1 - lvl / 100)).toFixed(1);
+    document.getElementById('dash-level-num').textContent = lvl;
+    const rank = document.getElementById('dash-rank');
+    rank.textContent = tierName;
+    if (tier === 10) { rank.style.cssText = getTierColorCSS(tier) + ' -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;'; }
+    else { rank.style.cssText = 'color:' + getTierColor(tier) + ';'; }
+    document.getElementById('dash-streak').textContent = `${getStreakEmoji(streak)} ${streak} day${streak !== 1 ? 's' : ''} in a row`;
 
     // Goals / quest list are no longer shown on this screen (quests still count in the background)
     document.getElementById('goal-suggestion-card').style.display = 'none';
@@ -9060,6 +9044,6 @@
 
   </script>
   <!-- Shot chart + progress cards on the Stats screen (also used by the Android app) -->
-  <script src="js/svstats.js?v=1.9.0"></script>
+  <script src="js/svstats.js?v=1.9.1"></script>
 </body>
 </html>
