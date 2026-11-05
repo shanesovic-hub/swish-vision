@@ -556,7 +556,7 @@
     /* Quests */
     .quests-container { flex: 0; }
     /* Progress ring (1.9) */
-    .dash-ring-wrap { display:flex; flex-direction:column; align-items:center; margin: 10px 0 22px; }
+    .dash-ring-wrap { display:flex; flex-direction:column; align-items:center; margin: 10px 0 clamp(36px, 7vh, 72px); }
     .dash-ring { position:relative; width: min(84vw, 46vh, 420px); aspect-ratio: 1; }
     .dash-ring svg { width:100%; height:100%; display:block; filter: drop-shadow(0 0 14px rgba(0,180,197,0.25)); }
     #dash-ring-arc { transition: stroke-dashoffset 1.2s ease-out; }
@@ -565,7 +565,7 @@
     .dash-ring-num { font-family:'Bebas Neue',sans-serif; font-size: clamp(90px, 18vh, 170px); line-height:0.85; color:#fff;
       background: linear-gradient(135deg, var(--teal), var(--pink)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
     .dash-ring-rank { font-family:'Bebas Neue',sans-serif; font-size: clamp(24px, 4.2vh, 38px); letter-spacing:4px; padding-left:4px; margin-top:6px; color:#aaa; }
-    .dash-streak-chip { margin-top:16px; padding:8px 18px; border-radius:999px; background:rgba(255,138,101,0.12); border:1px solid rgba(255,138,101,0.35);
+    .dash-streak-chip { margin-top:22px; padding:8px 18px; border-radius:999px; background:rgba(255,138,101,0.12); border:1px solid rgba(255,138,101,0.35);
       color:#ff8a65; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
     .quests-title {
       font-family: 'Bebas Neue', sans-serif;
