@@ -863,8 +863,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: flex-end;
       flex: 1;
+      height: 100%;
     }
+    .bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
+    .stats-range-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+    .stats-range-btn { flex: 1; padding: 10px 0; border-radius: 10px; border: 1px solid #333; background: #161616; color: #888;
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; cursor: pointer; }
+    .stats-range-btn.active { border-color: var(--teal); background: rgba(0,180,197,0.12); color: #fff; }
+    .stats-sub-row { text-align: center; color: #888; font-family: 'Outfit', sans-serif; font-size: 14px; margin: 2px 0 6px; }
     .bar {
       width: 100%;
       max-width: 32px;
@@ -965,6 +973,26 @@
       background: rgba(0,180,197,0.05);
     }
     .badge-item.locked { opacity: 0.45; }
+    /* Badges grid (1.10) */
+    .badge-section-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--teal); letter-spacing: 2px; margin: 18px 0 10px; padding-left: 2px; }
+    .badge-section-title span { color: #666; font-size: 18px; margin-left: 6px; }
+    .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+    .badge-tile { background: #141414; border: 1px solid #262626; border-radius: 14px; padding: 12px 6px 10px; text-align: center; }
+    .badge-tile-icon { font-size: 34px; line-height: 1.1; filter: grayscale(1); opacity: 0.28; }
+    .badge-tile-name { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: #666; margin-top: 6px; line-height: 1.2; }
+    .badge-tile-desc { font-family: 'Outfit', sans-serif; font-size: 11px; color: #555; margin-top: 3px; line-height: 1.25; }
+    .badge-tile.earned { border-color: rgba(0,180,197,0.55); background: linear-gradient(160deg, rgba(0,180,197,0.14), rgba(249,98,159,0.08)); }
+    .badge-tile.earned .badge-tile-icon { filter: drop-shadow(0 0 8px rgba(0,180,197,0.45)); opacity: 1; }
+    .badge-tile.earned .badge-tile-name { color: #fff; }
+    .badge-tile.earned .badge-tile-desc { color: #9aa; }
+    .badge-next { display: flex; flex-direction: column; gap: 10px; }
+    .badge-next-card { display: flex; align-items: center; gap: 14px; background: #141414; border: 1px solid #333; border-radius: 14px; padding: 12px 14px; }
+    .badge-next-icon { font-size: 34px; }
+    .badge-next-info { flex: 1; min-width: 0; }
+    .badge-next-name { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; color: #fff; }
+    .badge-next-bar { height: 8px; background: #262626; border-radius: 4px; overflow: hidden; margin: 7px 0 5px; }
+    .badge-next-bar > div { height: 100%; background: linear-gradient(90deg, var(--teal), var(--pink)); border-radius: 4px; }
+    .badge-next-count { font-family: 'Outfit', sans-serif; font-size: 12px; color: #888; }
     .badge-icon {
       width: 48px;
       height: 48px;
@@ -1153,6 +1181,18 @@
     .powered-link:active {
       background: rgba(0,180,197,0.1);
     }
+    .profile-danger { width: 100%; max-width: 360px; margin-top: 28px; text-align: center; }
+    .profile-danger summary { font-family: 'Outfit', sans-serif; font-size: 13px; color: #555; cursor: pointer; list-style: none; padding: 8px; }
+    .profile-danger summary::-webkit-details-marker { display: none; }
+    .profile-danger p { font-family: 'Outfit', sans-serif; font-size: 13px; color: #777; margin: 6px 0 0; }
+    .profile-danger .reset-btn { margin-top: 12px; border-color: #5a2323; color: #e06060; }
+    /* Log session: one row per shot type (1.10) */
+    .log-grid { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 12px 14px 4px; margin-bottom: 14px; }
+    .log-grid-head, .log-grid-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; align-items: center; }
+    .log-grid-head span { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px; color: var(--teal); text-align: center; }
+    .log-grid-row { margin-bottom: 10px; }
+    .log-grid-label { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 1.5px; color: var(--gold); line-height: 1.05; }
+    .log-grid-row .form-input { text-align: center; padding: 12px 6px; font-size: 20px; margin: 0; width: 100%; box-sizing: border-box; }
     .reset-btn {
       margin-top: 30px;
       background: none;
@@ -2379,6 +2419,11 @@
       letter-spacing: 0.5px;
       white-space: nowrap;
     }
+    .board-selects { display: flex; gap: 10px; margin: 0 0 12px; }
+    .board-select { flex: 1; min-width: 0; padding: 11px 12px; border-radius: 12px; border: 1px solid #333; background: #141414; color: #fff;
+      font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; appearance: none; -webkit-appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #00b4c5 50%), linear-gradient(135deg, #00b4c5 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
     .board-pill.active {
       color: var(--teal);
       border-color: var(--teal);
@@ -2860,15 +2905,9 @@
     .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: #fff; }
 
     /* ===== CENTER NAV TAB GLOW ===== */
-    .nav-item.center-tab .nav-icon {
-      font-size: 28px;
-      filter: drop-shadow(0 0 8px rgba(255,230,109,0.5));
-    }
-    .nav-item.center-tab.active .nav-icon {
-      filter: drop-shadow(0 0 12px rgba(255,230,109,0.8));
-    }
-    .nav-item.center-tab .nav-label { color: var(--gold); }
-    .nav-item.center-tab.active .nav-label { color: var(--gold); }
+    /* Only the tab you're on lights up (1.10): the others are dimmed, Board included. */
+    .nav-item .nav-icon { opacity: 0.45; filter: grayscale(0.6); transition: opacity 0.2s, filter 0.2s; }
+    .nav-item.active .nav-icon { opacity: 1; filter: drop-shadow(0 0 8px rgba(0,180,197,0.45)); }
 
     /* ===== AUTH-REQUIRED PROMPT ===== */
     .auth-required-prompt {
@@ -2969,9 +3008,10 @@
       .stats-header { text-align: left; }
 
       /* Badges: tiles across the screen */
-      #badges-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; max-width: 1700px; }
-      #badges-list > :not(.badge-item) { grid-column: 1 / -1; }
-      #badges-list > .badge-item { margin: 0 !important; }
+      #badges-list { max-width: 1400px; }
+      .badge-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+      .badge-next { flex-direction: row; }
+      .badge-next-card { flex: 1; }
 
       /* Board and profile: wide centred column */
       .board-screen > * { width: 100%; max-width: 1000px !important; margin-left: auto; margin-right: auto; }
@@ -3284,59 +3324,27 @@
       <h2 class="screen-title">📝 LOG SESSION</h2>
       <p class="screen-subtitle">Record your practice</p>
       <div class="log-form">
-        <div class="shot-type-block">
-          <div class="shot-type-block-title">LAYUPS</div>
-          <div class="log-row">
-            <div class="form-group">
-              <label class="form-label">MADE</label>
-              <input id="log-layups-made" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ATTEMPTED</label>
-              <input id="log-layups-att" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
+        <div class="log-grid">
+          <div class="log-grid-head"><span></span><span>MADE</span><span>ATTEMPTED</span></div>
+          <div class="log-grid-row">
+            <span class="log-grid-label">LAYUPS</span>
+            <input id="log-layups-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups made">
+            <input id="log-layups-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups attempted">
           </div>
-        </div>
-
-        <div class="shot-type-block">
-          <div class="shot-type-block-title">MID RANGE</div>
-          <div class="log-row">
-            <div class="form-group">
-              <label class="form-label">MADE</label>
-              <input id="log-midrange-made" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ATTEMPTED</label>
-              <input id="log-midrange-att" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
+          <div class="log-grid-row">
+            <span class="log-grid-label">MID RANGE</span>
+            <input id="log-midrange-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range made">
+            <input id="log-midrange-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range attempted">
           </div>
-        </div>
-
-        <div class="shot-type-block">
-          <div class="shot-type-block-title">FREE THROWS</div>
-          <div class="log-row">
-            <div class="form-group">
-              <label class="form-label">MADE</label>
-              <input id="log-ft-made" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ATTEMPTED</label>
-              <input id="log-ft-att" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
+          <div class="log-grid-row">
+            <span class="log-grid-label">FREE THROWS</span>
+            <input id="log-ft-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws made">
+            <input id="log-ft-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws attempted">
           </div>
-        </div>
-
-        <div class="shot-type-block">
-          <div class="shot-type-block-title">3 POINTERS</div>
-          <div class="log-row">
-            <div class="form-group">
-              <label class="form-label">MADE</label>
-              <input id="log-three-made" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ATTEMPTED</label>
-              <input id="log-three-att" class="form-input" type="number" placeholder="0" min="0" max="2000" oninput="calcSession()">
-            </div>
+          <div class="log-grid-row">
+            <span class="log-grid-label">3 POINTERS</span>
+            <input id="log-three-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers made">
+            <input id="log-three-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers attempted">
           </div>
         </div>
 
@@ -3379,7 +3387,7 @@
     <div id="badges" class="screen badges-screen">
       <div style="text-align:center; padding-top:10px; margin-bottom:18px;">
         <h2 class="screen-title">🏆 ACHIEVEMENTS</h2>
-        <p class="screen-subtitle" id="badges-count">0 / 14 Unlocked</p>
+        <p class="screen-subtitle" id="badges-count">0 earned</p>
       </div>
       <div id="badges-list"></div>
     </div>
@@ -3400,19 +3408,19 @@
       <div class="profile-stats-row">
         <div class="profile-stat">
           <div id="profile-level" class="profile-stat-val">1</div>
-          <div class="profile-stat-label">TIER · LEVEL</div>
+          <div class="profile-stat-label">LEVEL</div>
         </div>
         <div class="profile-stat">
           <div id="profile-xp" class="profile-stat-val">0</div>
           <div class="profile-stat-label">LIFETIME FGA</div>
         </div>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:360px; margin-bottom:10px;">
+      <div style="display:none; justify-content:space-between; align-items:center; width:100%; max-width:360px; margin-bottom:10px;">
         <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">GOALS</div>
         <button id="edit-goals-btn" onclick="showGoalEditor()" style="background:none; border:1px solid var(--teal); color:var(--teal); padding:4px 12px; border-radius:6px; font-family:'Outfit',sans-serif; font-size:12px; cursor:pointer;">✏️ EDIT</button>
       </div>
       <!-- Goals display -->
-      <div id="profile-goals-display" class="stat-cards-grid" style="width:100%; max-width:360px;">
+      <div id="profile-goals-display" class="stat-cards-grid" style="display:none; width:100%; max-width:360px;">
         <div class="profile-stat">
           <div id="profile-goal-days" class="profile-stat-val">—</div>
           <div class="profile-stat-label">DAYS / WEEK</div>
@@ -3503,7 +3511,11 @@
         <div class="powered-text">Saratoga Springs, UT</div>
         <a href="https://houseofswish.com" target="_blank" class="powered-link">Learn about House of Swish →</a>
       </div>
-      <button class="reset-btn" onclick="resetApp()">RESET ALL DATA</button>
+      <details class="profile-danger">
+        <summary>⚙️ More settings</summary>
+        <p>Erases this player's sessions, badges and rank for good.</p>
+        <button class="reset-btn" onclick="resetApp()">RESET ALL DATA</button>
+      </details>
     </div>
 
     <!-- ===== BOARD (LEADERBOARD) ===== -->
@@ -3523,12 +3535,6 @@
         <button class="board-view-btn" onclick="setBoardView('feed')">FEED</button>
       </div>
       <div id="board-rankings">
-        <div class="board-pills" id="board-time-pills">
-          <span class="board-pill" onclick="setBoardTime('daily')">DAILY</span>
-          <span class="board-pill" onclick="setBoardTime('weekly')">WEEKLY</span>
-          <span class="board-pill" onclick="setBoardTime('monthly')">MONTHLY</span>
-          <span class="board-pill active" onclick="setBoardTime('allTime')">ALL-TIME</span>
-        </div>
         <div class="board-pills" id="board-category-pills">
           <span class="board-pill active" onclick="setBoardCategory('fga')">FGA</span>
           <span class="board-pill" onclick="setBoardCategory('fgm')">FGM</span>
@@ -3536,11 +3542,20 @@
           <span class="board-pill" onclick="setBoardCategory('streak')">STREAK</span>
           <span class="board-pill" onclick="setBoardCategory('bosses')">BOSSES</span>
         </div>
-        <div class="board-pills" id="board-grade-pills">
-          <span class="board-pill active" onclick="setBoardGrade('all')">ALL</span>
-          <span class="board-pill" onclick="setBoardGrade('4th-6th')">4th-6th</span>
-          <span class="board-pill" onclick="setBoardGrade('7th-8th')">7th-8th</span>
-          <span class="board-pill" onclick="setBoardGrade('9th-12th')">9th-12th</span>
+        <div class="board-selects">
+          <select id="board-time-select" class="board-select" onchange="setBoardTime(this.value)">
+            <option value="daily">Today</option>
+            <option value="weekly">This week</option>
+            <option value="monthly">This month</option>
+            <option value="allTime" selected>All time</option>
+          </select>
+          <select id="board-grade-select" class="board-select" onchange="setBoardGrade(this.value)">
+            <option value="all" selected>All grades</option>
+            <option value="3rd-4th">3rd - 4th</option>
+            <option value="5th-6th">5th - 6th</option>
+            <option value="7th-8th">7th - 8th</option>
+            <option value="9th-12th">9th - 12th</option>
+          </select>
         </div>
         <div class="board-scope-toggle">
           <button class="board-scope-btn" onclick="setBoardScope('friends')">👥 FRIENDS</button>
@@ -3759,7 +3774,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.9.1';
+  const APP_VERSION = '1.10.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -6602,8 +6617,6 @@
     }
     const maxWeekShots = Math.max(...weekData.map(d => d.shots), 1);
 
-    const last7 = sessions.slice(-7);
-    const maxTrend = 100;
 
     // Today's stats
     const today = dateStr(new Date());
@@ -6612,90 +6625,62 @@
     const todayMakes = todaySessions.reduce((s, x) => s + x.makes, 0);
     const todayAcc = todayShots > 0 ? Math.round((todayMakes / todayShots) * 100) : 0;
 
+    // One "Shooting" card with a Today | All time switch (1.10); progress + shot chart cards go right after it.
+    const typeBars = (list) => {
+      const st = getShotTypeStats(list);
+      if (!Object.values(st).some(t => t.att > 0)) return '';
+      return '<div style="border-top:1px solid #333; margin-top:8px; padding-top:14px;">' + Object.keys(st).map(key => {
+        const t = st[key];
+        if (t.att === 0) return '';
+        const pct = Math.round((t.made / t.att) * 100);
+        return `
+          <div style="margin-bottom: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-family:'Outfit',sans-serif; font-size:15px; color:#ccc;">${t.label}</span>
+              <span style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--teal); letter-spacing:1px;">${t.made.toLocaleString()}/${t.att.toLocaleString()} (${pct}%)</span>
+            </div>
+            <div style="width:100%; height:10px; background:#222; border-radius:5px; overflow:hidden;">
+              <div style="width:${Math.max(4, pct)}%; height:100%; background:linear-gradient(90deg, var(--teal), var(--pink)); border-radius:5px; transition:width 0.5s;"></div>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+    };
+    if (!window._statsRange) window._statsRange = todayShots > 0 ? 'today' : 'all';
+    const range = window._statsRange;
+
     container.innerHTML = `
-      <div class="chart-container">
-        <div class="chart-title">TODAY</div>
-        <div class="stat-cards-grid" style="margin-bottom: 0;">
-          <div class="stat-card-mini" style="border: none; padding: 12px;">
-            <div class="stat-card-value">${todayMakes}/${todayShots}</div>
-            <div class="stat-card-label">FG</div>
-          </div>
-          <div class="stat-card-mini" style="border: none; padding: 12px;">
-            <div class="stat-card-value">${todayShots > 0 ? todayAcc + '%' : '—'}</div>
-            <div class="stat-card-label">FG%</div>
-          </div>
+      <div class="chart-container" id="stats-main">
+        <div class="stats-range-toggle">
+          <button class="stats-range-btn ${range === 'today' ? 'active' : ''}" onclick="setStatsRange('today')">TODAY</button>
+          <button class="stats-range-btn ${range === 'all' ? 'active' : ''}" onclick="setStatsRange('all')">ALL TIME</button>
         </div>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">TODAY BY SHOT TYPE</div>
-        ${(() => {
-          const todayTypeStats = getShotTypeStats(todaySessions);
-          const hasTodayTypeData = Object.values(todayTypeStats).some(t => t.att > 0);
-          if (!hasTodayTypeData) return '<div style="text-align:center; color:#666; padding:12px;">No shots logged today yet.</div>';
-          return Object.keys(todayTypeStats).map(key => {
-            const t = todayTypeStats[key];
-            if (t.att === 0) return '';
-            const pct = Math.round((t.made / t.att) * 100);
-            const barWidth = Math.max(4, pct);
-            return `
-              <div style="margin-bottom: 14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <span style="font-family:'Outfit',sans-serif; font-size:15px; color:#ccc;">${t.label}</span>
-                  <span style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--teal); letter-spacing:1px;">${t.made}/${t.att} (${pct}%)</span>
-                </div>
-                <div style="width:100%; height:10px; background:#222; border-radius:5px; overflow:hidden;">
-                  <div style="width:${barWidth}%; height:100%; background:linear-gradient(90deg, var(--teal), var(--pink)); border-radius:5px; transition:width 0.5s;"></div>
-                </div>
-              </div>`;
-          }).join('');
-        })()}
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">ALL TIME</div>
-        <div class="stat-cards-grid" style="margin-bottom: 0;">
-          <div class="stat-card-mini" style="border: none; padding: 12px;">
-            <div class="stat-card-value">${totalMakes.toLocaleString()}/${totalShots.toLocaleString()}</div>
-            <div class="stat-card-label">FG</div>
+        <div id="stats-range-today" style="display:${range === 'today' ? 'block' : 'none'}">
+          ${todayShots > 0 ? `
+          <div class="stat-cards-grid" style="margin-bottom: 0;">
+            <div class="stat-card-mini" style="border: none; padding: 12px;">
+              <div class="stat-card-value">${todayMakes}/${todayShots}</div>
+              <div class="stat-card-label">FG</div>
+            </div>
+            <div class="stat-card-mini" style="border: none; padding: 12px;">
+              <div class="stat-card-value">${todayAcc}%</div>
+              <div class="stat-card-label">FG%</div>
+            </div>
           </div>
-          <div class="stat-card-mini" style="border: none; padding: 12px;">
-            <div class="stat-card-value">${overallAcc}%</div>
-            <div class="stat-card-label">FG%</div>
+          ${typeBars(todaySessions)}` : '<div style="text-align:center; color:#777; padding:28px 12px; font-family:Outfit,sans-serif;">No shots logged today yet.<br>Go get some up! 🏀</div>'}
+        </div>
+        <div id="stats-range-all" style="display:${range === 'all' ? 'block' : 'none'}">
+          <div class="stat-cards-grid" style="margin-bottom: 0;">
+            <div class="stat-card-mini" style="border: none; padding: 12px;">
+              <div class="stat-card-value">${totalMakes.toLocaleString()}/${totalShots.toLocaleString()}</div>
+              <div class="stat-card-label">FG</div>
+            </div>
+            <div class="stat-card-mini" style="border: none; padding: 12px;">
+              <div class="stat-card-value">${overallAcc}%</div>
+              <div class="stat-card-label">FG%</div>
+            </div>
           </div>
-        </div>
-        ${(() => {
-          const allTimeTypeStats = getShotTypeStats(sessions);
-          const hasAllTimeTypeData = Object.values(allTimeTypeStats).some(t => t.att > 0);
-          if (!hasAllTimeTypeData) return '';
-          return '<div style="border-top:1px solid #333; margin-top:8px; padding-top:12px;">' +
-            Object.keys(allTimeTypeStats).map(key => {
-              const t = allTimeTypeStats[key];
-              if (t.att === 0) return '';
-              const pct = Math.round((t.made / t.att) * 100);
-              const barWidth = Math.max(4, pct);
-              return `
-                <div style="margin-bottom: 14px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-family:'Outfit',sans-serif; font-size:15px; color:#ccc;">${t.label}</span>
-                    <span style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--teal); letter-spacing:1px;">${t.made}/${t.att} (${pct}%)</span>
-                  </div>
-                  <div style="width:100%; height:10px; background:#222; border-radius:5px; overflow:hidden;">
-                    <div style="width:${barWidth}%; height:100%; background:linear-gradient(90deg, var(--teal), var(--pink)); border-radius:5px; transition:width 0.5s;"></div>
-                  </div>
-                </div>`;
-            }).join('') + '</div>';
-        })()}
-      </div>
-
-      <div class="stat-cards-grid">
-        <div class="stat-card-mini">
-          <div class="stat-card-value">${sessions.length}</div>
-          <div class="stat-card-label">Sessions</div>
-        </div>
-        <div class="stat-card-mini">
-          <div class="stat-card-value">${(totalTime / 60).toFixed(1)}</div>
-          <div class="stat-card-label">Hours</div>
+          <div class="stats-sub-row">${sessions.length} session${sessions.length !== 1 ? 's' : ''} · ${(totalTime / 60).toFixed(1)} hours</div>
+          ${typeBars(sessions)}
         </div>
       </div>
 
@@ -6705,24 +6690,10 @@
           ${weekData.map(d => `
             <div class="bar-col">
               <div class="bar-value">${d.shots || ''}</div>
-              <div class="bar" style="height: ${(d.shots / maxWeekShots) * 100}%; background: linear-gradient(to top, var(--teal), var(--pink));"></div>
+              <div class="bar-track"><div class="bar" style="height: ${d.shots ? Math.max(4, (d.shots / maxWeekShots) * 100) : 0}%; background: linear-gradient(to top, var(--teal), var(--pink));"></div></div>
               <div class="bar-label">${d.label}</div>
             </div>
           `).join('')}
-        </div>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">ACCURACY TREND (LAST 7 SESSIONS)</div>
-        <div class="accuracy-trend">
-          ${last7.map((s, i) => {
-            const acc = s.shots > 0 ? Math.round((s.makes / s.shots) * 100) : 0;
-            return `
-              <div class="trend-point" style="height: ${acc}%;">
-                <div class="trend-label" style="margin-bottom: 4px;">${acc}%</div>
-                <div class="trend-dot"></div>
-              </div>`;
-          }).join('')}
         </div>
       </div>
 
@@ -6750,6 +6721,15 @@
     `;
   }
 
+  function setStatsRange(r) {
+    window._statsRange = r;
+    ['today', 'all'].forEach(k => {
+      const el = document.getElementById('stats-range-' + k);
+      if (el) el.style.display = k === r ? 'block' : 'none';
+    });
+    document.querySelectorAll('.stats-range-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().startsWith(r === 'all' ? 'all' : 'today')));
+  }
+
   // =============================================
   // BADGES
   // =============================================
@@ -6757,9 +6737,6 @@
     const container = document.getElementById('badges-list');
     if (!container) return;
     container.innerHTML = '';
-    const unlockCount = state.achievements ? state.achievements.filter(id => ACHIEVEMENTS.some(a => a.id === id)).length : 0;
-    const countEl = document.getElementById('badges-count');
-    if (countEl) countEl.textContent = `${unlockCount} / ${ACHIEVEMENTS.length} Unlocked`;
 
     // Auto-unlock current tier
     const currentTier = state.tier || 1;
@@ -6769,37 +6746,77 @@
         state.achievements.push(tierId);
       }
     }
-    
-    const categories = [
-      { key: 'tiers', title: '🏆 TIERS' },
-      { key: 'streaks', title: '🔥 STREAKS' },
-      { key: 'badges', title: '🏀 BADGES' }
-    ];
+    const has = id => !!(state.achievements && state.achievements.includes(id));
 
-    categories.forEach(cat => {
-      const catAchievements = ACHIEVEMENTS.filter(a => a.category === cat.key);
-      if (catAchievements.length === 0) return;
+    // Ranks are on the Quest ring, so this screen shows streaks and badges (1.10).
+    const shown = ACHIEVEMENTS.filter(a => a.category !== 'tiers');
+    const countEl = document.getElementById('badges-count');
+    if (countEl) countEl.textContent = `${shown.filter(a => has(a.id)).length} / ${shown.length} earned`;
 
-      const header = document.createElement('div');
-      header.style.cssText = "font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--teal); letter-spacing: 2px; margin: 18px 0 10px; padding-left: 4px;";
-      header.textContent = cat.title;
-      container.appendChild(header);
+    // How close they are to each badge that can be counted
+    const ss = state.sessions || [];
+    const sum = (k) => ss.reduce((t, x) => t + (x[k] || 0), 0);
+    const best = (f) => ss.reduce((m, x) => Math.max(m, f(x) || 0), 0);
+    const typeBest = (k) => best(x => x.shotTypes && x.shotTypes[k] ? x.shotTypes[k].attempted : 0);
+    const shots = sum('shots'), makes = sum('makes'), streak = getStreak();
+    const week = typeof getWeekShots === 'function' ? getWeekShots() : 0;
+    const bestSession = best(x => x.shots), longest = best(x => x.time);
+    const bosses = (state.defeatedBosses || []).length;
+    const P = {
+      first_session: [ss.length, 1, 'session'],
+      century: [bestSession, 100, 'shots in a session'], double_century: [bestSession, 200, 'shots in a session'],
+      triple_century: [bestSession, 300, 'shots in a session'], five_hundred_session: [bestSession, 500, 'shots in a session'],
+      club_500: [week, 500, 'shots this week'], club_1000: [week, 1000, 'shots this week'], club_2000: [week, 2000, 'shots this week'],
+      lifetime_1000: [shots, 1000, 'career shots'], lifetime_2500: [shots, 2500, 'career shots'], lifetime_5000: [shots, 5000, 'career shots'],
+      lifetime_10000: [shots, 10000, 'career shots'], lifetime_25000: [shots, 25000, 'career shots'], lifetime_50000: [shots, 50000, 'career shots'],
+      makes_500: [makes, 500, 'career makes'], makes_1000: [makes, 1000, 'career makes'], makes_5000: [makes, 5000, 'career makes'],
+      the_grind: [ss.length, 10, 'sessions'], dedicated: [ss.length, 25, 'sessions'], committed: [ss.length, 50, 'sessions'],
+      relentless: [ss.length, 100, 'sessions'], unstoppable: [ss.length, 250, 'sessions'],
+      layup_master: [typeBest('layups'), 50, 'layups in a session'], midrange_master: [typeBest('midrange'), 50, 'mid-range in a session'],
+      ft_master: [typeBest('ft'), 50, 'free throws in a session'], three_master: [typeBest('three'), 50, 'threes in a session'],
+      hour_session: [longest, 60, 'minutes in a session'], marathon: [longest, 120, 'minutes in a session'],
+      boss: [bosses, 1, 'bosses'], boss_3: [bosses, 3, 'bosses'], boss_5: [bosses, 5, 'bosses'],
+      streak_3: [streak, 3, 'days in a row'], streak_7: [streak, 7, 'days in a row'], streak_10: [streak, 10, 'days in a row'],
+      streak_20: [streak, 20, 'days in a row'], streak_30: [streak, 30, 'days in a row'], streak_50: [streak, 50, 'days in a row'],
+      streak_100: [streak, 100, 'days in a row'],
+    };
 
-      catAchievements.forEach(a => {
-        const unlocked = state.achievements && state.achievements.includes(a.id);
-        const badge = document.createElement('div');
-        badge.className = 'badge-item' + (unlocked ? ' unlocked' : '');
-        badge.innerHTML = `
-          <div class="badge-icon">${unlocked ? a.icon : '🔒'}</div>
-          <div class="badge-info">
-            <div class="badge-name">${a.name}</div>
-            <div class="badge-desc">${a.desc}</div>
-          </div>
-        `;
-        container.appendChild(badge);
-      });
+    // NEXT UP: the 3 unearned badges they're closest to
+    const next = shown.filter(a => !has(a.id) && P[a.id] && P[a.id][0] < P[a.id][1])
+      .map(a => ({ a, r: P[a.id][0] / P[a.id][1] }))
+      .sort((x, y) => y.r - x.r).slice(0, 3);
+    if (next.length) {
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="badge-section-title">⏭️ NEXT UP</div>
+        <div class="badge-next">${next.map(({ a }) => {
+          const [cur, goal, unit] = P[a.id];
+          return `<div class="badge-next-card">
+            <div class="badge-next-icon">${a.icon}</div>
+            <div class="badge-next-info">
+              <div class="badge-next-name">${a.name}</div>
+              <div class="badge-next-bar"><div style="width:${Math.max(3, Math.round(cur / goal * 100))}%"></div></div>
+              <div class="badge-next-count">${cur.toLocaleString()} / ${goal.toLocaleString()} ${unit}</div>
+            </div>
+          </div>`;
+        }).join('')}</div>`;
+      container.appendChild(sec);
+    }
+
+    [{ key: 'streaks', title: '🔥 STREAKS' }, { key: 'badges', title: '🏀 BADGES' }].forEach(cat => {
+      const list = shown.filter(a => a.category === cat.key);
+      if (!list.length) return;
+      const sec = document.createElement('div');
+      sec.innerHTML = `<div class="badge-section-title">${cat.title} <span>${list.filter(a => has(a.id)).length}/${list.length}</span></div>
+        <div class="badge-grid">${list.map(a => `
+          <div class="badge-tile${has(a.id) ? ' earned' : ''}">
+            <div class="badge-tile-icon">${a.icon}</div>
+            <div class="badge-tile-name">${a.name}</div>
+            <div class="badge-tile-desc">${a.desc}</div>
+          </div>`).join('')}</div>`;
+      container.appendChild(sec);
     });
   }
+
 
   // =============================================
   // PROFILE
@@ -6819,7 +6836,7 @@
       <span style="font-size: 28px;">${getTierBadge(tier)}</span>
       <span style="font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: ${getTierColor(tier)};">${tierName.toUpperCase()}</span>
     `);
-    setEl('profile-level', `${tierName} Level ${level}`);
+    setEl('profile-level', level);
     setEl('profile-xp', state.lifetimeFGA ? state.lifetimeFGA.toLocaleString() : '0');
 
     if (state.goals) {
@@ -8469,6 +8486,7 @@
     const pills = document.querySelectorAll('#board-time-pills .board-pill');
     const labels = ['daily', 'weekly', 'monthly', 'allTime'];
     pills.forEach((p, i) => p.classList.toggle('active', labels[i] === time));
+    const ts = document.getElementById('board-time-select'); if (ts) ts.value = time;
     loadLeaderboard();
   }
 
@@ -8483,7 +8501,8 @@
 
   function setBoardGrade(grade) {
     _boardState.grade = grade;
-    const grades = ['all', '4th-6th', '7th-8th', '9th-12th'];
+    const grades = ['all', '3rd-4th', '5th-6th', '7th-8th', '9th-12th'];
+    const gs = document.getElementById('board-grade-select'); if (gs) gs.value = grade;
     document.querySelectorAll('#board-grade-pills .board-pill').forEach((p, i) => {
       p.classList.toggle('active', grades[i] === grade);
     });
@@ -8781,11 +8800,13 @@
 
     if (state.gamertag) {
       gamertagEl.textContent = state.gamertag;
-      friendCodeEl.textContent = state.friendCode || '—';
+      friendCodeEl.textContent = state.friendCode || '';
+      friendCodeEl.style.display = state.friendCode ? '' : 'none';
       socialSection.style.display = '';
     } else if (getFirebaseUser()) {
       gamertagEl.textContent = 'No gamertag set';
-      friendCodeEl.textContent = state.friendCode || '—';
+      friendCodeEl.textContent = state.friendCode || '';
+      friendCodeEl.style.display = state.friendCode ? '' : 'none';
       socialSection.style.display = '';
     } else {
       socialSection.style.display = 'none';
@@ -9044,6 +9065,6 @@
 
   </script>
   <!-- Shot chart + progress cards on the Stats screen (also used by the Android app) -->
-  <script src="js/svstats.js?v=1.9.1"></script>
+  <script src="js/svstats.js?v=1.10.0"></script>
 </body>
 </html>

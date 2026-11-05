@@ -327,7 +327,7 @@
     ['sv-progress', 'sv-shotchart'].forEach(function (id) { var o = document.getElementById(id); if (o) o.remove(); });
     if (!c.children.length || c.querySelector('.empty-state')) return; // "No sessions logged yet"
     var cards = c.querySelectorAll(':scope > .chart-container');
-    var after = cards.length >= 3 ? cards[2] : cards[cards.length - 1];
+    var after = document.getElementById('stats-main') || (cards.length >= 3 ? cards[2] : cards[cards.length - 1]);
     var p = progressCard(), sc = shotChartCard();
     if (after && after.parentNode === c) { c.insertBefore(sc, after.nextSibling); c.insertBefore(p, after.nextSibling); }
     else { c.appendChild(p); c.appendChild(sc); }
