@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val HOME = "https://swish-quest.web.app/"
         private val OUR_HOSTS = setOf("swish-quest.web.app", "swish-quest.firebaseapp.com")
+        // Ask for the newest Swish Quest page every time (not a copy kept from an earlier visit),
+        // so website updates show up in the app right away.
+        private val FRESH = mapOf("Cache-Control" to "no-cache", "Pragma" to "no-cache")
         private const val PREFS = "swishvision"
         private const val KEY_PENDING = "pendingSessions"
         private const val RETRY_MS = 1500L
@@ -160,7 +163,7 @@ class MainActivity : AppCompatActivity() {
 
         // Always start from a fresh load: Swish Quest is a single page, and a restored page
         // can come back half-loaded after Android has cleared the app from memory.
-        web.loadUrl(HOME)
+        web.loadUrl(HOME, FRESH)
     }
 
     override fun onResume() {
@@ -217,7 +220,7 @@ class MainActivity : AppCompatActivity() {
                 view.destroy()
                 web = buildWebView()
                 root.addView(web, maxOf(0, index), FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-                web.loadUrl(HOME)
+                web.loadUrl(HOME, FRESH)
                 return true
             }
         }
