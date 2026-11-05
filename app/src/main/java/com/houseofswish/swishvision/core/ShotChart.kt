@@ -5,10 +5,8 @@ import kotlin.math.atan2
 import kotlin.math.hypot
 
 /**
- * Shot chart zones on a high school half court, like an NBA shot chart: inside 7.3 ft is "at the rim"
- * (the app's layup range), then mid-range out to the high school 3-point line (5 zones), then three
- * (5 zones). Free throws aren't on the chart (they get their own line). Same rules as the website's
- * shot chart (web/public/js/svstats.js).
+ * Shot chart on a high school half court, split into the 20 shooting spots the players practise from
+ * (see [Zone]). Free throws aren't on the chart (they get their own line).
  *
  * Court position: feet from the middle of the rim, x to the shooter's right (facing the hoop), y out
  * toward the free-throw line. Pure logic, no Android.
@@ -28,18 +26,35 @@ object ShotChart {
         return if (s > 0.01f) THREE_FT / s else 200f
     }
 
-    enum class Zone(val key: String, val label: String) {
-        RIM("rim", "At the rim"),
-        MID_LEFT_BASE("mid_left_baseline", "Left baseline"),
-        MID_LEFT("mid_left", "Left elbow"),
-        MID_CENTER("mid_center", "Middle"),
-        MID_RIGHT("mid_right", "Right elbow"),
-        MID_RIGHT_BASE("mid_right_baseline", "Right baseline"),
-        THREE_LEFT_CORNER("three_left_corner", "Left corner 3"),
-        THREE_LEFT("three_left_wing", "Left wing 3"),
-        THREE_TOP("three_top", "Top 3"),
-        THREE_RIGHT("three_right_wing", "Right wing 3"),
-        THREE_RIGHT_CORNER("three_right_corner", "Right corner 3"),
+    /**
+     * The 20 shooting spots: 5, 10, 15 and 20 ft from the rim, at 5 spots round the court (left baseline,
+     * left wing, middle, right wing, right baseline). Distance bands: under 7.5 ft = 5 ft, 7.5-12.5 = 10 ft,
+     * 12.5-17.5 = 15 ft, 17.5 and out = 20 ft. Spots by angle from straight out: middle within 22.5 deg,
+     * wings 22.5-67.5, baselines beyond. [from]/[to]: angle range; [inner]/[outer]: radius range (ft);
+     * [labelDeg]: where its numbers go. Same rules as the website (web/public/js/svstats.js).
+     */
+    enum class Zone(val key: String, val label: String, val band: Int, val spot: Int,
+                    val from: Float, val to: Float, val inner: Float, val outer: Float, val labelDeg: Float) {
+        D5_LB("d5_lb", "5 ft \u00B7 Left baseline", 5, 0, -180f, -67.5f, 0f, 7.5f, -84f),
+        D5_LW("d5_lw", "5 ft \u00B7 Left wing", 5, 1, -67.5f, -22.5f, 0f, 7.5f, -45f),
+        D5_M("d5_m", "5 ft \u00B7 Middle", 5, 2, -22.5f, 22.5f, 0f, 7.5f, 0f),
+        D5_RW("d5_rw", "5 ft \u00B7 Right wing", 5, 3, 22.5f, 67.5f, 0f, 7.5f, 45f),
+        D5_RB("d5_rb", "5 ft \u00B7 Right baseline", 5, 4, 67.5f, 180f, 0f, 7.5f, 84f),
+        D10_LB("d10_lb", "10 ft \u00B7 Left baseline", 10, 0, -180f, -67.5f, 7.5f, 12.5f, -84f),
+        D10_LW("d10_lw", "10 ft \u00B7 Left wing", 10, 1, -67.5f, -22.5f, 7.5f, 12.5f, -45f),
+        D10_M("d10_m", "10 ft \u00B7 Middle", 10, 2, -22.5f, 22.5f, 7.5f, 12.5f, 0f),
+        D10_RW("d10_rw", "10 ft \u00B7 Right wing", 10, 3, 22.5f, 67.5f, 7.5f, 12.5f, 45f),
+        D10_RB("d10_rb", "10 ft \u00B7 Right baseline", 10, 4, 67.5f, 180f, 7.5f, 12.5f, 84f),
+        D15_LB("d15_lb", "15 ft \u00B7 Left baseline", 15, 0, -180f, -67.5f, 12.5f, 17.5f, -84f),
+        D15_LW("d15_lw", "15 ft \u00B7 Left wing", 15, 1, -67.5f, -22.5f, 12.5f, 17.5f, -45f),
+        D15_M("d15_m", "15 ft \u00B7 Middle", 15, 2, -22.5f, 22.5f, 12.5f, 17.5f, 0f),
+        D15_RW("d15_rw", "15 ft \u00B7 Right wing", 15, 3, 22.5f, 67.5f, 12.5f, 17.5f, 45f),
+        D15_RB("d15_rb", "15 ft \u00B7 Right baseline", 15, 4, 67.5f, 180f, 12.5f, 17.5f, 84f),
+        D20_LB("d20_lb", "20 ft \u00B7 Left baseline", 20, 0, -180f, -67.5f, 17.5f, 80f, -84f),
+        D20_LW("d20_lw", "20 ft \u00B7 Left wing", 20, 1, -67.5f, -22.5f, 17.5f, 80f, -45f),
+        D20_M("d20_m", "20 ft \u00B7 Middle", 20, 2, -22.5f, 22.5f, 17.5f, 80f, 0f),
+        D20_RW("d20_rw", "20 ft \u00B7 Right wing", 20, 3, 22.5f, 67.5f, 17.5f, 80f, 45f),
+        D20_RB("d20_rb", "20 ft \u00B7 Right baseline", 20, 4, 67.5f, 180f, 17.5f, 80f, 84f),
     }
 
     /** Angle from straight out (0) toward the shooter's right (+) or left (-), in degrees; 90 = along the baseline. */
@@ -49,19 +64,9 @@ object ShotChart {
         val d = hypot(x, y)
         val a = angle(x, y)
         val aa = abs(a)
-        return when {
-            d < RIM_FT -> Zone.RIM
-            !isThree(x, y) -> when {
-                aa < 22.5f -> Zone.MID_CENTER
-                aa < 60f -> if (a < 0) Zone.MID_LEFT else Zone.MID_RIGHT
-                else -> if (a < 0) Zone.MID_LEFT_BASE else Zone.MID_RIGHT_BASE
-            }
-            else -> when {
-                aa < 25f -> Zone.THREE_TOP
-                aa < CORNER_DEG -> if (a < 0) Zone.THREE_LEFT else Zone.THREE_RIGHT
-                else -> if (a < 0) Zone.THREE_LEFT_CORNER else Zone.THREE_RIGHT_CORNER
-            }
-        }
+        val band = when { d < 7.5f -> 5; d < 12.5f -> 10; d < 17.5f -> 15; else -> 20 }
+        val spot = when { aa < 22.5f -> 2; aa < 67.5f -> if (a < 0) 1 else 3; else -> if (a < 0) 0 else 4 }
+        return Zone.values().first { it.band == band && it.spot == spot }
     }
 
     /** Shots with a court position (free throws left out). */
@@ -82,10 +87,11 @@ object ShotChart {
     /** Hot / OK / cold for a zone's shooting percentage (what's good depends on how far out it is). */
     fun heat(zone: Zone, line: TypeLine): Int {
         val pct = 100f * line.made / line.attempted
-        val (good, ok) = when (zone) {
-            Zone.RIM -> 60f to 45f
-            Zone.MID_LEFT_BASE, Zone.MID_LEFT, Zone.MID_CENTER, Zone.MID_RIGHT, Zone.MID_RIGHT_BASE -> 45f to 35f
-            else -> 38f to 30f
+        val (good, ok) = when (zone.band) {
+            5 -> 60f to 45f
+            10 -> 45f to 35f
+            15 -> 40f to 30f
+            else -> 35f to 27f
         }
         return if (pct >= good) 1 else if (pct >= ok) 0 else -1
     }

@@ -79,11 +79,8 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
         c.save()
         c.clipRect(court)
 
-        // Zones (radius LINE = follow the 3-point line)
-        val far = 60f
-        val r1 = ShotChart.RIM_FT
-        val cd = ShotChart.CORNER_DEG
-        fun zone(z: Zone, a1: Float, a2: Float, rIn: Float, rOut: Float) {
+        // The 20 shooting spots (5/10/15/20 ft x baseline, wing, middle, wing, baseline)
+        for (z in Zone.values()) {
             val l = lines[z]
             fill.color = when {
                 l == null -> Color.argb(30, 255, 255, 255)
@@ -93,21 +90,10 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
                     else -> Color.argb(150, 215, 60, 55)
                 }
             }
-            val p = wedge(a1, a2, rIn, rOut)
+            val p = wedge(z.from, z.to, z.inner, z.outer)
             c.drawPath(p, fill)
             c.drawPath(p, zoneLine)
         }
-        zone(Zone.RIM, -180f, 180f, 0f, r1)
-        zone(Zone.MID_LEFT_BASE, -180f, -60f, r1, LINE)
-        zone(Zone.MID_LEFT, -60f, -22.5f, r1, LINE)
-        zone(Zone.MID_CENTER, -22.5f, 22.5f, r1, LINE)
-        zone(Zone.MID_RIGHT, 22.5f, 60f, r1, LINE)
-        zone(Zone.MID_RIGHT_BASE, 60f, 180f, r1, LINE)
-        zone(Zone.THREE_LEFT_CORNER, -180f, -cd, LINE, far)
-        zone(Zone.THREE_LEFT, -cd, -25f, LINE, far)
-        zone(Zone.THREE_TOP, -25f, 25f, LINE, far)
-        zone(Zone.THREE_RIGHT, 25f, cd, LINE, far)
-        zone(Zone.THREE_RIGHT_CORNER, cd, 180f, LINE, far)
 
         // High school court lines: 12 ft lane, free-throw line 13.75 ft out with its circle (bottom half
         // dashed), 3-point line (straight from the baseline to level with the rim, then the 19'9" arc).
@@ -134,17 +120,14 @@ class ShotChartView @JvmOverloads constructor(context: Context, attrs: Attribute
         }
 
         // Labels: made/attempted and percentage in each zone with shots.
-        label.textSize = max(11f * d, 1.5f * sc)
-        small.textSize = max(9f * d, 1.15f * sc)
-        val spots = mapOf(
-            Zone.RIM to (0f to 3.6f),
-            Zone.MID_LEFT_BASE to (-13.5f to 0.8f), Zone.MID_LEFT to (-9.5f to 10.5f), Zone.MID_CENTER to (0f to 10.4f),
-            Zone.MID_RIGHT to (9.5f to 10.5f), Zone.MID_RIGHT_BASE to (13.5f to 0.8f),
-            Zone.THREE_LEFT_CORNER to (-22.4f to -0.6f), Zone.THREE_LEFT to (-17.5f to 16.5f), Zone.THREE_TOP to (0f to 23.5f),
-            Zone.THREE_RIGHT to (17.5f to 16.5f), Zone.THREE_RIGHT_CORNER to (22.4f to -0.6f),
-        )
         for ((z, l) in lines) {
-            val (fx, fy) = spots.getValue(z)
+            val r = if (z.band == 20) 21f else z.band.toFloat()
+            val rad = Math.toRadians(z.labelDeg.toDouble())
+            val fx = (r * sin(rad)).toFloat()
+            val fy = max(top + 1.3f, (r * cos(rad)).toFloat())
+            val k = when (z.band) { 5 -> 0.62f; 10 -> 0.8f; else -> 1f }
+            label.textSize = max(9f * d, 1.5f * sc) * k
+            small.textSize = max(8f * d, 1.15f * sc) * k
             val pct = Math.round(100f * l.made / l.attempted)
             c.drawText("${l.made}/${l.attempted}", px(fx), py(fy), label)
             c.drawText("$pct%", px(fx), py(fy) + small.textSize * 1.15f, small)

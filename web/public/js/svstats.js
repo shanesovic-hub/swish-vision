@@ -19,45 +19,35 @@
 
   function isThree(x, y) { return y <= 0 ? Math.abs(x) >= LINE : Math.sqrt(x * x + y * y) >= LINE; }
 
+  // ---------- the 20 shooting spots: 5, 10, 15 and 20 ft from the rim x 5 spots round the court ----------
+  // Distance bands: under 7.5 ft = 5 ft, 7.5-12.5 = 10 ft, 12.5-17.5 = 15 ft, 17.5 and out = 20 ft.
+  // Spots by angle from straight out: baseline (past 67.5 deg), wing (22.5-67.5), middle (within 22.5).
+  var BANDS = [[5, 0, 7.5], [10, 7.5, 12.5], [15, 12.5, 17.5], [20, 17.5, 80]];
+  var SPOTS = [ // key, name, from angle, to angle, label angle
+    ['lb', 'Left baseline', -180, -67.5, -84], ['lw', 'Left wing', -67.5, -22.5, -45], ['m', 'Middle', -22.5, 22.5, 0],
+    ['rw', 'Right wing', 22.5, 67.5, 45], ['rb', 'Right baseline', 67.5, 180, 84]];
   function zoneOf(x, y) {
     var d = Math.sqrt(x * x + y * y), a = Math.atan2(x, y) * 180 / Math.PI, aa = Math.abs(a);
-    if (d < RIM_FT) return 'rim';
-    if (!isThree(x, y)) {
-      if (aa < 22.5) return 'mid_center';
-      if (aa < 60) return a < 0 ? 'mid_left' : 'mid_right';
-      return a < 0 ? 'mid_left_baseline' : 'mid_right_baseline';
-    }
-    if (aa < 25) return 'three_top';
-    if (aa < 78) return a < 0 ? 'three_left_wing' : 'three_right_wing';
-    return a < 0 ? 'three_left_corner' : 'three_right_corner';
+    var band = d < 7.5 ? 5 : d < 12.5 ? 10 : d < 17.5 ? 15 : 20;
+    var spot = aa < 22.5 ? 'm' : aa < 67.5 ? (a < 0 ? 'lw' : 'rw') : (a < 0 ? 'lb' : 'rb');
+    return 'd' + band + '_' + spot;
   }
   window.svZoneOf = zoneOf;
 
-  // Distance to the 3-point line along a ray at angle a (degrees from straight out).
-  function lineAt(a) {
-    var aa = Math.abs(a);
-    if (aa <= 90) return LINE;
-    var s = Math.abs(Math.sin(a * Math.PI / 180));
-    return s > 0.01 ? LINE / s : 200;
-  }
-  var ZONES = [
-    // key, from angle, to angle, inner (number or 'line'), outer, label x, label y
-    ['rim', -180, 180, 0, RIM_FT, 0, 3.6],
-    ['mid_left_baseline', -180, -60, RIM_FT, 'line', -13.5, 0.8],
-    ['mid_left', -60, -22.5, RIM_FT, 'line', -9.5, 10.5],
-    ['mid_center', -22.5, 22.5, RIM_FT, 'line', 0, 10.4],
-    ['mid_right', 22.5, 60, RIM_FT, 'line', 9.5, 10.5],
-    ['mid_right_baseline', 60, 180, RIM_FT, 'line', 13.5, 0.8],
-    ['three_left_corner', -180, -78, 'line', 80, -22.4, -0.6],
-    ['three_left_wing', -78, -25, 'line', 80, -17.5, 16.5],
-    ['three_top', -25, 25, 'line', 80, 0, 23.5],
-    ['three_right_wing', 25, 78, 'line', 80, 17.5, 16.5],
-    ['three_right_corner', 78, 180, 'line', 80, 22.4, -0.6],
-  ];
+  var ZONES = [];   // key, from angle, to angle, inner, outer, label x, label y, band
+  var ZONE_NAMES = {};
+  BANDS.forEach(function (b) {
+    SPOTS.forEach(function (sp) {
+      var key = 'd' + b[0] + '_' + sp[0], la = sp[4] * Math.PI / 180;
+      var lr = b[0] === 20 ? 21 : b[0];
+      ZONES.push([key, sp[2], sp[3], b[1], b[2], lr * Math.sin(la), Math.max(BASE + 1.3, lr * Math.cos(la)), b[0]]);
+      ZONE_NAMES[key] = b[0] + ' ft \u00B7 ' + sp[1];
+    });
+  });
 
   function heat(key, made, att) {
-    var pct = 100 * made / att;
-    var g = key === 'rim' ? [60, 45] : key.indexOf('mid') === 0 ? [45, 35] : [38, 30];
+    var pct = 100 * made / att, band = +key.slice(1, key.indexOf('_'));
+    var g = band === 5 ? [60, 45] : band === 10 ? [45, 35] : band === 15 ? [40, 30] : [35, 27];
     return pct >= g[0] ? 1 : pct >= g[1] ? 0 : -1;
   }
 
@@ -103,7 +93,7 @@
   function py(y) { return ((y - T) * S).toFixed(1); }
   function ring(a1, a2, inner, outer) {
     var pts = [], i, a, r, n = 48;
-    var rad = function (v, ang) { return v === 'line' ? lineAt(ang) : v; };
+    var rad = function (v) { return v; };
     for (i = 0; i <= n; i++) { a = a1 + (a2 - a1) * i / n; r = rad(outer, a); pts.push(px(r * Math.sin(a * Math.PI / 180)) + ',' + py(r * Math.cos(a * Math.PI / 180))); }
     for (i = n; i >= 0; i--) { a = a1 + (a2 - a1) * i / n; r = rad(inner, a); pts.push(px(r * Math.sin(a * Math.PI / 180)) + ',' + py(r * Math.cos(a * Math.PI / 180))); }
     return pts.join(' ');
@@ -156,8 +146,9 @@
     ZONES.forEach(function (z) {
       var l = lines[z[0]]; if (!l) return;
       var st = 'font-family:\'Bebas Neue\',sans-serif;paint-order:stroke;stroke:#000;stroke-width:3px;fill:#fff;text-anchor:middle';
-      s += '<text x="' + px(z[5]) + '" y="' + py(z[6]) + '" style="' + st + ';font-size:22px">' + l[0] + '/' + l[1] + '</text>';
-      s += '<text x="' + px(z[5]) + '" y="' + (+py(z[6]) + 18) + '" style="' + st + ';font-size:16px;fill:#eee">' + Math.round(100 * l[0] / l[1]) + '%</text>';
+      var f1 = z[7] === 5 ? 13 : z[7] === 10 ? 17 : 21, f2 = Math.round(f1 * 0.75);
+      s += '<text x="' + px(z[5]) + '" y="' + py(z[6]) + '" style="' + st + ';font-size:' + f1 + 'px">' + l[0] + '/' + l[1] + '</text>';
+      s += '<text x="' + px(z[5]) + '" y="' + (+py(z[6]) + f2 + 1) + '" style="' + st + ';font-size:' + f2 + 'px;fill:#eee">' + Math.round(100 * l[0] / l[1]) + '%</text>';
     });
     return s + '</svg>';
   }
@@ -220,24 +211,28 @@
     return card;
   }
 
-  var ZONE_NAMES = {
-    rim: 'At the rim', mid_left_baseline: 'Left baseline', mid_left: 'Left elbow', mid_center: 'Straight on',
-    mid_right: 'Right elbow', mid_right_baseline: 'Right baseline', three_left_corner: 'Left corner 3',
-    three_left_wing: 'Left wing 3', three_top: 'Top of the key 3', three_right_wing: 'Right wing 3', three_right_corner: 'Right corner 3',
-  };
-  // Zone-by-zone list (shown beside the chart on wide screens, below it on phones).
+  // Spot-by-spot grid: rows 5/10/15/20 ft, columns left baseline .. right baseline
+  // (beside the chart on wide screens, below it on phones).
   function zoneTable(dots) {
     var lines = {};
     dots.forEach(function (p) { var z = zoneOf(p.x, p.y); lines[z] = lines[z] || [0, 0]; lines[z][1]++; if (p.m) lines[z][0]++; });
-    var keys = Object.keys(ZONE_NAMES).filter(function (k) { return lines[k]; });
-    if (!keys.length) return '';
-    return '<div class="sv-zone-table">' + keys.map(function (k) {
-      var l = lines[k], pct = Math.round(100 * l[0] / l[1]), h = heat(k, l[0], l[1]);
-      var col = h > 0 ? '#4ade80' : h === 0 ? '#ffe66d' : '#ff6b6b';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid #222;' + font + ';font-size:14px;color:#ccc">' +
-        '<span><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' + col + ';margin-right:8px"></span>' + ZONE_NAMES[k] + '</span>' +
-        '<span style="' + bebas + ';font-size:17px;color:#fff">' + l[0] + '/' + l[1] + ' <span style="color:' + col + '">' + pct + '%</span></span></div>';
-    }).join('') + '</div>';
+    if (!Object.keys(lines).length) return '';
+    var heads = ['L BASE', 'L WING', 'MID', 'R WING', 'R BASE'];
+    var h = '<table class="sv-zone-table" style="width:100%;border-collapse:collapse;' + font + ';font-size:13px;color:#ccc;table-layout:fixed">' +
+      '<tr><th style="width:15%"></th>' + heads.map(function (t) { return '<th style="' + bebas + ';font-size:12px;letter-spacing:0;color:#888;font-weight:normal;padding:4px 0">' + t + '</th>'; }).join('') + '</tr>';
+    BANDS.forEach(function (b) {
+      h += '<tr><td style="' + bebas + ';font-size:17px;color:var(--gold);padding:6px 0">' + b[0] + ' FT</td>';
+      SPOTS.forEach(function (sp) {
+        var k = 'd' + b[0] + '_' + sp[0], l = lines[k];
+        if (!l) { h += '<td style="text-align:center;color:#444;border:1px solid #1d1d2a;padding:6px 0">\u2013</td>'; return; }
+        var pct = Math.round(100 * l[0] / l[1]), hh = heat(k, l[0], l[1]);
+        var col = hh > 0 ? '#4ade80' : hh === 0 ? '#ffe66d' : '#ff6b6b';
+        h += '<td style="text-align:center;border:1px solid #1d1d2a;padding:5px 0;background:' + (hh > 0 ? 'rgba(34,170,90,.14)' : hh === 0 ? 'rgba(235,200,80,.12)' : 'rgba(215,60,55,.14)') + '">' +
+          '<div style="' + bebas + ';font-size:16px;color:#fff">' + l[0] + '/' + l[1] + '</div><div style="font-size:12px;color:' + col + '">' + pct + '%</div></td>';
+      });
+      h += '</tr>';
+    });
+    return h + '</table>';
   }
 
   // ---------- PROGRESS card ----------

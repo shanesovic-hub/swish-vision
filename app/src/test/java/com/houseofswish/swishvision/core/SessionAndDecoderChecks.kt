@@ -191,19 +191,20 @@ object SessionAndDecoderChecks {
         check(s2.byType()[ShotType.FT] == TypeLine(1, 1) && s2.byType()[ShotType.MID] == TypeLine(0, 0), "retype last shot", f)
 
         // Shot chart zones (x = shooter's right, y = out from the rim, feet)
-        check(ShotChart.zoneOf(0f, 3f) == ShotChart.Zone.RIM, "zone: at the rim", f)
-        check(ShotChart.zoneOf(0f, 12f) == ShotChart.Zone.MID_CENTER, "zone: middle", f)
-        check(ShotChart.zoneOf(-8f, 8f) == ShotChart.Zone.MID_LEFT && ShotChart.zoneOf(8f, 8f) == ShotChart.Zone.MID_RIGHT, "zone: elbows", f)
-        check(ShotChart.zoneOf(14f, 1f) == ShotChart.Zone.MID_RIGHT_BASE, "zone: right baseline", f)
-        check(ShotChart.zoneOf(-20.5f, -2f) == ShotChart.Zone.THREE_LEFT_CORNER && ShotChart.zoneOf(-19f, 2f) == ShotChart.Zone.MID_LEFT_BASE && ShotChart.zoneOf(0f, 18f) == ShotChart.Zone.MID_CENTER && ShotChart.zoneOf(0f, 20f) == ShotChart.Zone.THREE_TOP, "zone: threes", f)
+        val Z = ShotChart.Zone
+        check(ShotChart.zoneOf(0f, 5f) == Z.D5_M && ShotChart.zoneOf(0f, 10f) == Z.D10_M && ShotChart.zoneOf(0f, 15f) == Z.D15_M && ShotChart.zoneOf(0f, 20f) == Z.D20_M, "zones: middle at 5/10/15/20 ft", f)
+        check(ShotChart.zoneOf(-7f, 7f) == Z.D10_LW && ShotChart.zoneOf(7f, 7f) == Z.D10_RW, "zones: wings at 10 ft", f)
+        check(ShotChart.zoneOf(-15f, 0.5f) == Z.D15_LB && ShotChart.zoneOf(5f, -1f) == Z.D5_RB && ShotChart.zoneOf(-19.5f, 3f) == Z.D20_LB, "zones: baselines", f)
+        check(ShotChart.zoneOf(0f, 7.4f) == Z.D5_M && ShotChart.zoneOf(0f, 7.6f) == Z.D10_M && ShotChart.zoneOf(0f, 17.6f) == Z.D20_M && ShotChart.zoneOf(0f, 30f) == Z.D20_M, "zones: band edges", f)
+        check(Z.values().size == 20 && Z.values().map { it.key }.toSet().size == 20, "20 zones", f)
         val cs = Session(0)
         cs.add(1, Result.MAKE, ShotType.MID, Method.AUTO).apply { courtX = 0f; courtY = 12f }
         cs.add(2, Result.MISS, ShotType.MID, Method.AUTO).apply { courtX = 1f; courtY = 11f }
         cs.add(3, Result.MAKE, ShotType.FT, Method.AUTO).apply { courtX = 0f; courtY = 13.7f }
         cs.add(4, Result.MAKE, ShotType.LAYUP, Method.MANUAL)
-        check(ShotChart.zoneLines(cs.shots) == mapOf(ShotChart.Zone.MID_CENTER to TypeLine(1, 2)), "zone lines (FT and unplaced left out): ${ShotChart.zoneLines(cs.shots)}", f)
+        check(ShotChart.zoneLines(cs.shots) == mapOf(ShotChart.Zone.D10_M to TypeLine(1, 2)), "zone lines (FT and unplaced left out): ${ShotChart.zoneLines(cs.shots)}", f)
         val cj = cs.toJson(10L, 0f, "m")
-        check(cj.contains("\"zones\": {\"mid_center\": {\"attempted\": 2, \"made\": 1}}") && cj.contains("\"x\": 0.0, \"y\": 12.0"), "json zones / positions: $cj", f)
+        check(cj.contains("\"zones\": {\"d10_m\": {\"attempted\": 2, \"made\": 1}}") && cj.contains("\"x\": 0.0, \"y\": 12.0"), "json zones / positions: $cj", f)
         val rt = Session(0); rt.add(1, Result.MAKE, ShotType.MID, Method.AUTO).apply { courtX = 0f; courtY = 12f }; rt.retypeLast(ShotType.THREE)
         check(rt.shots[0].courtX == null, "retyped shot comes off the chart", f)
 
