@@ -1,7 +1,9 @@
 package com.houseofswish.swishvision
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
@@ -12,6 +14,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -26,6 +29,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import org.json.JSONArray
@@ -69,6 +73,15 @@ class MainActivity : AppCompatActivity() {
             addPending(json) // on the phone first, so nothing is lost whatever happens next
             startDelivering()
         }
+    }
+
+    // Dribble Quest (swish-quest.web.app/dribble.html) uses the camera inside the page.
+    // The page asks; we check Android's camera permission (asking once if needed) and then let it in.
+    private var pendingWebCamera: PermissionRequest? = null
+    private val askWebCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        val req = pendingWebCamera ?: return@registerForActivityResult
+        pendingWebCamera = null
+        if (ok) req.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) else req.deny()
     }
 
     /** What the Swish Quest page can call: window.SwishVisionNative.startTracking('ft') */
@@ -154,7 +167,8 @@ class MainActivity : AppCompatActivity() {
             override fun handleOnBackPressed() {
                 // Swish Quest is one page with screens: Back goes to the dashboard first, then exits.
                 web.evaluateJavascript(
-                    "(function(){var a=document.querySelector('.screen.active');" +
+                    "(function(){if(typeof window.__dqBack==='function'){window.__dqBack();return 'handled';}" +
+                        "var a=document.querySelector('.screen.active');" +
                         "if(a&&a.id!=='dashboard'&&typeof showNav==='function'&&document.getElementById('bottom-nav')){showNav('dashboard');return 'handled';}" +
                         "return 'exit';})()"
                 ) { out -> if (out == null || !out.contains("handled")) finish() }
@@ -190,7 +204,26 @@ class MainActivity : AppCompatActivity() {
             userAgentString = "$userAgentString SwishQuestApp"
         }
         w.addJavascriptInterface(Bridge(), "SwishVisionNative")
-        w.webChromeClient = WebChromeClient() // enables the site's alert()/confirm() dialogs
+        // enables the site's alert()/confirm() dialogs, and the camera for Dribble Quest
+        w.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest) {
+                runOnUiThread {
+                    val ours = request.origin?.host in OUR_HOSTS
+                    val camera = request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                    if (!ours || !camera) {
+                        request.deny()
+                    } else if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) ==
+                        PackageManager.PERMISSION_GRANTED
+                    ) {
+                        request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE))
+                    } else {
+                        pendingWebCamera?.deny()
+                        pendingWebCamera = request
+                        askWebCamera.launch(Manifest.permission.CAMERA)
+                    }
+                }
+            }
+        }
         w.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val host = request.url.host ?: return false

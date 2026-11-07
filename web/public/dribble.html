@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Dribble Quest — Swish Quest</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+<script src="js/dribble-engine.js?v=0.1.0"></script>
+<style>
+  :root { --teal:#00b4c5; --pink:#f9629f; --gold:#ffe66d; --green:#4ade80; --red:#ff6b6b; --card:#111; --line:#2a2a3e; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { background:#000; color:#ddd; font-family:'Outfit',sans-serif; overscroll-behavior:none; }
+  body { min-height:100vh; display:flex; justify-content:center; }
+  .app { width:100%; max-width:420px; min-height:100vh; background:#0a0a0a; padding:16px 16px 40px; }
+  .screen { display:none; }
+  .screen.active { display:block; }
+  h1 { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:3px; line-height:1;
+       background:linear-gradient(135deg,var(--teal),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h2 { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; color:var(--gold); margin:22px 0 10px; }
+  .sub { color:#999; font-size:14px; line-height:1.5; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .back { background:none; border:1px solid #333; color:#bbb; border-radius:8px; padding:6px 12px; font-size:14px; cursor:pointer; font-family:inherit; }
+  .player { font-size:14px; color:#aaa; text-align:right; }
+  .player b { color:#fff; }
+  .chips { display:flex; gap:8px; margin:12px 0 4px; flex-wrap:wrap; }
+  .chip { background:#151522; border:1px solid #333; border-radius:20px; padding:6px 12px; font-size:13px; color:#ddd; }
+  .chip b { color:var(--gold); }
+  .card { background:var(--card); border:2px solid #222; border-radius:12px; padding:14px; margin:10px 0; }
+  .daily { border-color:var(--teal); background:linear-gradient(135deg,#0d1f24,#151022); }
+  .daily-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #1f1f2c; cursor:pointer; }
+  .daily-row:last-child { border-bottom:none; }
+  .tick { width:24px; height:24px; border-radius:50%; border:2px solid #444; display:flex; align-items:center; justify-content:center; font-size:14px; flex:none; }
+  .tick.done { background:var(--green); border-color:var(--green); color:#000; }
+  .drill { display:flex; align-items:center; gap:12px; cursor:pointer; }
+  .drill .em { font-size:30px; width:44px; text-align:center; flex:none; }
+  .drill .nm { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:#fff; }
+  .drill .meta { font-size:13px; color:#999; }
+  .drill .go { margin-left:auto; color:var(--teal); font-size:22px; }
+  .stars { color:var(--gold); letter-spacing:2px; }
+  .stars .off { color:#333; }
+  .btn { display:block; width:100%; padding:15px; border:none; border-radius:10px; cursor:pointer; margin:10px 0;
+         font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:#000;
+         background:linear-gradient(135deg,var(--teal),var(--pink)); }
+  .btn.ghost { background:#151522; color:#ddd; border:1px solid #333; }
+  .btn.small { font-size:17px; padding:10px; }
+  .btn:disabled { opacity:.45; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid #1d1d28; font-size:14px; }
+  .row:last-child { border-bottom:none; }
+  .seg { display:flex; background:#151522; border:1px solid #333; border-radius:10px; overflow:hidden; }
+  .seg button { flex:1; padding:8px 14px; border:none; background:none; color:#aaa; font-family:inherit; font-size:14px; cursor:pointer; }
+  .seg button.on { background:var(--teal); color:#000; font-weight:600; }
+  .badges { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .badge { text-align:center; font-size:11px; color:#888; background:#111; border:1px solid #222; border-radius:10px; padding:8px 4px; }
+  .badge .e { font-size:24px; display:block; filter:grayscale(1); opacity:.35; }
+  .badge.got { color:#eee; border-color:#554; }
+  .badge.got .e { filter:none; opacity:1; }
+  .note { font-size:12px; color:#777; line-height:1.5; margin-top:8px; }
+  .warn { color:var(--gold); }
+  .bad { color:var(--red); }
+  .ok { color:var(--green); }
+  .bigscore { font-family:'Bebas Neue',sans-serif; font-size:110px; line-height:1; text-align:center; color:#fff; }
+  .center { text-align:center; }
+  .pb { display:inline-block; background:var(--gold); color:#000; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; padding:4px 14px; border-radius:8px; margin:6px 0; }
+  .newbadge { background:#1b1b10; border:1px solid #554; border-radius:10px; padding:10px; margin:8px 0; text-align:center; color:#fff; }
+  .spark { display:block; }
+  .link { color:var(--teal); background:none; border:none; font-family:inherit; font-size:14px; cursor:pointer; text-decoration:underline; padding:4px 0; }
+
+  /* ---------- camera stage ---------- */
+  #stage { position:fixed; inset:0; background:#000; z-index:50; display:none; }
+  #stage.on { display:block; }
+  #view { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+  #view video, #view canvas { position:absolute; inset:0; width:100%; height:100%; }
+  #view.mirror video, #view.mirror canvas { transform:scaleX(-1); }
+  .hud { position:absolute; left:0; right:0; pointer-events:none; text-align:center; text-shadow:0 2px 8px #000, 0 0 2px #000; }
+  #hudTop { top:0; padding:calc(env(safe-area-inset-top) + 10px) 12px 0; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:auto; }
+  .hbtn { background:rgba(0,0,0,.55); border:1px solid #444; color:#fff; border-radius:10px; padding:8px 12px; font-size:15px; font-family:inherit; cursor:pointer; }
+  #timer { position:absolute; left:0; right:0; top:0; height:8px; background:rgba(255,255,255,.12); }
+  #timerFill { height:100%; width:0; background:linear-gradient(90deg,var(--teal),var(--pink)); }
+  #count { top:16%; font-family:'Bebas Neue',sans-serif; font-size:30vmin; line-height:1; color:#fff; }
+  #countLabel { top:calc(16% + 30vmin); font-family:'Bebas Neue',sans-serif; font-size:6vmin; letter-spacing:3px; color:var(--gold); }
+  #clock { top:calc(env(safe-area-inset-top) + 56px); font-family:'Bebas Neue',sans-serif; font-size:9vmin; color:#fff; }
+  #call { top:40%; font-family:'Bebas Neue',sans-serif; font-size:24vmin; color:var(--gold); }
+  #msg { top:38%; padding:0 6%; font-family:'Bebas Neue',sans-serif; font-size:10vmin; letter-spacing:2px; color:#fff; line-height:1.05; }
+  #msgSub { top:calc(38% + 24vmin); padding:0 8%; font-size:4.6vmin; color:#eee; }
+  #panel { position:absolute; left:10px; right:10px; bottom:calc(env(safe-area-inset-bottom) + 10px); background:rgba(0,0,0,.72); border:1px solid #333; border-radius:12px; padding:10px 14px; pointer-events:auto; }
+  #panel .row { font-size:15px; border-color:#2a2a2a; }
+  #free { position:absolute; left:10px; right:10px; bottom:calc(env(safe-area-inset-bottom) + 10px); background:rgba(0,0,0,.72); border:1px solid #333; border-radius:12px; padding:10px 14px; pointer-events:auto; display:none; }
+  #free .grid { display:grid; grid-template-columns:repeat(4,1fr); text-align:center; gap:6px; margin-bottom:8px; }
+  #free .n { font-family:'Bebas Neue',sans-serif; font-size:30px; color:#fff; line-height:1; }
+  #free .l { font-size:11px; color:#aaa; }
+  #free .btns { display:flex; gap:8px; }
+  #free .btns .btn { margin:0; }
+  #debug { position:absolute; left:10px; top:calc(env(safe-area-inset-top) + 110px); font-size:12px; color:#9f9; background:rgba(0,0,0,.6); padding:6px 8px; border-radius:6px; text-align:left; display:none; white-space:pre; font-family:ui-monospace,monospace; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= HOME ================= -->
+  <div id="home" class="screen active">
+    <div class="topbar">
+      <button class="back" onclick="goSwishQuest()">← Swish Quest</button>
+      <div class="player" id="playerLine">Loading…</div>
+    </div>
+    <h1>DRIBBLE QUEST</h1>
+    <div class="sub">Phone on a stand 6–8 ft away, whole body in view. A bright ball works best.</div>
+    <div class="chips">
+      <div class="chip">⭐ <b id="xpChip">0</b> XP</div>
+      <div class="chip">🔥 <b id="streakChip">0</b> day streak</div>
+      <div class="chip">🏀 <b id="totalChip">0</b> dribbles</div>
+    </div>
+
+    <h2>Today's Quest</h2>
+    <div class="card daily" id="dailyCard"></div>
+
+    <h2>Drills</h2>
+    <div id="drillList"></div>
+
+    <h2>Badges</h2>
+    <div class="badges" id="badgeGrid"></div>
+
+    <h2>More</h2>
+    <div class="card">
+      <div class="row"><span>Strong hand</span>
+        <div class="seg" id="handSeg"><button data-h="left">Left</button><button data-h="right">Right</button></div></div>
+      <div class="row"><span>Voice call-outs</span>
+        <div class="seg" id="voiceSeg"><button data-v="on">On</button><button data-v="off">Off</button></div></div>
+    </div>
+    <button class="btn ghost" onclick="showProgress()">📈 My Progress</button>
+    <button class="btn ghost" onclick="startFree(false)">🔢 Free Count (no timer)</button>
+    <button class="link" onclick="document.getElementById('replayFile').click()">Test the counter on a recorded video…</button>
+    <input type="file" id="replayFile" accept="video/*" class="hidden">
+    <div class="note" id="saveNote"></div>
+  </div>
+
+  <!-- ================= DRILL CARD ================= -->
+  <div id="drillCard" class="screen">
+    <div class="topbar"><button class="back" onclick="showHome()">← Drills</button><div></div></div>
+    <div class="center" style="font-size:64px" id="dcEmoji"></div>
+    <h1 class="center" id="dcName"></h1>
+    <p class="sub center" id="dcHow" style="margin:10px 0"></p>
+    <div class="card">
+      <div class="row"><span>Time</span><b id="dcTime"></b></div>
+      <div class="row"><span>Your best</span><b id="dcBest"></b></div>
+      <div class="row"><span>Stars</span><span id="dcStars"></span></div>
+      <div class="row"><span>⭐ / ⭐⭐ / ⭐⭐⭐</span><span id="dcCuts"></span></div>
+    </div>
+    <div class="note warn" id="dcWarn"></div>
+    <button class="btn" id="dcStart">START</button>
+    <button class="link" onclick="calib.at = 0; this.textContent = 'Will recalibrate at the start ✓'">Recalibrate (moved the phone?)</button>
+  </div>
+
+  <!-- ================= RESULTS ================= -->
+  <div id="results" class="screen">
+    <div class="topbar"><button class="back" onclick="showHome()">← Drills</button><div></div></div>
+    <h1 class="center" id="rsName"></h1>
+    <div class="bigscore" id="rsScore">0</div>
+    <div class="center sub" id="rsUnit"></div>
+    <div class="center" style="font-size:40px; margin:6px 0" id="rsStars"></div>
+    <div class="center" id="rsPB"></div>
+    <div class="card" id="rsDetails"></div>
+    <div id="rsBadges"></div>
+    <div class="note" id="rsNote"></div>
+    <button class="btn" id="rsAgain">TRY AGAIN</button>
+    <button class="btn ghost" onclick="showHome()">DONE</button>
+  </div>
+
+  <!-- ================= PROGRESS ================= -->
+  <div id="progress" class="screen">
+    <div class="topbar"><button class="back" onclick="showHome()">← Drills</button><div></div></div>
+    <h1>MY PROGRESS</h1>
+    <div class="chips" id="pgChips"></div>
+    <div id="pgDrills"></div>
+    <h2>Recent sessions</h2>
+    <div class="card" id="pgSessions"></div>
+  </div>
+</div>
+
+<!-- ================= CAMERA STAGE ================= -->
+<div id="stage">
+  <div id="view">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="overlay"></canvas>
+  </div>
+  <div id="timer"><div id="timerFill"></div></div>
+  <div class="hud" id="hudTop">
+    <button class="hbtn" onclick="leaveStage()">✕</button>
+    <div>
+      <button class="hbtn" id="flipBtn" onclick="flipCamera()">🔄</button>
+      <button class="hbtn" onclick="toggleDebug()">🔧</button>
+    </div>
+  </div>
+  <div class="hud hidden" id="clock"></div>
+  <div class="hud hidden" id="count">0</div>
+  <div class="hud hidden" id="countLabel"></div>
+  <div class="hud hidden" id="call"></div>
+  <div class="hud" id="msg"></div>
+  <div class="hud" id="msgSub"></div>
+  <div id="debug"></div>
+  <div id="panel" class="hidden"></div>
+  <div id="free">
+    <div class="grid">
+      <div><div class="n" id="fDr">0</div><div class="l">DRIBBLES</div></div>
+      <div><div class="n" id="fR">0</div><div class="l">RIGHT</div></div>
+      <div><div class="n" id="fL">0</div><div class="l">LEFT</div></div>
+      <div><div class="n" id="fX">0</div><div class="l">CROSSES</div></div>
+    </div>
+    <div class="btns">
+      <button class="btn small ghost" onclick="resetFree()">RESET</button>
+      <button class="btn small" onclick="leaveStage()">DONE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Dribble Quest — part of Swish Quest (swish-quest.web.app/dribble.html)
+   Camera + body tracking run on this phone only; no video ever leaves it.
+   ===================================================================== */
+const DQ_VERSION = 'dq-0.1.0';
+const MP_VER = '1.2.2';
+const MP_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VER;
+const POSE_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+const SHORT_SIDE = 144;         // processing frame: short side in pixels
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBjbs6blOwe-sOJKhx9iXGT0a6XV1ekxKM",
+  authDomain: "swish-quest.firebaseapp.com",
+  projectId: "swish-quest",
+  storageBucket: "swish-quest.firebasestorage.app",
+  messagingSenderId: "292047437270",
+  appId: "1:292047437270:web:8cc3b93916ab879b3e7877"
+};
+
+const $ = id => document.getElementById(id);
+
+// ---------------------------------------------------------------- data + saving
+let data = DQ.emptyData();
+let profileId = null, playerName = null;
+let fbUser = null, db = null;
+let voiceOn = localStorage.getItem('dq_voice') !== 'off';
+
+function readProfiles() {
+  try { const d = JSON.parse(localStorage.getItem('swishquest_profiles')); if (d && d.profiles) return d; } catch (e) {}
+  return null;
+}
+
+function loadLocal() {
+  const all = readProfiles();
+  if (all && all.activeId && all.profiles[all.activeId] && all.profiles[all.activeId].player) {
+    profileId = all.activeId;
+    playerName = all.profiles[profileId].player.name || 'Player';
+    data = DQ.normalizeData(all.profiles[profileId].dribble);
+  } else {
+    profileId = null; playerName = null;
+    let g = null; try { g = JSON.parse(localStorage.getItem('dribblequest_guest')); } catch (e) {}
+    data = DQ.normalizeData(g);
+  }
+}
+
+function saveLocal() {
+  try {
+    if (profileId) {
+      const all = readProfiles();   // read fresh, so nothing else in the profile gets overwritten
+      if (all && all.profiles[profileId]) {
+        all.profiles[profileId].dribble = JSON.parse(JSON.stringify(data));
+        localStorage.setItem('swishquest_profiles', JSON.stringify(all));
+        return true;
+      }
+    }
+    localStorage.setItem('dribblequest_guest', JSON.stringify(data));
+    return true;
+  } catch (e) { console.warn('local save failed', e); return false; }
+}
+
+function profileRef() {
+  if (!db || !fbUser || !profileId) return null;
+  return db.collection('players').doc(fbUser.uid).collection('profiles').doc(profileId);
+}
+
+async function saveCloud() {
+  const ref = profileRef();
+  if (!ref) return false;
+  try {
+    // Merge with whatever is in the cloud first (another phone may have added sessions), then write.
+    const doc = await ref.get();
+    if (doc.exists && doc.data().dribble) { data = DQ.mergeData(data, doc.data().dribble); saveLocal(); }
+    await ref.update({ dribble: JSON.parse(JSON.stringify(data)) });
+    return true;
+  } catch (e) {
+    if (e && e.code === 'not-found') {   // profile not in the cloud yet: Swish Quest will create it
+      return false;
+    }
+    console.warn('cloud save failed', e); return false;
+  }
+}
+
+async function persist() {
+  saveLocal();
+  const ok = await saveCloud();
+  updateSaveNote(ok);
+  return ok;
+}
+
+function updateSaveNote(cloudOk) {
+  const n = $('saveNote');
+  if (!profileId) n.innerHTML = '<span class="warn">No Swish Quest player picked on this phone.</span> Scores are kept on this phone only. Open Swish Quest, sign in and pick a player to save them to a profile.';
+  else if (!fbUser) n.textContent = 'Saving to ' + playerName + ' on this phone. Sign in to Swish Quest to back it up to the cloud.';
+  else if (cloudOk === false) n.innerHTML = '<span class="warn">Saved on this phone. The cloud save didn\'t go through; it will try again next time.</span>';
+  else n.textContent = 'Saving to ' + playerName + "'s Swish Quest profile.";
+}
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebase.auth().onAuthStateChanged(async user => {
+      fbUser = user;
+      const ref = profileRef();
+      if (ref) {
+        try {
+          const doc = await ref.get();
+          if (doc.exists && doc.data().dribble) {
+            const before = JSON.stringify(data);
+            data = DQ.mergeData(data, doc.data().dribble);
+            if (JSON.stringify(data) !== before) { saveLocal(); renderHome(); }
+          }
+        } catch (e) { console.warn('cloud load failed', e); }
+      }
+      updateSaveNote();
+    });
+  } catch (e) { console.warn('Firebase not available', e); updateSaveNote(); }
+}
+
+// ---------------------------------------------------------------- screens
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+}
+function goSwishQuest() { location.href = '/'; }
+function showHome() { renderHome(); show('home'); }
+
+function starText(n) {
+  let s = '';
+  for (let i = 0; i < 3; i++) s += i < n ? '★' : '<span class="off">★</span>';
+  return '<span class="stars">' + s + '</span>';
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+
+function renderHome() {
+  $('playerLine').innerHTML = playerName ? 'Player<br><b>' + esc(playerName) + '</b>' : '<span class="warn">Guest</span>';
+  $('xpChip').textContent = data.xp.toLocaleString();
+  const today = DQ.dayKey();
+  const yest = DQ.dayKey(new Date(Date.now() - 864e5));
+  const streakAlive = data.streak.last === today || data.streak.last === yest;
+  $('streakChip').textContent = streakAlive ? data.streak.count : 0;
+  $('totalChip').textContent = data.totalDribbles.toLocaleString();
+
+  const todays = DQ.dailyDrills(today);
+  const done = data.daily.date === today ? data.daily.done : [];
+  let h = '<div class="sub" style="margin-bottom:6px">Finish all three for +25 XP and keep your streak going.</div>';
+  todays.forEach(id => {
+    const d = DQ.drill(id), ok = done.indexOf(id) >= 0;
+    h += '<div class="daily-row" onclick="openDrill(\'' + id + '\')"><div class="tick ' + (ok ? 'done' : '') + '">' + (ok ? '✓' : '') + '</div>' +
+      '<div style="font-size:22px">' + d.emoji + '</div><div style="flex:1"><b style="color:#fff">' + d.name + '</b></div>' +
+      (ok ? '<span class="ok" style="font-size:13px">Done</span>' : '<span style="color:var(--teal)">▶</span>') + '</div>';
+  });
+  $('dailyCard').innerHTML = h;
+
+  $('drillList').innerHTML = DQ.DRILLS.map(d => {
+    const best = data.bests[d.id];
+    return '<div class="card drill" onclick="openDrill(\'' + d.id + '\')"><div class="em">' + d.emoji + '</div><div>' +
+      '<div class="nm">' + d.name + '</div><div class="meta">' + starText(data.stars[d.id] || 0) +
+      ' &nbsp;Best: ' + (best ? best : '—') + '</div></div><div class="go">▶</div></div>';
+  }).join('');
+
+  $('badgeGrid').innerHTML = DQ.BADGES.map(b =>
+    '<div class="badge ' + (data.badges.indexOf(b.id) >= 0 ? 'got' : '') + '"><span class="e">' + b.emoji + '</span>' + b.name + '</div>').join('');
+
+  document.querySelectorAll('#handSeg button').forEach(b => b.classList.toggle('on', b.dataset.h === data.strongHand));
+  document.querySelectorAll('#voiceSeg button').forEach(b => b.classList.toggle('on', (b.dataset.v === 'on') === voiceOn));
+  updateSaveNote();
+}
+
+document.querySelectorAll('#handSeg button').forEach(b => b.onclick = () => { data.strongHand = b.dataset.h; persist(); renderHome(); });
+document.querySelectorAll('#voiceSeg button').forEach(b => b.onclick = () => {
+  voiceOn = b.dataset.v === 'on'; localStorage.setItem('dq_voice', voiceOn ? 'on' : 'off'); renderHome();
+});
+
+let currentDrill = null;
+function openDrill(id) {
+  const d = DQ.drill(id); currentDrill = d;
+  $('dcEmoji').textContent = d.emoji;
+  $('dcName').textContent = d.name;
+  let how = d.how;
+  if (id === 'weak') how += ' (Your weak hand is your ' + (data.strongHand === 'right' ? 'LEFT' : 'RIGHT') + ' — change it under More.)';
+  $('dcHow').textContent = how;
+  $('dcTime').textContent = d.secs + ' seconds';
+  $('dcBest').textContent = data.bests[id] ? data.bests[id] + ' ' + d.unit : 'None yet';
+  $('dcStars').innerHTML = starText(data.stars[id] || 0);
+  $('dcCuts').textContent = d.stars.join(' / ');
+  $('dcWarn').textContent = poseFailed && d.needsBody ? 'The body tracker could not load on this phone, so this drill can\'t run. Pound It still works.' : '';
+  $('dcStart').disabled = poseFailed && d.needsBody;
+  $('dcStart').onclick = () => startDrill(id);
+  show('drillCard');
+}
+
+// ---------------------------------------------------------------- progress
+function sparkSvg(vals, max) {
+  const w = 300, h = 46, n = vals.length;
+  if (!n) return '<div class="note">No sessions yet.</div>';
+  const bw = Math.min(26, (w - 4) / n - 4);
+  let s = '<svg class="spark" viewBox="0 0 ' + w + ' ' + (h + 14) + '" width="100%" role="img" aria-label="Last scores">';
+  vals.forEach((v, i) => {
+    const bh = Math.max(2, (v / (max || 1)) * h), x = 2 + i * (bw + 4);
+    s += '<rect x="' + x + '" y="' + (h - bh) + '" width="' + bw + '" height="' + bh + '" rx="3" fill="' + (i === n - 1 ? '#f9629f' : '#00b4c5') + '"/>' +
+      '<text x="' + (x + bw / 2) + '" y="' + (h + 12) + '" font-size="10" fill="#888" text-anchor="middle">' + v + '</text>';
+  });
+  return s + '</svg>';
+}
+
+function showProgress() {
+  const ses = data.sessions;
+  $('pgChips').innerHTML =
+    '<div class="chip">⭐ <b>' + data.xp.toLocaleString() + '</b> XP</div>' +
+    '<div class="chip">🏀 <b>' + data.totalDribbles.toLocaleString() + '</b> dribbles</div>' +
+    '<div class="chip">🔥 best streak <b>' + data.streak.best + '</b></div>' +
+    '<div class="chip">📋 <b>' + ses.length + '</b> sessions</div>';
+  $('pgDrills').innerHTML = DQ.DRILLS.map(d => {
+    const mine = ses.filter(s => s.d === d.id);
+    const last = mine.slice(-10).map(s => s.s);
+    return '<h2>' + d.emoji + ' ' + d.name + '</h2><div class="card">' +
+      '<div class="row"><span>Best</span><b>' + (data.bests[d.id] || '—') + '</b></div>' +
+      '<div class="row"><span>Stars</span>' + starText(data.stars[d.id] || 0) + '</div>' +
+      '<div class="row"><span>Times played</span><b>' + mine.length + '</b></div>' +
+      '<div style="margin-top:8px">' + sparkSvg(last, Math.max(d.stars[2], ...last)) + '</div></div>';
+  }).join('');
+  const recent = ses.slice(-20).reverse();
+  $('pgSessions').innerHTML = recent.length ? recent.map(s => {
+    const d = DQ.drill(s.d), dt = new Date(s.t);
+    return '<div class="row"><span>' + d.emoji + ' ' + d.name + '<br><span class="note">' +
+      dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) +
+      (s.ok ? '' : ' · <span class="warn">low tracking, not on leaderboards</span>') + '</span></span><span><b>' + s.s + '</b> ' +
+      starText(s.st) + '</span></div>';
+  }).join('') : '<div class="note">Play a drill and it shows up here.</div>';
+  show('progress');
+}
+
+// ---------------------------------------------------------------- sounds + voice
+let actx = null;
+function audio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function beep(freq, ms, vol, type) {
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type || 'sine'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + ms / 1000);
+  o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + ms / 1000 + 0.02);
+}
+const sfx = {
+  tick: () => beep(1300, 45, 0.12, 'square'),
+  hit: () => { beep(880, 90, 0.2); setTimeout(() => beep(1320, 120, 0.2), 70); },
+  miss: () => beep(220, 160, 0.15, 'sawtooth'),
+  count: () => beep(660, 140, 0.25),
+  go: () => beep(990, 300, 0.3),
+  buzzer: () => { beep(180, 700, 0.35, 'sawtooth'); beep(186, 700, 0.25, 'square'); },
+  lock: () => { beep(700, 80, 0.2); setTimeout(() => beep(1050, 120, 0.2), 90); }
+};
+function say(text) {
+  if (!voiceOn || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.15; speechSynthesis.speak(u); } catch (e) {}
+}
+
+// ---------------------------------------------------------------- camera + trackers
+const video = $('video'), overlay = $('overlay'), octx = overlay.getContext('2d');
+const proc = document.createElement('canvas'), pctx = proc.getContext('2d', { willReadFrequently: true });
+let PW = 0, PH = 0;
+let stream = null, facing = 'user', replayMode = false, running = false, wakeLock = null;
+let tracker = new DQ.BallTracker();
+let detector = null;
+let poseLm = null, poseLoading = null, poseFailed = false;
+let lastPose = null, lastPoseT = -1, lastPoseTs = 0, frameNo = 0;
+let lastBall = null;
+let debugOn = false;
+let fps = 0, fpsN = 0, fpsT = 0;
+let mode = null;            // 'setup' | 'calib' | 'countdown' | 'live' | 'free'
+let modeT = 0;
+let task = null;            // what the stage is for: { kind:'drill', id } or { kind:'free' }
+const calib = { at: 0, floorY: null, stanceY: null, facing: null };
+
+function loadPose() {
+  if (poseLm || poseLoading) return poseLoading;
+  poseLoading = (async () => {
+    try {
+      const vision = await import(MP_BASE + '/vision_bundle.mjs');
+      const files = await vision.FilesetResolver.forVisionTasks(MP_BASE + '/wasm');
+      const opts = d => ({ baseOptions: { modelAssetPath: POSE_MODEL, delegate: d }, runningMode: 'VIDEO', numPoses: 1,
+        minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5 });
+      try { poseLm = await vision.PoseLandmarker.createFromOptions(files, opts('GPU')); }
+      catch (e) { console.warn('GPU pose failed, using CPU', e); poseLm = await vision.PoseLandmarker.createFromOptions(files, opts('CPU')); }
+    } catch (e) {
+      console.error('Body tracker failed to load', e);
+      poseFailed = true;
+    }
+    return poseLm;
+  })();
+  return poseLoading;
+}
+
+async function startCamera() {
+  stopCamera();
+  replayMode = false;
+  $('view').classList.toggle('mirror', facing === 'user');
+  $('flipBtn').classList.remove('hidden');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
+      facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60, max: 60 } } });
+  } catch (e) {
+    console.error(e);
+    setMsg('CAMERA BLOCKED', 'Allow camera access for this site in your browser settings, then try again.');
+    return false;
+  }
+  video.srcObject = stream;
+  try { await video.play(); } catch (e) {}
+  await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); });
+  return true;
+}
+
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  video.srcObject = null;
+  if (video.src) { URL.revokeObjectURL(video.src); video.removeAttribute('src'); video.load(); }
+}
+
+function fitView() {
+  const vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
+  const sw = window.innerWidth, sh = window.innerHeight;
+  const s = Math.min(sw / vw, sh / vh);
+  const v = $('view');
+  v.style.width = Math.round(vw * s) + 'px'; v.style.height = Math.round(vh * s) + 'px';
+  if (vw < vh) { PW = SHORT_SIDE; PH = Math.round(SHORT_SIDE * vh / vw); }
+  else { PH = SHORT_SIDE; PW = Math.round(SHORT_SIDE * vw / vh); }
+  if (proc.width !== PW || proc.height !== PH) {
+    proc.width = PW; proc.height = PH;
+    detector = new DQ.DribbleDetector(PW, PH);
+    calib.at = 0;
+  }
+  overlay.width = PW * 3; overlay.height = PH * 3;
+}
+window.addEventListener('resize', () => { if (running) fitView(); });
+
+async function flipCamera() {
+  facing = facing === 'user' ? 'environment' : 'user';
+  calib.at = 0;
+  if (await startCamera()) { fitView(); tracker.last = null; }
+}
+
+function toggleDebug() { debugOn = !debugOn; $('debug').style.display = debugOn ? 'block' : 'none'; }
+
+async function requestWake() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+
+// Tap the ball on screen to lock its color (handy when a parent sets it up).
+$('view').addEventListener('click', ev => {
+  if (!running || !PW) return;
+  const r = $('view').getBoundingClientRect();
+  let nx = (ev.clientX - r.left) / r.width, ny = (ev.clientY - r.top) / r.height;
+  if ($('view').classList.contains('mirror')) nx = 1 - nx;
+  const img = pctx.getImageData(0, 0, PW, PH);
+  const s = tracker.sampleCircle(img, nx * PW, ny * PH, PH * 0.03);
+  if (s.ok) { tracker.lockColor(s, PH * 0.04); sfx.lock(); flash('BALL LOCKED'); }
+  else flash('That doesn\'t look like a ball. Tap right in the middle of it.');
+});
+
+let flashTimer = null;
+function flash(text) {
+  $('msgSub').textContent = text;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { if (mode !== 'setup') $('msgSub').textContent = ''; }, 1600);
+}
+
+function setMsg(big, sub) { $('msg').textContent = big || ''; $('msgSub').textContent = sub || ''; }
+
+// ---------------------------------------------------------------- frame loop
+function nowT() { return replayMode ? video.currentTime : performance.now() / 1000; }
+
+function loop() {
+  if (!running) return;
+  if (video.readyState >= 2 && video.videoWidth) {
+    try { processFrame(); } catch (e) { console.error(e); }
+  }
+  if (replayMode && video.requestVideoFrameCallback) video.requestVideoFrameCallback(loop);
+  else requestAnimationFrame(loop);
+}
+
+function processFrame() {
+  if (proc.width !== PW || !detector || (video.videoWidth < video.videoHeight) !== (PW < PH)) fitView();
+  const t = nowT();
+  pctx.drawImage(video, 0, 0, PW, PH);
+  const img = pctx.getImageData(0, 0, PW, PH);
+  frameNo++;
+
+  // Body: every other frame (it is the slow part), held for up to 0.3 s.
+  if (poseLm && frameNo % 2 === 0) {
+    let ts = replayMode ? Math.round(video.currentTime * 1000) : Math.round(performance.now());
+    if (ts <= lastPoseTs) ts = lastPoseTs + 1;
+    lastPoseTs = ts;
+    try {
+      const res = poseLm.detectForVideo(video, ts);
+      const p = res && res.landmarks && res.landmarks[0] ? DQ.poseFromLandmarks(res.landmarks[0], PW, PH) : null;
+      if (p) { lastPose = p; lastPoseT = t; }
+    } catch (e) { console.warn('pose', e); }
+  }
+  const pose = lastPose && t - lastPoseT < 0.3 && t >= lastPoseT ? lastPose : null;
+
+  const b = tracker.track(img, t);
+  const ball = b.found ? { x: b.x, y: b.y, r: b.r } : null;
+  lastBall = ball;
+  const events = detector.update({ t, ball, pose });
+
+  // fps
+  fpsN++;
+  const pn = performance.now();
+  if (pn - fpsT > 1000) { fps = fpsN * 1000 / (pn - fpsT); fpsN = 0; fpsT = pn; }
+
+  step(t, img, ball, pose, events);
+  draw(ball, pose);
+  if (debugOn) {
+    $('debug').textContent = 'fps ' + fps.toFixed(0) + '  frame ' + PW + 'x' + PH +
+      '\nball ' + (ball ? Math.round(ball.x) + ',' + Math.round(ball.y) + ' r' + ball.r.toFixed(1) : 'lost') +
+      '\nbody ' + (pose ? 'yes' : (poseLm ? 'no' : poseFailed ? 'failed' : 'loading')) +
+      '\nfloor ' + (detector.floorY ? detector.floorY.toFixed(0) : '?') + '  stance ' + (detector.stanceY ? detector.stanceY.toFixed(0) : '?') +
+      (tracker.color ? '\ncolor h' + tracker.color.h.toFixed(0) + ' s' + tracker.color.s.toFixed(2) : '');
+  }
+}
+
+// ---------------------------------------------------------------- drawing
+function draw(ball, pose) {
+  const k = overlay.width / PW;
+  octx.clearRect(0, 0, overlay.width, overlay.height);
+  octx.save(); octx.scale(k, k);
+
+  if (mode === 'setup' && !tracker.color) {
+    octx.strokeStyle = '#ffe66d'; octx.lineWidth = 1.2; octx.setLineDash([3, 2]);
+    octx.beginPath(); octx.arc(PW / 2, PH * 0.45, PH * 0.05, 0, Math.PI * 2); octx.stroke(); octx.setLineDash([]);
+  }
+  if (debugOn && pose) {
+    octx.strokeStyle = 'rgba(0,180,197,.8)'; octx.lineWidth = 0.8;
+    [['ls', 'rs'], ['lh', 'rh'], ['ls', 'lh'], ['rs', 'rh'], ['lh', 'lk'], ['rh', 'rk'], ['lk', 'la'], ['rk', 'ra']].forEach(([a, b2]) => {
+      octx.beginPath(); octx.moveTo(pose[a].x, pose[a].y); octx.lineTo(pose[b2].x, pose[b2].y); octx.stroke();
+    });
+    octx.fillStyle = '#f9629f';
+    ['lw', 'rw'].forEach(w => { octx.beginPath(); octx.arc(pose[w].x, pose[w].y, 2, 0, Math.PI * 2); octx.fill(); });
+  }
+  if (debugOn && detector && detector.floorY) {
+    octx.strokeStyle = 'rgba(255,230,109,.6)'; octx.lineWidth = 0.6;
+    octx.beginPath(); octx.moveTo(0, detector.floorY); octx.lineTo(PW, detector.floorY); octx.stroke();
+  }
+  if (task && task.id === 'low' && detector && detector.stanceY && (mode === 'live' || mode === 'countdown') && pose) {
+    const low = pose.hipY >= detector.stanceY;
+    octx.strokeStyle = low ? 'rgba(74,222,128,.9)' : 'rgba(255,107,107,.9)'; octx.lineWidth = 1.2;
+    octx.beginPath(); octx.moveTo(0, detector.stanceY); octx.lineTo(PW, detector.stanceY); octx.stroke();
+  }
+  if (run && run.target && mode === 'live') {
+    const tg = run.target, age = (nowT() - tg.born) / TARGET_LIFE;
+    octx.strokeStyle = '#ffe66d'; octx.fillStyle = 'rgba(255,230,109,' + (0.35 * (1 - age)).toFixed(2) + ')'; octx.lineWidth = 1.5;
+    // A circle lying on the floor (flattened), with a shrinking ring showing the time left.
+    octx.beginPath(); octx.ellipse(tg.x, tg.y, tg.r, tg.r * 0.45, 0, 0, Math.PI * 2); octx.fill(); octx.stroke();
+    octx.strokeStyle = '#fff'; octx.lineWidth = 1;
+    octx.beginPath(); octx.ellipse(tg.x, tg.y, tg.r * (1 - age), tg.r * 0.45 * (1 - age), 0, 0, Math.PI * 2); octx.stroke();
+  }
+  if (ball) {
+    octx.strokeStyle = '#00b4c5'; octx.lineWidth = 1.4;
+    octx.beginPath(); octx.arc(ball.x, ball.y, ball.r + 1.5, 0, Math.PI * 2); octx.stroke();
+  }
+  octx.restore();
+}
+
+// ---------------------------------------------------------------- stage flow
+let run = null;
+const TARGET_LIFE = 3.0, CALL_LIFE = 2.5;
+
+function bodyInFrame(pose) {
+  return !!pose && pose.ankleY !== null && pose.ankleY < PH * 0.98 && pose.nose.y > 0 && pose.nose.vis > 0.4;
+}
+
+function setMode(m, t) { mode = m; modeT = t; }
+
+async function openStage() {
+  Object.assign(setup, { okFrames: 0, lastHue: null, goodSince: null, cal: null, calStep: null, bounces: 0, lastCount: null });
+  $('stage').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  ['count', 'countLabel', 'clock', 'call'].forEach(id => $(id).classList.add('hidden'));
+  $('panel').classList.add('hidden'); $('free').style.display = 'none';
+  $('timerFill').style.width = '0';
+  setMsg('STARTING CAMERA…', '');
+  audio();
+  requestWake();
+  running = true;
+  const ok = replayMode ? true : await startCamera();
+  if (!ok) return false;
+  fitView();
+  fpsT = performance.now(); fpsN = 0;
+  requestAnimationFrame(loop);
+  return true;
+}
+
+function leaveStage() {
+  running = false;
+  stopCamera();
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+  try { speechSynthesis.cancel(); } catch (e) {}
+  $('stage').classList.remove('on');
+  document.body.style.overflow = '';
+  mode = null; run = null; task = null;
+  showHome();
+}
+
+async function startDrill(id) {
+  task = { kind: 'drill', id };
+  if (DQ.drill(id).needsBody || !poseFailed) loadPose();
+  if (!(await openStage())) return;
+  detector.reset();
+  setMode('setup', nowT());
+}
+
+async function startFree(isReplay) {
+  task = { kind: 'free', id: 'free' };
+  replayMode = !!isReplay;
+  loadPose();
+  if (!(await openStage())) return;
+  detector.reset();
+  setMode('setup', nowT());
+}
+
+$('replayFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  stopCamera();
+  replayMode = true;
+  $('view').classList.remove('mirror');
+  $('flipBtn').classList.add('hidden');
+  video.srcObject = null;
+  video.src = URL.createObjectURL(f);
+  video.loop = true;              // loops until the ball is locked, then plays once from the start
+  await new Promise(r => { video.onloadedmetadata = () => r(); });
+  video.onended = () => { if (mode === 'free') setMsg('VIDEO DONE', 'Counted ' + free.dr + ' dribbles. Compare with your hand count.'); };
+  calib.at = 0;
+  e.target.value = '';
+  tracker = new DQ.BallTracker();  // a new video may have a different ball
+  await startFree(true);
+  video.play().catch(() => {});
+});
+
+// One step per frame: what the stage does depends on the mode.
+function step(t, img, ball, pose, events) {
+  const d = task && task.kind === 'drill' ? DQ.drill(task.id) : null;
+  const needsBody = !d || d.needsBody;
+  const el = t - modeT;
+
+  if (mode === 'setup') {
+    // 1) ball color, 2) body in frame (if this drill needs it, and the tracker loaded)
+    if (d && d.needsBody && poseFailed) {
+      setMsg('BODY TRACKER DIDN\'T LOAD', 'This drill needs it. Check the internet connection and try again, or play Pound It.');
+      return;
+    }
+    if (!tracker.color) {
+      const cx = PW / 2, cy = PH * 0.45, rr = PH * 0.04;
+      let s = tracker.sampleCircle(img, cx, cy, rr);
+      // Only a ball: the ring around the circle must NOT be the same color (that would be a shirt or wall).
+      if (s.ok && tracker.ringShare(img, cx, cy, rr * 1.6, rr * 2.6, s) > 0.6) s = { ok: false };
+      if (s.ok && setup.lastHue !== null && DQ.hueDiff(s.h, setup.lastHue) < 12) setup.okFrames++;
+      else setup.okFrames = 0;
+      setup.lastHue = s.ok ? s.h : null;
+      if (setup.okFrames >= 15) { tracker.lockColor(s, PH * 0.05); sfx.lock(); }
+      if (replayMode) setMsg('TAP THE BALL', 'Tap the ball when you see it in the video to lock its color. The video starts over after that.');
+      else setMsg('HOLD YOUR BALL IN THE CIRCLE', 'Walk up and hold it inside the yellow circle until it beeps — or tap the ball on the screen.');
+      panel(['Ball locked', false], ['Whole body in frame', bodyInFrame(pose)]);
+      return;
+    }
+    if (replayMode) {
+      // Recorded video: no calibration steps (the kid in the video didn't do them). Count from the start.
+      $('panel').classList.add('hidden');
+      detector.floorY = null; detector.stanceY = null;
+      video.loop = false; video.currentTime = 0; video.play().catch(() => {});
+      beginAfterCalib(0);
+      return;
+    }
+    const wantBody = needsBody && !poseFailed;
+    const bodyOk = !wantBody || bodyInFrame(pose);
+    const ballOk = !!ball;
+    if (wantBody && !poseLm) setMsg('LOADING BODY TRACKER…', 'First time takes a few seconds.');
+    else if (!bodyOk) setMsg('STEP BACK', 'Head to feet in the picture. Move the phone back or tilt it.');
+    else if (!ballOk) setMsg('WHERE\'S THE BALL?', 'Hold it in front of you so the camera can see it.');
+    else setMsg('LOOKING GOOD', 'Hold still…');
+    panel(['Ball locked', true], ['Ball found', ballOk], wantBody ? ['Whole body in frame', bodyOk] : ['Body tracker', poseFailed ? 'off' : 'not needed']);
+    if (bodyOk && ballOk && (!wantBody || poseLm)) {
+      if (setup.goodSince === null) setup.goodSince = t;
+      if (t - setup.goodSince > 1.0) {
+        $('panel').classList.add('hidden');
+        const fresh = calib.at && Date.now() - calib.at < 20 * 60 * 1000 && calib.facing === facing && !replayMode;
+        if (fresh) { detector.floorY = calib.floorY; detector.stanceY = calib.stanceY; beginAfterCalib(t); }
+        else beginCalib(t, wantBody);
+      }
+    } else setup.goodSince = null;
+    return;
+  }
+
+  if (mode === 'calib') {
+    const c = setup.cal;
+    if (setup.calStep === 'tall') {
+      setMsg('STAND TALL', 'Ball in your hands. Stay still…');
+      if (pose) c.addTall(pose);
+      if (el > 2.0) { setup.calStep = 'stance'; modeT = t; sfx.count(); }
+    } else if (setup.calStep === 'stance') {
+      setMsg('GET IN YOUR STANCE', 'Knees bent, hips low, like you\'re ready to dribble.');
+      if (pose) c.addStance(pose);
+      if (el > 2.2) { setup.calStep = 'bounce'; modeT = t; sfx.count(); detector.reset(); }
+    } else {
+      setMsg('BOUNCE IT 3 TIMES', setup.bounces + ' / 3');
+      events.forEach(e => { if (e.type === 'bounce' && ball) { c.addBounce(e, ball.r); setup.bounces++; sfx.tick(); } });
+      if (setup.bounces >= 3 || el > 12) {
+        const r = c.result();
+        detector.floorY = r.floorY; detector.stanceY = r.stanceY;
+        Object.assign(calib, { at: Date.now(), floorY: r.floorY, stanceY: r.stanceY, facing });
+        sfx.lock();
+        beginAfterCalib(t);
+      }
+    }
+    return;
+  }
+
+  if (mode === 'countdown') {
+    const left = 3 - Math.floor(el);
+    if (left !== setup.lastCount && left > 0) { setup.lastCount = left; sfx.count(); }
+    if (left > 0) setMsg(String(left), d ? d.name : '');
+    else { setMsg('', ''); sfx.go(); say('Go!'); startLive(t); }
+    return;
+  }
+
+  if (mode === 'free') {
+    events.forEach(e => {
+      if (e.type === 'bounce') { free.dr++; if (e.hand === 'right') free.r++; if (e.hand === 'left') free.l++; sfx.tick(); }
+      if (e.type === 'cross') free.x++;
+    });
+    $('fDr').textContent = free.dr; $('fR').textContent = free.r; $('fL').textContent = free.l; $('fX').textContent = free.x;
+    $('count').textContent = free.dr;
+    return;
+  }
+
+  if (mode === 'live') liveStep(t, ball, pose, events);
+}
+
+const setup = {};
+const free = { dr: 0, r: 0, l: 0, x: 0 };
+function resetFree() { free.dr = free.r = free.l = free.x = 0; detector.reset(); if (replayMode) { video.currentTime = 0; video.play().catch(() => {}); } }
+
+function panel(...rows) {
+  const p = $('panel');
+  p.classList.remove('hidden');
+  p.innerHTML = rows.map(([label, v]) => '<div class="row"><span>' + label + '</span><b>' +
+    (v === true ? '<span class="ok">✓</span>' : v === false ? '<span class="bad">✗</span>' : '<span class="note">' + v + '</span>') + '</b></div>').join('');
+}
+
+function beginCalib(t, withBody) {
+  setup.cal = new DQ.Calibrator();
+  setup.bounces = 0;
+  setup.calStep = withBody ? 'tall' : 'bounce';
+  detector.floorY = null; detector.stanceY = null;
+  detector.reset();
+  setMode('calib', t);
+  sfx.count();
+}
+
+function beginAfterCalib(t) {
+  detector.reset();
+  if (task.kind === 'free') {
+    setMsg('', '');
+    $('free').style.display = 'block';
+    $('count').classList.remove('hidden');
+    $('countLabel').classList.remove('hidden'); $('countLabel').textContent = 'DRIBBLES';
+    Object.assign(free, { dr: 0, r: 0, l: 0, x: 0 });
+    setMode('free', t);
+  } else {
+    setMode('countdown', t);
+  }
+}
+
+// ---------------------------------------------------------------- live drill
+function startLive(t) {
+  const d = DQ.drill(task.id);
+  run = { id: d.id, start: t, end: t + d.secs, score: 0, dribbles: 0, right: 0, left: 0, crosses: 0,
+    frames: 0, ballFrames: 0, poseFrames: 0, hits: 0, total: 0, reactions: [], target: null, nextTargetAt: t + 0.5,
+    lastSpot: -1, call: null, nextCallAt: t + 0.6, lastMove: null, lastHand: null, ended: false };
+  ['count', 'countLabel', 'clock'].forEach(id => $(id).classList.remove('hidden'));
+  $('count').textContent = '0';
+  $('countLabel').textContent = d.unit.toUpperCase();
+  setMode('live', t);
+}
+
+function liveStep(t, ball, pose, events) {
+  const d = DQ.drill(run.id);
+  run.frames++; if (ball) run.ballFrames++; if (pose) run.poseFrames++;
+  const weak = data.strongHand === 'right' ? 'left' : 'right';
+
+  events.forEach(e => {
+    if (e.type === 'bounce') {
+      run.dribbles++;
+      if (e.hand === 'right') run.right++;
+      if (e.hand === 'left') run.left++;
+      if (e.hand) run.lastHand = e.hand;
+      if (run.id === 'pound') { run.score++; sfx.tick(); }
+      else if (run.id === 'weak') { if (e.hand === weak) { run.score++; sfx.tick(); } }
+      else if (run.id === 'low') { if (e.low) { run.score++; sfx.tick(); } }
+      if (run.id === 'call' && run.call && !run.call.done && t - run.call.born > 0.15 &&
+        ((run.call.move === 'RIGHT' && e.hand === 'right') || (run.call.move === 'LEFT' && e.hand === 'left'))) callHit(t);
+    }
+    if (e.type === 'cross') {
+      run.crosses++;
+      if (run.id === 'cross') { run.score++; sfx.tick(); }
+      if (run.id === 'call' && run.call && !run.call.done && run.call.move === 'CROSS' && t - run.call.born > 0.15) callHit(t);
+    }
+  });
+
+  if (run.id === 'target') targetStep(t, ball, pose, events);
+  if (run.id === 'call') callStep(t);
+
+  const left = Math.max(0, run.end - t);
+  $('clock').textContent = Math.ceil(left);
+  $('timerFill').style.width = (100 * (1 - left / d.secs)).toFixed(1) + '%';
+  $('count').textContent = run.score;
+  if (left <= 0 && !run.ended) finishRun(t);
+}
+
+function targetStep(t, ball, pose, events) {
+  if (!run.target && t >= run.nextTargetAt && pose) {
+    const spots = DQ.targetSpots(pose, detector.floorY, (ball && ball.r) || tracker.expectR || PH * 0.04)
+      .map((s, i) => Object.assign(s, { i }))
+      .filter(s => s.x > s.r * 0.5 && s.x < PW - s.r * 0.5 && s.y < PH && s.i !== run.lastSpot &&
+        // never right where the ball already is: the kid has to move it there
+        (!ball || Math.abs(ball.x - s.x) > s.r + 2 * ball.r));
+    if (spots.length) {
+      const s = spots[Math.floor(Math.random() * spots.length)];
+      run.target = { x: s.x, y: s.y, r: s.r, born: t, i: s.i };
+      run.lastSpot = s.i; run.total++;
+    }
+  }
+  if (run.target) {
+    const tg = run.target;
+    if (events.some(e => e.t > tg.born + 0.1 && DQ.bounceInTarget(e, tg))) {
+      run.hits++; run.score++; run.reactions.push(t - run.target.born);
+      run.target = null; run.nextTargetAt = t + 0.35; sfx.hit();
+    } else if (t - run.target.born > TARGET_LIFE) {
+      run.target = null; run.nextTargetAt = t + 0.35; sfx.miss();
+    }
+  }
+}
+
+function callStep(t) {
+  const el = $('call');
+  if (!run.call && t >= run.nextCallAt) {
+    const moves = ['RIGHT', 'LEFT', 'CROSS'].filter(m => m !== run.lastMove &&
+      !(m === 'RIGHT' && run.lastHand === 'right') && !(m === 'LEFT' && run.lastHand === 'left'));
+    const m = moves[Math.floor(Math.random() * moves.length)] || 'CROSS';
+    run.call = { move: m, born: t, done: false }; run.lastMove = m; run.total++;
+    el.textContent = m; el.style.color = '#ffe66d'; el.classList.remove('hidden');
+    say(m.toLowerCase()); beep(1100, 80, 0.2);
+  }
+  if (run.call && !run.call.done && t - run.call.born > CALL_LIFE) {
+    run.call.done = true; el.style.color = '#ff6b6b'; sfx.miss();
+    setTimeout(() => el.classList.add('hidden'), 300);
+    run.call = null; run.nextCallAt = t + 0.6;
+  }
+}
+
+function callHit(t) {
+  run.hits++; run.score++; run.reactions.push(t - run.call.born);
+  run.call.done = true; $('call').style.color = '#4ade80'; sfx.hit();
+  setTimeout(() => $('call').classList.add('hidden'), 250);
+  run.call = null; run.nextCallAt = t + 0.6;
+}
+
+async function finishRun(t) {
+  run.ended = true;
+  sfx.buzzer();
+  const d = DQ.drill(run.id);
+  const ballQ = run.frames ? run.ballFrames / run.frames : 0;
+  const poseQ = run.frames ? run.poseFrames / run.frames : 0;
+  const quality = d.needsBody ? Math.min(ballQ, poseQ) : ballQ;
+  const result = { drillId: run.id, score: run.score, dribbles: run.dribbles, right: run.right, left: run.left,
+    crossovers: run.crosses, targetsHit: run.id === 'target' ? run.hits : (run.id === 'call' ? run.hits : 0),
+    targetsTotal: run.id === 'target' || run.id === 'call' ? run.total : 0,
+    avgReactionMs: run.reactions.length ? 1000 * run.reactions.reduce((a, b) => a + b, 0) / run.reactions.length : 0,
+    quality };
+  const out = DQ.recordSession(data, result, new Date(), DQ_VERSION);
+  const id = run.id;
+  running = false;
+  stopCamera();
+  if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+  $('stage').classList.remove('on');
+  document.body.style.overflow = '';
+  mode = null; run = null;
+  showResults(d, result, out);
+  if (out.pb) say('New personal best!');
+  await persist();
+}
+
+function showResults(d, result, out) {
+  $('rsName').textContent = d.name;
+  $('rsScore').textContent = result.score;
+  $('rsUnit').textContent = d.unit;
+  $('rsStars').innerHTML = starText(out.stars);
+  $('rsPB').innerHTML = out.pb ? '<div class="pb">NEW PERSONAL BEST!</div>' :
+    (out.prevBest ? '<div class="sub">Your best: ' + out.prevBest + '</div>' : '');
+  let det = '<div class="row"><span>XP earned</span><b>+' + out.xp + '</b></div>';
+  if (out.dailyDone) det += '<div class="row"><span>Today\'s Quest</span><b class="ok">Complete! 🔥 ' + data.streak.count + ' day streak</b></div>';
+  det += '<div class="row"><span>Total dribbles</span><b>' + result.dribbles + '</b></div>';
+  if (result.right || result.left) det += '<div class="row"><span>Right / Left hand</span><b>' + result.right + ' / ' + result.left + '</b></div>';
+  if (d.id === 'cross') det += '<div class="row"><span>Crossovers</span><b>' + result.crossovers + '</b></div>';
+  if (result.targetsTotal) det += '<div class="row"><span>' + (d.id === 'call' ? 'Calls' : 'Targets') + ' hit</span><b>' + result.targetsHit + ' / ' + result.targetsTotal + '</b></div>';
+  if (result.avgReactionMs) det += '<div class="row"><span>Average reaction</span><b>' + (result.avgReactionMs / 1000).toFixed(2) + ' s</b></div>';
+  det += '<div class="row"><span>Next star at</span><b>' + (out.stars < 3 ? d.stars[out.stars] + ' ' + d.unit : 'Maxed out ⭐⭐⭐') + '</b></div>';
+  $('rsDetails').innerHTML = det;
+  $('rsBadges').innerHTML = out.newBadges.map(b => '<div class="newbadge">🏅 NEW BADGE: ' + b.emoji + ' <b>' + b.name + '</b></div>').join('');
+  $('rsNote').innerHTML = !out.counted ? '<span class="bad">That score looks like a tracking glitch, so it wasn\'t saved.</span>' :
+    result.quality < DQ.MIN_QUALITY ? '<span class="warn">The camera lost the ' + (d.needsBody ? 'ball or your body' : 'ball') +
+    ' a lot this time (' + Math.round(result.quality * 100) + '% tracked). Saved, but it won\'t count for leaderboards. Try brighter light or a brighter ball.</span>' : '';
+  $('rsAgain').onclick = () => startDrill(d.id);
+  show('results');
+}
+
+// Android app Back button: leave the camera or go back a screen instead of closing the app.
+window.__dqBack = function () {
+  if ($('stage').classList.contains('on')) { leaveStage(); return; }
+  const active = document.querySelector('.screen.active');
+  if (active && active.id !== 'home') showHome(); else goSwishQuest();
+};
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && running) requestWake(); });
+
+// ---------------------------------------------------------------- start
+loadLocal();
+renderHome();
+initFirebase();
+</script>
+</body>
+</html>

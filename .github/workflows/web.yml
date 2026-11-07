@@ -17,10 +17,15 @@ jobs:
       - name: Check the website parses
         run: |
           node -e "
-            const fs=require('fs'); const html=fs.readFileSync('web/public/index.html','utf8');
-            const scripts=[...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
-            scripts.forEach((s,i)=>{ try{ new Function(s) }catch(e){ console.error('::error::script '+i+': '+e.message); process.exit(1) } });
-            console.log('index.html scripts OK:', scripts.length);"
+            const fs=require('fs');
+            for (const f of ['index.html','dribble.html']) {
+              const html=fs.readFileSync('web/public/'+f,'utf8');
+              const scripts=[...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+              scripts.forEach((s,i)=>{ try{ new Function(s) }catch(e){ console.error('::error::'+f+' script '+i+': '+e.message); process.exit(1) } });
+              console.log(f+' scripts OK:', scripts.length);
+            }"
+      - name: Test Dribble Quest tracking
+        run: node web/tests/dribble-engine.test.js
       - name: Check the key is there
         id: key
         run: |

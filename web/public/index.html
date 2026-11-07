@@ -3281,6 +3281,7 @@
       </div>
 
       <button class="log-session-btn" onclick="showScreen('log-session')">LOG YOUR STATS</button>
+      <button class="log-session-btn" id="dribble-quest-btn" onclick="location.href='dribble.html'" style="margin-top:10px; background:#101820; border:2px solid #f9629f; box-shadow:none; color:#fff;">🏀 DRIBBLE QUEST</button>
 
 <!-- Coach widget removed -->
     </div>
@@ -3774,7 +3775,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.10.0';
+  const APP_VERSION = '1.11.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4440,6 +4441,9 @@
     
     try {
       const data = JSON.parse(JSON.stringify(state));
+      // Dribble Quest (dribble.html) saves its own part of the profile, merged with the cloud copy.
+      // Leaving it out here means an older copy on this device can never overwrite newer dribble scores.
+      delete data.dribble;
       data._lastSync = new Date().toISOString();
       data._uid = user.uid;
       data._email = user.email;
@@ -9065,6 +9069,6 @@
 
   </script>
   <!-- Shot chart + progress cards on the Stats screen (also used by the Android app) -->
-  <script src="js/svstats.js?v=1.10.0"></script>
+  <script src="js/svstats.js?v=1.11.0"></script>
 </body>
 </html>
