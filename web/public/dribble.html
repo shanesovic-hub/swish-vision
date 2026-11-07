@@ -524,12 +524,36 @@ async function startCamera() {
   replayMode = false;
   $('view').classList.toggle('mirror', facing === 'user');
   $('flipBtn').classList.remove('hidden');
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: {
-      facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60, max: 60 } } });
-  } catch (e) {
-    console.error(e);
-    setMsg('CAMERA BLOCKED', 'Allow camera access for this site in your browser settings, then try again.');
+  // Try the best camera settings first, then simpler ones (some phones refuse 60 fps or HD).
+  const tries = [
+    { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } },
+    { facingMode: facing },
+    true
+  ];
+  let err = null;
+  stream = null;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) err = { name: 'NoCameraApi' };
+  for (const v of tries) {
+    if (err && err.name === 'NoCameraApi') break;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v }); break; }
+    catch (e) {
+      err = e; console.error('camera', e);
+      if (e.name === 'NotAllowedError' || e.name === 'SecurityError') break;   // a "no", not a settings problem
+    }
+  }
+  if (!stream) {
+    const inApp = /SwishQuestApp/.test(navigator.userAgent);
+    const name = (err && err.name) || 'Error';
+    if (inApp && (name === 'NotAllowedError' || name === 'SecurityError' || name === 'NoCameraApi')) {
+      setMsg('UPDATE THE APP', 'This version of the Swish Quest app can\'t share the camera with Dribble Quest. ' +
+        'Install the newest app build (38 or later), or open swish-quest.web.app/dribble.html in Chrome. (' + name + ')');
+    } else if (name === 'NotAllowedError' || name === 'SecurityError') {
+      setMsg('CAMERA BLOCKED', 'Tap the lock icon next to the web address, allow Camera, then try again. (' + name + ')');
+    } else if (name === 'NotReadableError') {
+      setMsg('CAMERA BUSY', 'Another app is using the camera. Close it and try again. (' + name + ')');
+    } else {
+      setMsg('CAMERA PROBLEM', 'The camera wouldn\'t start on this phone. (' + name + ')');
+    }
     return false;
   }
   video.srcObject = stream;
