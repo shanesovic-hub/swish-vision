@@ -688,6 +688,22 @@
       min-height: 56px;
     }
     .log-session-btn:active { transform: scale(0.97); }
+    /* Dashboard: Swish Quest / Dribble Quest */
+    .log-session-btn.quest-choice {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #101820; border: 2px solid var(--teal); box-shadow: none; margin-top: 12px;
+      font-size: 24px; letter-spacing: 4px;
+    }
+    .quest-choice .hoop-icon { width: 34px; height: 34px; flex: none; }
+    .quest-choice .quest-emoji { font-size: 28px; line-height: 1; letter-spacing: 0; }
+    /* Stats: Log Your Stats stays on screen just above the bottom bar */
+    .stats-log-spacer { height: 96px; }
+    .stats-log-bar {
+      position: fixed; left: 50%; transform: translateX(-50%); z-index: 49;
+      bottom: calc(var(--sv-nav-h, 76px) + 10px);
+      width: calc(100% - 32px); max-width: 388px;
+    }
+    .stats-log-bar .log-session-btn { margin: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 4px 20px rgba(0,180,197,0.3); }
 
     /* ===== LOG SESSION SCREEN ===== */
     .log-screen {
@@ -2995,6 +3011,7 @@
       #dashboard > * { width: 100%; max-width: 560px; }
       #dashboard .dash-ring { width: min(56vh, 460px); }
       #dashboard .log-session-btn { width: 100%; }
+      .stats-log-bar { left: auto; right: 48px; bottom: 28px; transform: none; width: 360px; }
 
       /* Stats: a grid of cards; the shot chart and progress cards take two columns */
       #stats-content {
@@ -3280,8 +3297,11 @@
         <div id="boss-unlocked-active-info" class="boss-unlocked-active-info"></div>
       </div>
 
-      <button class="log-session-btn" onclick="showScreen('log-session')">LOG YOUR STATS</button>
-      <button class="log-session-btn" id="dribble-quest-btn" onclick="location.href='dribble.html'" style="margin-top:10px; background:#101820; border:2px solid #f9629f; box-shadow:none; color:#fff;">🏀 DRIBBLE QUEST</button>
+      <!-- Two big choices: shooting (Swish Quest) and ball handling (Dribble Quest). Log Your Stats lives on the Stats tab. -->
+      <button class="log-session-btn quest-choice" id="swish-quest-btn" onclick="startSwishQuest()" style="border-color:var(--teal);"><svg class="hoop-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 11 L9.5 27 M27 11 L22.5 27 M5 11 L14 27 M11 12.5 L19 27 M21 12.5 L13 27 M27 11 L18 27 M7.2 19 H24.8 M8.6 24 H23.4" fill="none" stroke="#e8e8e8" stroke-width="1.3" stroke-linecap="round"/><ellipse cx="16" cy="10.5" rx="12" ry="3.3" fill="none" stroke="#ff7a1a" stroke-width="2.6"/></svg><span>SWISH QUEST</span></button>
+      <button class="log-session-btn quest-choice" id="dribble-quest-btn" onclick="location.href='dribble.html'" style="border-color:#f9629f;"><span class="quest-emoji">🏀</span><span>DRIBBLE QUEST</span></button>
+      <!-- Tells the Android app not to add its own "Track with camera" button here (Swish Quest above does that job). -->
+      <span id="sv-dash-btn" hidden></span>
 
 <!-- Coach widget removed -->
     </div>
@@ -3372,7 +3392,7 @@
           </div>
         </div>
         <button id="save-session-btn" class="save-btn" onclick="saveSession()" disabled>SAVE SESSION 💾</button>
-        <button class="back-btn" onclick="showNav('dashboard')">← BACK</button>
+        <button class="back-btn" onclick="showNav('stats')">← BACK</button>
       </div>
     </div>
 
@@ -3382,6 +3402,8 @@
         <h2 class="screen-title">📊 YOUR STATS</h2>
       </div>
       <div id="stats-content"></div>
+      <div class="stats-log-spacer"></div>
+      <div class="stats-log-bar"><button class="log-session-btn" onclick="showScreen('log-session')">📝 LOG YOUR STATS</button></div>
     </div>
 
     <!-- ===== BADGES ===== -->
@@ -3775,7 +3797,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.11.0';
+  const APP_VERSION = '1.12.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -5615,6 +5637,23 @@
   // =============================================
   // SCREEN NAVIGATION
   // =============================================
+  // Swish Quest button: in the Android app it opens the shot-tracking camera; on the web it opens Log Session.
+  function startSwishQuest() {
+    const nat = window.SwishVisionNative;
+    if (!nat) { showScreen('log-session'); return; }
+    let name = '', grade = '';
+    try { name = (state.player && state.player.name) || ''; grade = (state.player && state.player.grade) || ''; } catch (e) {}
+    if (nat.startTrackingWith) nat.startTrackingWith('ft', String(name), String(grade));
+    else if (nat.startTrackingFor) nat.startTrackingFor('ft', String(name));
+    else nat.startTracking('ft');
+  }
+
+  function syncNavHeightVar() {
+    const n = document.getElementById('bottom-nav');
+    if (n && n.offsetHeight) document.documentElement.style.setProperty('--sv-nav-h', n.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', syncNavHeightVar);
+
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -5624,7 +5663,7 @@
 
     if (id === 'meet-coach') setupCoachScreen();
     if (id === 'dashboard') setupDashboard();
-    if (id === 'stats') setupStats();
+    if (id === 'stats') { setupStats(); syncNavHeightVar(); }
     if (id === 'board') setupBoard();
     if (id === 'badges') setupBadges();
     if (id === 'profile') setupProfile();
@@ -9069,6 +9108,6 @@
 
   </script>
   <!-- Shot chart + progress cards on the Stats screen (also used by the Android app) -->
-  <script src="js/svstats.js?v=1.11.0"></script>
+  <script src="js/svstats.js?v=1.12.0"></script>
 </body>
 </html>
