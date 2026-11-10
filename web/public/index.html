@@ -1225,6 +1225,7 @@
       font-family: 'Outfit', sans-serif;
       font-size: 18px;
       color: #aaa;
+      max-width: 320px; padding: 0 20px; text-align: center; line-height: 1.4;
     }
     .tier-firework {
       position: absolute;
@@ -1451,6 +1452,7 @@
       font-family: 'Outfit', sans-serif;
       font-size: 20px;
       color: #aaa;
+      max-width: 320px; padding: 0 20px; text-align: center; line-height: 1.4;
     }
 
     /* Streak fire effect */
@@ -2980,7 +2982,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.13.0';
+  const APP_VERSION = '1.13.1';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -3556,6 +3558,7 @@
     saveAllProfiles(data);
     _activeProfileId = profileId;
     state = migrateState(JSON.parse(JSON.stringify(data.profiles[profileId]))) || defaultState();
+    creditEarlierShots();
     return true;
   }
 
@@ -4015,6 +4018,7 @@
     // Proceed with active profile
     if (state.player) {
       if (!state.goals) { state.goals = legacyGoals(); saveState(); }
+      creditEarlierShots();
       if (user && !state.gamertag) {
         showScreen('gamertag-setup');
         return;
@@ -4675,6 +4679,7 @@
     else { rank.style.cssText = 'color:' + getTierColor(tier) + ';'; }
     document.getElementById('dash-streak').textContent = `${getStreakEmoji(streak)} ${streak} day${streak !== 1 ? 's' : ''} in a row`;
     renderNextRank();
+    showShotCreditNotice();
   }
 
   function getStreakEmoji(days) {
@@ -5081,6 +5086,76 @@
   }
 
   // =============================================
+  // ONE-TIME CREDIT FOR EARLIER SHOTS (1.13.1)
+  // =============================================
+  // Before 1.13 a session under the rank's minimum did not count toward rank, shots past three times the
+  // minimum were dropped, and whatever was left over at a rank-up was lost. Every shot counts now, so each
+  // player gets those shots back, once: their rank is set to where their total shots put them on the ladder.
+  // It only ever moves a player up, and what it changed is kept on the player as state.shotCredit
+  // (from = rank before, to = rank after), so it can be checked or put back.
+  let _shotCreditNotice = null; // { profileId, added, rankUp, levelUp }: shown once, on the home screen
+
+  function totalShotsEver() {
+    const sum = list => (Array.isArray(list) ? list : []).reduce((t, x) => t + Math.max(0, Math.floor(Number(x && x.shots) || 0)), 0);
+    return Math.max(Math.floor(Number(state.lifetimeFGA) || 0), sum(state.sessions) + sum(state.bossSessions));
+  }
+
+  // Walk a shot total up the ladder: the same rule checkTierAdvancement() uses, from zero.
+  function rankForShots(total) {
+    let left = Math.max(0, total), tier = 1;
+    while (tier < 10) {
+      const need = TIER_CONFIG[tier] && TIER_CONFIG[tier].fgaRequired;
+      if (!need || left < need) break;
+      const next = TIER_CONFIG[tier + 1];
+      if (next && next.accGate > 0 && getRollingAccuracy(next.accWindow) < next.accGate) break;
+      left -= need;
+      tier += 1;
+    }
+    return { tier: tier, tierFGA: left };
+  }
+
+  function shotsUpTheLadder(pos) {
+    let n = pos.tierFGA;
+    for (let t = 1; t < pos.tier; t++) n += (TIER_CONFIG[t] && TIER_CONFIG[t].fgaRequired) || 0;
+    return n;
+  }
+
+  function creditEarlierShots() {
+    if (!state || !state.player || state.shotCredit) return;
+    const from = { tier: Math.min(10, Math.max(1, Math.floor(Number(state.tier) || 1))), tierFGA: Math.max(0, Math.floor(Number(state.tierFGA) || 0)) };
+    const to = rankForShots(totalShotsEver());
+    const ahead = to.tier > from.tier || (to.tier === from.tier && to.tierFGA > from.tierFGA);
+    state.shotCredit = { v: 1, date: todayStr(), added: ahead ? shotsUpTheLadder(to) - shotsUpTheLadder(from) : 0, from: from, to: ahead ? to : from };
+    if (ahead) {
+      const levelBefore = Math.max(1, getTierLevel());
+      if (!Array.isArray(state.tierHistory)) state.tierHistory = [];
+      if (!Array.isArray(state.achievements)) state.achievements = [];
+      for (let t = from.tier + 1; t <= to.tier; t++) state.tierHistory.push({ tier: t, date: todayStr() });
+      for (let t = 1; t <= to.tier; t++) { if (!state.achievements.includes('tier_' + t)) state.achievements.push('tier_' + t); }
+      state.tier = to.tier;
+      state.tierFGA = to.tierFGA;
+      state.tierLevel = Math.max(1, getTierLevel());
+      _shotCreditNotice = { profileId: _activeProfileId, added: state.shotCredit.added, rankUp: to.tier > from.tier, levelUp: state.tierLevel > levelBefore };
+    }
+    saveState();
+    if (ahead && getFirebaseUser()) updatePublicProfile().catch(() => {});
+  }
+
+  // Tell the player why their level or rank just moved (once, on the home screen).
+  function showShotCreditNotice() {
+    const n = _shotCreditNotice;
+    if (!n || n.profileId !== _activeProfileId) return;
+    _shotCreditNotice = null;
+    const shots = n.added.toLocaleString() + ' shot' + (n.added === 1 ? '' : 's');
+    setTimeout(() => {
+      if (n.profileId !== _activeProfileId) return;
+      if (n.rankUp) showTierCelebration(state.tier, `Every shot counts now. ${shots} from your earlier sessions moved you up to ${getTierName(state.tier)}!`, 7000);
+      else if (n.levelUp) showLevelUp(Math.max(1, state.tierLevel || 1), `Every shot counts now: +${shots} from your earlier sessions`, 6000);
+      else showXPPopup('+' + n.added.toLocaleString() + ' FGA');
+    }, 700);
+  }
+
+  // =============================================
   // ACHIEVEMENTS
   // =============================================
   let badgeUnlockQueue = [];
@@ -5355,18 +5430,18 @@
     setTimeout(() => popup.classList.remove('visible'), 2500);
   }
 
-  function showLevelUp(level) {
+  function showLevelUp(level, note, ms) {
     const overlay = document.getElementById('level-up-overlay');
     if (!overlay) return;
     const numEl = document.getElementById('level-up-number');
     if (numEl) numEl.textContent = 'LEVEL ' + level;
     const subEl = document.getElementById('level-up-sub');
-    if (subEl) subEl.textContent = getTierName(state.tier).toUpperCase() + ' · LEVEL ' + level;
+    if (subEl) subEl.textContent = note || (getTierName(state.tier).toUpperCase() + ' · LEVEL ' + level);
     overlay.classList.add('visible');
-    setTimeout(() => overlay.classList.remove('visible'), 3000);
+    setTimeout(() => overlay.classList.remove('visible'), ms || 3000);
   }
 
-  function showTierCelebration(tier) {
+  function showTierCelebration(tier, note, ms) {
     const overlay = document.getElementById('tier-celebration');
     if (!overlay) return;
     const badgeEl = document.getElementById('tier-celeb-badge');
@@ -5377,9 +5452,9 @@
       nameEl.textContent = getTierName(tier).toUpperCase();
       nameEl.style.color = getTierColor(tier);
     }
-    if (msgEl) msgEl.textContent = `You've reached ${getTierName(tier)}!`;
+    if (msgEl) msgEl.textContent = note || `You've reached ${getTierName(tier)}!`;
     overlay.classList.add('visible');
-    setTimeout(() => overlay.classList.remove('visible'), 4000);
+    setTimeout(() => overlay.classList.remove('visible'), ms || 4000);
   }
 
   function fireEffect() {
