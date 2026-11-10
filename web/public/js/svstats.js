@@ -2,11 +2,13 @@
 // Loaded by the website (index.html) and also injected by the Swish Quest Android app; whichever runs
 // first installs it. Works everywhere (phone, desktop) because it reads the player's Swish Quest sessions.
 //
-//  - SHOT CHART: camera sessions carry where each shot was taken from (session.sv, saved with the session).
+//  - SHOT CHART: camera sessions, and sessions logged BY SPOT on the Log Session screen, carry where each shot
+//    was taken from (session.sv, saved with the session).
 //    Pick one session, one day, or all time. High school half court; zones coloured hot / OK / cold.
 //  - PROGRESS: shooting % per day (all shots or one shot type), the trend, and shots per day.
 //
-// session.sv = { v: 1, t: <camera start time, ms>, p: <3 characters per charted shot>, ft: [made, attempted] }
+// session.sv = { v: 1, t: <start time, ms>, p: <3 characters per charted shot>, ft: [made, attempted] }
+// Logged BY SPOT: also src: 'spots'. Those shots all sit at the middle of their spot, so no dots are drawn for them.
 (function () {
   if (window.__svStatsInstalled) return;
   window.__svStatsInstalled = true;
@@ -138,6 +140,7 @@
     s += '</g>';
     if (showDots) {
       dots.forEach(function (p) {
+        if (p.nd) return; // logged by spot: counted in its zone, no dot
         var x = +px(Math.max(L + 0.5, Math.min(R - 0.5, p.x))), y = +py(Math.max(T + 0.5, Math.min(B - 0.5, p.y)));
         if (p.m) s += '<circle cx="' + x + '" cy="' + y + '" r="4.5" fill="#4ade80" stroke="#0a0a0a" stroke-width="1"/>';
         else s += '<g stroke="#ff6b6b" stroke-width="2.5"><line x1="' + (x - 4) + '" y1="' + (y - 4) + '" x2="' + (x + 4) + '" y2="' + (y + 4) + '"/><line x1="' + (x - 4) + '" y1="' + (y + 4) + '" x2="' + (x + 4) + '" y2="' + (y - 4) + '"/></g>';
@@ -172,7 +175,8 @@
     var html = '<div class="chart-title">SHOT CHART</div>';
     if (!list.length) {
       card.innerHTML = html + '<div style="color:#888;' + font + ';font-size:14px;line-height:1.5;padding:4px 2px 8px">' +
-        'Track a session with the camera in the Swish Quest app, turn on 📍 and set the free-throw spot. Each shot then shows up here by where it was taken.</div>';
+        'Tap LOG YOUR STATS and log a session BY SPOT, or track one with the camera in the Swish Quest app (turn on 📍 and set the free-throw spot). ' +
+        'Each shot then shows up here by where it was taken.</div>';
       return card;
     }
     var days = [];
@@ -193,7 +197,9 @@
       : list.filter(function (c) { return 's:' + c.i === pick; });
     var dots = [], ftM = 0, ftA = 0;
     chosen.forEach(function (c) {
-      dots = dots.concat(decodeShots(c.s.sv.p));
+      var shots = decodeShots(c.s.sv.p);
+      if (c.s.sv.src === 'spots') shots.forEach(function (p) { p.nd = true; });
+      dots = dots.concat(shots);
       if (c.s.sv.ft) { ftM += c.s.sv.ft[0] || 0; ftA += c.s.sv.ft[1] || 0; }
     });
     var made = dots.filter(function (p) { return p.m; }).length;
@@ -205,7 +211,7 @@
       '<span>ON CHART <span style="color:var(--teal)">' + made + '/' + dots.length + (dots.length ? ' (' + Math.round(100 * made / dots.length) + '%)' : '') + '</span></span>' +
       (ftA ? '<span>FREE THROWS <span style="color:var(--teal)">' + ftM + '/' + ftA + ' (' + Math.round(100 * ftM / ftA) + '%)</span></span>' : '') + '</div>';
     html += '<div style="color:#777;font-size:12px;' + font + ';margin-top:6px">Green = hot, yellow = OK, red = cold. Hoop at the top; left/right as the shooter faces the hoop.' +
-      (pick === 'all' ? '' : ' Dots: ● make, ✕ miss.') + '</div>';
+      (pick !== 'all' && dots.some(function (p) { return !p.nd; }) ? ' Dots: ● make, ✕ miss.' : '') + '</div>';
     card.innerHTML = html;
     card.querySelector('.sv-pick').onchange = function () { pick = this.value; render(); };
     return card;

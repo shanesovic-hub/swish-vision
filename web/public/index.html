@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firestore.googleapis.com wss://*.firebaseio.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firestore.googleapis.com wss://*.firebaseio.com https://script.google.com https://script.googleusercontent.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -201,6 +201,7 @@
       min-height: 48px;
     }
     .form-input:focus { border-color: var(--teal); }
+    .form-hint { font-family: 'Outfit', sans-serif; font-size: 12px; color: #999; margin-top: 6px; }
     .form-select {
       width: 100%;
       background: var(--dark);
@@ -240,114 +241,6 @@
     .continue-btn:disabled {
       opacity: 0.4;
       pointer-events: none;
-    }
-
-    /* ===== GOAL SETTING ===== */
-    .goal-screen {
-      background: linear-gradient(180deg, #0a0a0a 0%, var(--gray) 100%);
-      padding: 24px;
-      align-items: center;
-      justify-content: center;
-    }
-    .goal-step {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 360px;
-    }
-    .goal-step.active { display: flex; }
-    .goal-step-indicator {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-      letter-spacing: 2px;
-    }
-    .goal-question {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
-      color: #fff;
-      text-align: center;
-      margin-bottom: 28px;
-      letter-spacing: 2px;
-      line-height: 1.2;
-    }
-    .goal-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      width: 100%;
-    }
-    .goal-option {
-      background: var(--dark);
-      border: 3px solid #333;
-      border-radius: 12px;
-      padding: 18px 24px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-      min-width: 90px;
-      min-height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .goal-option:active { transform: scale(0.95); }
-    .goal-option.selected {
-      border-color: var(--teal);
-      box-shadow: 0 0 25px var(--teal-glow);
-      background: rgba(0,180,197,0.1);
-    }
-    .goal-option-text {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 26px;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-    .goal-option.selected .goal-option-text {
-      color: var(--teal);
-    }
-
-    /* Goal Summary */
-    .goal-summary {
-      width: 100%;
-      max-width: 360px;
-    }
-    .goal-summary-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background: var(--dark);
-      border: 2px solid #333;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    .goal-summary-label {
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
-      color: #aaa;
-    }
-    .goal-summary-value {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      color: var(--teal);
-      letter-spacing: 1px;
-    }
-    .goal-summary-highlight {
-      background: rgba(0,180,197,0.1);
-      border-color: rgba(0,180,197,0.4);
-      margin-top: 16px;
-    }
-    .goal-summary-highlight .goal-summary-label {
-      color: var(--gold);
-      font-weight: 600;
-    }
-    .goal-summary-highlight .goal-summary-value {
-      font-size: 28px;
-      color: var(--gold);
     }
 
     /* ===== MEET COACH ===== */
@@ -553,8 +446,6 @@
       line-height: 1.4;
     }
 
-    /* Quests */
-    .quests-container { flex: 0; }
     /* Progress ring (1.9) */
     .dash-ring-wrap { display:flex; flex-direction:column; align-items:center; margin: 10px 0 clamp(36px, 7vh, 72px); }
     .dash-ring { position:relative; width: min(84vw, 46vh, 420px); aspect-ratio: 1; }
@@ -567,109 +458,6 @@
     .dash-ring-rank { font-family:'Bebas Neue',sans-serif; font-size: clamp(24px, 4.2vh, 38px); letter-spacing:4px; padding-left:4px; margin-top:6px; color:#aaa; }
     .dash-streak-chip { margin-top:22px; padding:8px 18px; border-radius:999px; background:rgba(255,138,101,0.12); border:1px solid rgba(255,138,101,0.35);
       color:#ff8a65; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
-    .quests-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      color: var(--teal);
-      text-align: center;
-      margin-bottom: 12px;
-      letter-spacing: 2px;
-    }
-    .quest-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--dark);
-      border: 2px solid #333;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 10px;
-      transition: all 0.2s ease;
-      min-height: 56px;
-    }
-    .quest-item.completed {
-      opacity: 0.75;
-      border-color: rgba(0,180,197,0.3);
-      background: rgba(0,180,197,0.06);
-    }
-    /* All quests complete banner */
-    .all-complete-banner {
-      display: none;
-      text-align: center;
-      background: linear-gradient(135deg, rgba(0,180,197,0.15), rgba(249,98,159,0.15));
-      border: 2px solid var(--teal);
-      border-radius: 10px;
-      padding: 18px 16px;
-      margin-bottom: 14px;
-      animation: bannerPop 0.4s ease;
-    }
-    .all-complete-banner.visible { display: block; }
-    .all-complete-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      color: var(--teal);
-      letter-spacing: 2px;
-      margin-bottom: 4px;
-    }
-    .all-complete-xp {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
-      background: linear-gradient(135deg, var(--teal), var(--pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .all-complete-sub {
-      font-size: 15px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 6px;
-    }
-    @keyframes bannerPop {
-      0% { transform: scale(0.9); opacity: 0; }
-      50% { transform: scale(1.03); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .quest-checkbox {
-      width: 30px;
-      height: 30px;
-      border: 2px solid var(--teal);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      color: var(--black);
-      font-weight: bold;
-      flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    .quest-checkbox.checked {
-      background: var(--teal);
-    }
-    .quest-info { flex: 1; }
-    .quest-text {
-      font-size: 16px;
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-    }
-    .quest-item.completed .quest-text {
-      text-decoration: line-through;
-      color: #888;
-    }
-    .quest-target {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      color: #666;
-      margin-top: 2px;
-    }
-    .quest-xp {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 14px;
-      color: var(--teal);
-      flex-shrink: 0;
-      letter-spacing: 1px;
-    }
-
     /* Log Session Button */
     .log-session-btn {
       width: 100%;
@@ -696,14 +484,25 @@
     }
     .quest-choice .hoop-icon { width: 34px; height: 34px; flex: none; }
     .quest-choice .quest-emoji { font-size: 28px; line-height: 1; letter-spacing: 0; }
-    /* Stats: Log Your Stats stays on screen just above the bottom bar */
-    .stats-log-spacer { height: 96px; }
-    .stats-log-bar {
-      position: fixed; left: 50%; transform: translateX(-50%); z-index: 49;
-      bottom: calc(var(--sv-nav-h, 76px) + 10px);
-      width: calc(100% - 32px); max-width: 388px;
+    /* Stats: Log Your Stats sits under the title, in the page (1.13: it no longer floats over the charts) */
+    .stats-log-btn { margin: 0 0 16px; padding: 14px 20px; min-height: 52px; }
+    /* Quest: what's left to reach the next rank (the goal) */
+    .dash-next-rank { margin-top: 14px; font-family: 'Bebas Neue', sans-serif; font-size: clamp(18px, 2.8vh, 24px);
+      letter-spacing: 2px; color: #bbb; text-align: center; line-height: 1.25; }
+    .dash-next-rank strong { color: #fff; font-weight: normal; }
+    .dash-next-rank .next-rank-name { color: var(--gold); }
+    .dash-next-rank small { display: block; font-family: 'Outfit', sans-serif; font-size: 13px; letter-spacing: 0; color: #999; margin-top: 2px; }
+    /* Short screens (iPhone in Safari, small Androids): keep both Quest buttons above the bottom bar */
+    @media (max-height: 720px) and (max-width: 1099px) {
+      .dash-ring-wrap { margin: 0 0 18px; }
+      .dash-ring { width: min(64vw, 36vh); }
+      .dash-ring-num { font-size: clamp(64px, 13vh, 96px); }
+      .dash-ring-label { font-size: 16px; letter-spacing: 4px; }
+      .dash-ring-rank { font-size: 20px; margin-top: 2px; }
+      .dash-streak-chip { margin-top: 12px; padding: 5px 14px; font-size: 18px; }
+      .dash-next-rank { margin-top: 8px; font-size: 17px; }
+      .log-session-btn.quest-choice { margin-top: 8px; padding: 12px; min-height: 50px; font-size: 21px; }
     }
-    .stats-log-bar .log-session-btn { margin: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 4px 20px rgba(0,180,197,0.3); }
 
     /* ===== LOG SESSION SCREEN ===== */
     .log-screen {
@@ -1209,6 +1008,43 @@
     .log-grid-row { margin-bottom: 10px; }
     .log-grid-label { font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 1.5px; color: var(--gold); line-height: 1.05; }
     .log-grid-row .form-input { text-align: center; padding: 12px 6px; font-size: 20px; margin: 0; width: 100%; box-sizing: border-box; }
+    /* Log Session: BY SPOT (tap the court) / QUICK TOTALS (1.13) */
+    .log-mode-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+    .log-mode-btn { flex: 1; min-height: 48px; padding: 10px 6px; border-radius: 8px; border: 1px solid #333; background: #151522; color: #999;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; cursor: pointer; }
+    .log-mode-btn.active { border-color: var(--teal); background: rgba(0,180,197,0.18); color: #fff; }
+    .spot-hint { font-family: 'Outfit', sans-serif; font-size: 14px; color: #aaa; text-align: center; line-height: 1.4; margin-bottom: 10px; }
+    .spot-court { margin: 0 0 12px; }
+    @media (max-width: 480px) { .spot-court { margin: 0 -14px 12px; } } /* phones: the court uses the full width */
+    .spot-court svg { width: 100%; display: block; border-radius: 12px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    .spot-court .spot-zone { cursor: pointer; }
+    .spot-court text { pointer-events: none; }
+    .spot-panel { background: #111; border: 1px solid #2a2a2a; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+    .spot-panel.has-spot { border-color: var(--teal); }
+    .spot-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+    .spot-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--gold); }
+    .spot-count { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; color: var(--teal); white-space: nowrap; }
+    .spot-tap-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .spot-tap { min-height: 64px; border-radius: 10px; border: 2px solid; font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px;
+      cursor: pointer; transition: transform 0.1s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .spot-tap-make { border-color: #4ade80; background: rgba(74,222,128,0.16); color: #4ade80; }
+    .spot-tap-miss { border-color: #ff6b6b; background: rgba(255,107,107,0.14); color: #ff8f8f; }
+    .spot-tap:active { transform: scale(0.96); }
+    .spot-tap:disabled { opacity: 0.35; pointer-events: none; }
+    .spot-type-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+    .spot-type-row label, .spot-ft-row label { display: flex; flex-direction: column; gap: 4px; font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1.5px; color: var(--teal); text-align: center; }
+    .spot-type-row .form-input, .spot-ft-row .form-input { text-align: center; padding: 10px 6px; font-size: 18px; margin: 0; width: 100%; box-sizing: border-box; }
+    .spot-type-row .form-input:disabled { opacity: 0.4; }
+    .spot-undo { min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #444; background: none; color: #bbb;
+      font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1.5px; cursor: pointer; white-space: nowrap; }
+    .spot-undo:disabled { opacity: 0.35; pointer-events: none; }
+    .spot-ft-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; align-items: end; background: #111; border: 1px solid #2a2a2a;
+      border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+    .spot-ft-row .log-grid-label { align-self: center; }
+    .form-input.input-bad { border-color: #ff6b6b; }
+    .log-save-hint { text-align: center; margin: 0 0 8px; min-height: 16px; color: #ff8f8f; }
+    .log-foot-row { display: flex; gap: 10px; }
+    .log-foot-row .back-btn { flex: 1; }
     .reset-btn {
       margin-top: 30px;
       background: none;
@@ -1617,34 +1453,6 @@
       color: #aaa;
     }
 
-    /* Boss Defeat Overlay */
-    .boss-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.92);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .boss-overlay.visible { display: flex; }
-    .boss-text {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 24px;
-      color: var(--gold);
-      text-shadow: 0 0 20px var(--gold-glow);
-      animation: pulse 0.5s infinite alternate;
-      letter-spacing: 3px;
-    }
-    .boss-xp {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
-      color: var(--teal);
-      letter-spacing: 3px;
-    }
-
     /* Streak fire effect */
     .fire-effect {
       position: fixed;
@@ -1835,467 +1643,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-    }
-
-    /* ===== BOSS BATTLES ===== */
-    .boss-battle-btn {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #1a0a1e, #2a1a0e);
-      border: 2px solid #ff6b35;
-      border-radius: 10px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      color: #ff6b35;
-      cursor: pointer;
-      margin-top: 14px;
-      transition: all 0.2s;
-      letter-spacing: 3px;
-      min-height: 56px;
-      text-shadow: 0 0 10px rgba(255,107,53,0.3);
-      position: relative;
-      overflow: hidden;
-    }
-    .boss-battle-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.08), transparent);
-      animation: bossBtnShimmer 3s infinite;
-    }
-    @keyframes bossBtnShimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    .boss-battle-btn:active { transform: scale(0.97); }
-
-    /* Active Boss Widget on Dashboard */
-    .active-boss-widget {
-      background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,50,50,0.05));
-      border: 2px solid rgba(255,107,53,0.4);
-      border-radius: 10px;
-      padding: 14px;
-      margin-top: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .active-boss-widget:active { transform: scale(0.98); }
-    .active-boss-header {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
-    }
-    .active-boss-emoji { font-size: 32px; }
-    .active-boss-info { flex: 1; }
-    .active-boss-label {
-      font-family: 'Bebas Neue', sans-serif; font-size: 12px;
-      color: #ff6b35; letter-spacing: 2px;
-    }
-    .active-boss-name {
-      font-family: 'Bebas Neue', sans-serif; font-size: 20px;
-      color: #fff; letter-spacing: 1px;
-    }
-    .active-boss-challenge {
-      font-family: 'Outfit', sans-serif; font-size: 14px;
-      color: #aaa; margin-bottom: 8px;
-    }
-    .active-boss-progress-bar {
-      width: 100%; height: 8px; background: #222;
-      border-radius: 4px; overflow: hidden;
-    }
-    .active-boss-progress-fill {
-      height: 100%; border-radius: 4px;
-      background: linear-gradient(90deg, #ff6b35, #ff3232);
-      transition: width 0.5s ease;
-    }
-    .active-boss-progress-text {
-      font-family: 'Outfit', sans-serif; font-size: 12px;
-      color: #888; margin-top: 4px; text-align: right;
-    }
-    .abandon-boss-btn {
-      font-family: 'Outfit', sans-serif; font-size: 12px;
-      color: #555; background: none; border: none;
-      cursor: pointer; padding: 4px 0; margin-top: 4px;
-    }
-    .abandon-boss-btn:hover { color: #888; }
-
-    /* Boss Battles Screen */
-    .boss-screen {
-      background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0e 40%, #0a0a1a 100%);
-      padding: 24px 16px 40px;
-      min-height: 100vh;
-    }
-    .boss-screen-header {
-      text-align: center; margin-bottom: 20px;
-    }
-    .boss-screen-title {
-      font-family: 'Bebas Neue', sans-serif; font-size: 32px;
-      color: #ff6b35; letter-spacing: 3px;
-      text-shadow: 0 0 20px rgba(255,107,53,0.3);
-    }
-    .boss-screen-subtitle {
-      font-family: 'Outfit', sans-serif; font-size: 14px;
-      color: #888; margin-top: 4px;
-    }
-    .boss-difficulty-section {
-      margin-bottom: 20px;
-    }
-    .boss-difficulty-title {
-      font-family: 'Bebas Neue', sans-serif; font-size: 18px;
-      letter-spacing: 2px; margin-bottom: 10px; padding-left: 4px;
-    }
-    .boss-difficulty-easy .boss-difficulty-title { color: #4caf50; }
-    .boss-difficulty-medium .boss-difficulty-title { color: #ffc107; }
-    .boss-difficulty-hard .boss-difficulty-title { color: #ff5722; }
-    .boss-difficulty-legendary .boss-difficulty-title { color: #9c27b0; }
-
-    .boss-card {
-      background: var(--dark);
-      border: 2px solid #333;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 10px;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .boss-card.boss-easy { border-left: 4px solid #4caf50; }
-    .boss-card.boss-medium { border-left: 4px solid #ffc107; }
-    .boss-card.boss-hard { border-left: 4px solid #ff5722; }
-    .boss-card.boss-legendary {
-      border-left: 4px solid #9c27b0;
-      box-shadow: 0 0 15px rgba(156,39,176,0.15);
-    }
-    .boss-card.boss-legendary::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, rgba(156,39,176,0.05), transparent);
-      pointer-events: none;
-    }
-    .boss-card.boss-locked {
-      opacity: 0.4; filter: grayscale(0.6);
-    }
-    .boss-card.boss-defeated {
-      opacity: 0.6;
-      border-color: rgba(76,175,80,0.4);
-      background: rgba(76,175,80,0.05);
-    }
-    .boss-card.boss-active {
-      border-color: #ff6b35;
-      box-shadow: 0 0 15px rgba(255,107,53,0.2);
-    }
-    .boss-card-top {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
-    }
-    .boss-card-emoji { font-size: 36px; }
-    .boss-card-info { flex: 1; }
-    .boss-card-name {
-      font-family: 'Bebas Neue', sans-serif; font-size: 20px;
-      color: #fff; letter-spacing: 1px;
-    }
-    .boss-card-difficulty {
-      font-family: 'Outfit', sans-serif; font-size: 11px;
-      text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
-      padding: 2px 8px; border-radius: 4px; display: inline-block;
-    }
-    .boss-diff-easy { background: rgba(76,175,80,0.15); color: #4caf50; }
-    .boss-diff-medium { background: rgba(255,193,7,0.15); color: #ffc107; }
-    .boss-diff-hard { background: rgba(255,87,34,0.15); color: #ff5722; }
-    .boss-diff-legendary { background: rgba(156,39,176,0.15); color: #9c27b0; }
-    .boss-card-challenge {
-      font-family: 'Outfit', sans-serif; font-size: 15px;
-      color: #aaa; line-height: 1.4; margin-bottom: 10px;
-    }
-    .boss-card-lock {
-      font-family: 'Outfit', sans-serif; font-size: 13px;
-      color: #666;
-    }
-    .boss-card-defeated-badge {
-      display: flex; align-items: center; gap: 6px;
-      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
-      color: #4caf50; letter-spacing: 1px;
-    }
-    .boss-accept-btn {
-      width: 100%; padding: 12px;
-      background: linear-gradient(135deg, #ff6b35, #ff3232);
-      border: none; border-radius: 8px;
-      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
-      color: #fff; cursor: pointer; letter-spacing: 2px;
-      transition: all 0.2s; min-height: 44px;
-    }
-    .boss-accept-btn:active { transform: scale(0.95); }
-    .boss-accept-btn:disabled { opacity: 0.4; pointer-events: none; }
-    .boss-active-badge {
-      font-family: 'Bebas Neue', sans-serif; font-size: 14px;
-      color: #ff6b35; letter-spacing: 2px; text-align: center;
-      padding: 8px; border: 1px dashed rgba(255,107,53,0.4);
-      border-radius: 6px; background: rgba(255,107,53,0.05);
-    }
-
-    /* Boss Battle Unlocked Card */
-    .boss-unlocked-card {
-      display: none;
-      text-align: center;
-      background: linear-gradient(135deg, rgba(255,107,53,0.12), rgba(255,50,50,0.08));
-      border: 2px solid #ff6b35;
-      border-radius: 12px;
-      padding: 22px 16px;
-      margin-top: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
-      animation: bossUnlockedPulse 2s ease infinite;
-    }
-    .boss-unlocked-card.visible { display: block; }
-    .boss-unlocked-card:active { transform: scale(0.97); }
-    .boss-unlocked-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 50%, rgba(255,107,53,0.15), transparent 70%);
-      animation: bossGlow 3s ease infinite;
-    }
-    @keyframes bossUnlockedPulse {
-      0%, 100% { box-shadow: 0 0 15px rgba(255,107,53,0.2); }
-      50% { box-shadow: 0 0 30px rgba(255,107,53,0.4), 0 0 60px rgba(255,107,53,0.15); }
-    }
-    @keyframes bossGlow {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 1; }
-    }
-    .boss-unlocked-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
-      color: #ff6b35;
-      letter-spacing: 3px;
-      text-shadow: 0 0 20px rgba(255,107,53,0.4);
-      position: relative;
-      z-index: 1;
-    }
-    .boss-unlocked-sub {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      color: #aaa;
-      margin-top: 6px;
-      position: relative;
-      z-index: 1;
-    }
-    .boss-unlocked-active-info {
-      margin-top: 10px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 15px;
-      color: #fff;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Quests Complete Summary Bar (collapsed) */
-    .quests-complete-summary {
-      display: none;
-      background: linear-gradient(135deg, rgba(0,180,197,0.12), rgba(249,98,159,0.08));
-      border: 2px solid rgba(0,180,197,0.4);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
-      text-align: center;
-    }
-    .quests-complete-summary.visible { display: block; }
-    .quests-complete-summary-text {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      color: var(--teal);
-      letter-spacing: 2px;
-    }
-    .quests-complete-summary-detail {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    /* Boss Battle Log Screen */
-    .boss-log-screen {
-      background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0e 50%, #0a0a1a 100%);
-      padding: 24px;
-      align-items: center;
-    }
-    .boss-log-header {
-      width: 100%;
-      max-width: 360px;
-      background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,50,50,0.06));
-      border: 2px solid rgba(255,107,53,0.4);
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .boss-log-emoji { font-size: 48px; margin-bottom: 8px; }
-    .boss-log-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 26px;
-      color: #ff6b35;
-      letter-spacing: 2px;
-      text-shadow: 0 0 15px rgba(255,107,53,0.3);
-    }
-    .boss-log-challenge {
-      font-family: 'Outfit', sans-serif;
-      font-size: 15px;
-      color: #ccc;
-      margin-top: 6px;
-      line-height: 1.4;
-    }
-    .boss-log-requirement {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 16px;
-      color: #ff6b35;
-      letter-spacing: 2px;
-      margin-top: 10px;
-      padding: 8px 12px;
-      border: 1px dashed rgba(255,107,53,0.4);
-      border-radius: 6px;
-      background: rgba(255,107,53,0.05);
-    }
-    .boss-log-form {
-      width: 100%;
-      max-width: 360px;
-    }
-    .boss-log-form .form-label {
-      color: #ff6b35;
-    }
-    .boss-log-form .form-input {
-      border-color: rgba(255,107,53,0.3);
-    }
-    .boss-log-form .form-input:focus {
-      border-color: #ff6b35;
-    }
-    .boss-log-progress {
-      width: 100%;
-      max-width: 360px;
-      background: rgba(255,107,53,0.08);
-      border: 1px solid rgba(255,107,53,0.3);
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin: 14px 0;
-      text-align: center;
-    }
-    .boss-log-progress-label {
-      font-family: 'Outfit', sans-serif;
-      font-size: 14px;
-      color: #aaa;
-      margin-bottom: 8px;
-    }
-    .boss-log-progress-bar {
-      width: 100%;
-      height: 12px;
-      background: #222;
-      border-radius: 6px;
-      overflow: hidden;
-      margin-bottom: 6px;
-    }
-    .boss-log-progress-fill {
-      height: 100%;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #ff6b35, #ff3232);
-      transition: width 0.3s ease;
-    }
-    .boss-log-progress-text {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      color: #ff6b35;
-      letter-spacing: 1px;
-    }
-    .boss-log-progress-status {
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-    .boss-submit-btn {
-      width: 100%;
-      padding: 20px;
-      background: linear-gradient(135deg, #ff6b35, #ff3232);
-      border: none;
-      border-radius: 10px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 4px 20px rgba(255,107,53,0.3);
-      letter-spacing: 3px;
-      min-height: 56px;
-      margin-top: 14px;
-    }
-    .boss-submit-btn:active { transform: scale(0.95); }
-    .boss-submit-btn:disabled { opacity: 0.4; pointer-events: none; }
-    .boss-log-accuracy-live {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 18px;
-      color: #ff6b35;
-      text-align: center;
-      margin-top: 6px;
-      letter-spacing: 1px;
-    }
-    .boss-log-not-defeated {
-      display: none;
-      background: rgba(255,107,53,0.1);
-      border: 2px solid rgba(255,107,53,0.3);
-      border-radius: 10px;
-      padding: 18px;
-      text-align: center;
-      margin-top: 14px;
-    }
-    .boss-log-not-defeated.visible { display: block; }
-    .boss-log-not-defeated-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px;
-      color: #ff6b35;
-      letter-spacing: 2px;
-      margin-bottom: 6px;
-    }
-    .boss-log-not-defeated-text {
-      font-family: 'Outfit', sans-serif;
-      font-size: 15px;
-      color: #aaa;
-    }
-
-    /* Boss Defeat Celebration */
-    .boss-defeat-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.95);
-      display: none; align-items: center; justify-content: center;
-      z-index: 280; flex-direction: column;
-      gap: 14px; text-align: center; padding: 24px;
-      cursor: pointer;
-    }
-    .boss-defeat-overlay.visible { display: flex; }
-    .boss-defeat-emoji {
-      font-size: 80px;
-      animation: badgeIconPop 0.6s ease forwards;
-    }
-    .boss-defeat-title {
-      font-family: 'Bebas Neue', sans-serif; font-size: 42px;
-      color: #ff6b35; letter-spacing: 4px;
-      text-shadow: 0 0 30px rgba(255,107,53,0.5);
-      animation: tierReveal 1s ease forwards;
-    }
-    .boss-defeat-name {
-      font-family: 'Bebas Neue', sans-serif; font-size: 24px;
-      color: var(--gold); letter-spacing: 2px;
-    }
-    .boss-defeat-sub {
-      font-family: 'Outfit', sans-serif; font-size: 16px;
-      color: #888; margin-top: 8px;
-    }
-    .boss-defeat-particles {
-      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
-    }
-    .boss-defeat-particle {
-      position: absolute; border-radius: 50%;
-      animation: bossParticleFly 2s ease-out forwards;
-    }
-    @keyframes bossParticleFly {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
     }
 
     /* ===== GAMERTAG SETUP ===== */
@@ -3011,7 +2358,14 @@
       #dashboard > * { width: 100%; max-width: 560px; }
       #dashboard .dash-ring { width: min(56vh, 460px); }
       #dashboard .log-session-btn { width: 100%; }
-      .stats-log-bar { left: auto; right: 48px; bottom: 28px; transform: none; width: 360px; }
+      .stats-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+      .stats-header .screen-title { margin: 0; }
+      .stats-log-btn { width: 320px; margin: 0; }
+      /* Log Session: court on the left, numbers on the right */
+      .log-form { max-width: 980px; }
+      .log-form.mode-quick { max-width: 420px; }
+      .log-mode-toggle { max-width: 420px; margin-left: auto; margin-right: auto; }
+      .log-form.mode-spots .log-panes { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 28px; align-items: start; }
 
       /* Stats: a grid of cards; the shot chart and progress cards take two columns */
       #stats-content {
@@ -3116,11 +2470,12 @@
         <input id="inp-name" class="form-input" placeholder="Enter your name" autocomplete="name">
       </div>
       <div class="form-group">
-        <label class="form-label">EMAIL</label>
-        <input id="inp-email" class="form-input" type="email" placeholder="parent@email.com" autocomplete="email">
+        <label class="form-label">PARENT'S EMAIL</label>
+        <input id="inp-email" class="form-input" type="email" inputmode="email" placeholder="parent@email.com" autocomplete="email">
+        <div class="form-hint">For your account and House of Swish updates.</div>
       </div>
       <div class="form-group">
-        <label class="form-label">PHONE</label>
+        <label class="form-label">PHONE (OPTIONAL)</label>
         <input id="inp-phone" class="form-input" type="tel" placeholder="(555) 123-4567" autocomplete="tel">
       </div>
       <div class="form-group">
@@ -3143,90 +2498,6 @@
       <div style="text-align:center; margin-top:16px;">
         <span style="color:#888; font-size:13px;">Already have an account?</span>
         <a href="#" onclick="event.preventDefault(); recoverExistingAccount();" style="color:var(--teal); font-size:13px; font-weight:600; text-decoration:underline; margin-left:4px;">SIGN IN & RECOVER</a>
-      </div>
-    </div>
-
-    <!-- ===== SET YOUR GOALS ===== -->
-    <div id="set-goals" class="screen goal-screen">
-      <div id="goal-step-1" class="goal-step active">
-        <div class="goal-step-indicator">STEP 1 OF 4</div>
-        <h2 class="screen-title">🎯 SET YOUR GOALS</h2>
-        <div class="goal-question">How many days per week do you want to practice?</div>
-        <div class="goal-options">
-          <div class="goal-option" onclick="selectGoalOption(1, this, 2)"><div class="goal-option-text">2</div></div>
-          <div class="goal-option" onclick="selectGoalOption(1, this, 3)"><div class="goal-option-text">3</div></div>
-          <div class="goal-option" onclick="selectGoalOption(1, this, 4)"><div class="goal-option-text">4</div></div>
-          <div class="goal-option" onclick="selectGoalOption(1, this, 5)"><div class="goal-option-text">5</div></div>
-          <div class="goal-option" onclick="selectGoalOption(1, this, 6)"><div class="goal-option-text">6</div></div>
-          <div class="goal-option" onclick="selectGoalOption(1, this, 7)"><div class="goal-option-text">7</div></div>
-        </div>
-      </div>
-      <div id="goal-step-2" class="goal-step">
-        <div class="goal-step-indicator">STEP 2 OF 4</div>
-        <h2 class="screen-title">🏀 SET YOUR GOALS</h2>
-        <div class="goal-question">How many shots per session?</div>
-        <div class="goal-options">
-          <div class="goal-option" onclick="selectGoalOption(2, this, 100)"><div class="goal-option-text">100</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 150)"><div class="goal-option-text">150</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 200)"><div class="goal-option-text">200</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 250)"><div class="goal-option-text">250</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 300)"><div class="goal-option-text">300</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 400)"><div class="goal-option-text">400</div></div>
-          <div class="goal-option" onclick="selectGoalOption(2, this, 500)"><div class="goal-option-text">500</div></div>
-        </div>
-      </div>
-      <div id="goal-step-3" class="goal-step">
-        <div class="goal-step-indicator">STEP 3 OF 4</div>
-        <h2 class="screen-title">⏱ SET YOUR GOALS</h2>
-        <div class="goal-question">How long should each session be?</div>
-        <div class="goal-options">
-          <div class="goal-option" onclick="selectGoalOption(3, this, 15)"><div class="goal-option-text">15 min</div></div>
-          <div class="goal-option" onclick="selectGoalOption(3, this, 20)"><div class="goal-option-text">20 min</div></div>
-          <div class="goal-option" onclick="selectGoalOption(3, this, 30)"><div class="goal-option-text">30 min</div></div>
-          <div class="goal-option" onclick="selectGoalOption(3, this, 45)"><div class="goal-option-text">45 min</div></div>
-          <div class="goal-option" onclick="selectGoalOption(3, this, 60)"><div class="goal-option-text">60 min</div></div>
-        </div>
-      </div>
-      <div id="goal-step-4" class="goal-step">
-        <div class="goal-step-indicator">STEP 4 OF 4</div>
-        <h2 class="screen-title">🎯 SET YOUR GOALS</h2>
-        <div class="goal-question">What's your shooting percentage goal?</div>
-        <div class="goal-options">
-          <div class="goal-option" onclick="selectGoalOption(4, this, 40)"><div class="goal-option-text">40%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 45)"><div class="goal-option-text">45%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 50)"><div class="goal-option-text">50%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 55)"><div class="goal-option-text">55%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 60)"><div class="goal-option-text">60%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 65)"><div class="goal-option-text">65%</div></div>
-          <div class="goal-option" onclick="selectGoalOption(4, this, 70)"><div class="goal-option-text">70%</div></div>
-        </div>
-      </div>
-      <div id="goal-step-5" class="goal-step">
-        <h2 class="screen-title">🏆 YOUR QUEST</h2>
-        <p class="screen-subtitle" style="margin-bottom:20px;">Here's what you're committing to</p>
-        <div class="goal-summary">
-          <div class="goal-summary-item">
-            <span class="goal-summary-label">Days per week</span>
-            <span id="summary-days" class="goal-summary-value">—</span>
-          </div>
-          <div class="goal-summary-item">
-            <span class="goal-summary-label">Shots per session</span>
-            <span id="summary-shots" class="goal-summary-value">—</span>
-          </div>
-          <div class="goal-summary-item">
-            <span class="goal-summary-label">Minutes per session</span>
-            <span id="summary-time" class="goal-summary-value">—</span>
-          </div>
-          <div class="goal-summary-item">
-            <span class="goal-summary-label">Accuracy target</span>
-            <span id="summary-accuracy" class="goal-summary-value">—</span>
-          </div>
-          <div class="goal-summary-item goal-summary-highlight">
-            <span class="goal-summary-label">📊 Weekly shot goal</span>
-            <span id="summary-weekly" class="goal-summary-value">—</span>
-          </div>
-        </div>
-        <button class="continue-btn" onclick="confirmGoals()" style="margin-top:24px;">LET'S GO →</button>
       </div>
     </div>
 
@@ -3267,34 +2538,7 @@
           </div>
         </div>
         <div id="dash-streak" class="dash-streak-chip">🔥 0 days in a row</div>
-      </div>
-
-      <!-- Coach Goal Suggestion Card -->
-      <div id="goal-suggestion-card" style="display:none; width:100%; max-width:360px; margin:0 auto 16px; background:linear-gradient(135deg, #1a1a2e 0%, #0d2233 100%); border:2px solid #00b4c5; border-radius:12px; padding:16px; text-align:center;">
-        <div style="font-size:28px; margin-bottom:6px;">🏀</div>
-        <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:#00b4c5; letter-spacing:2px; margin-bottom:6px;">COACH SWISH SAYS</div>
-        <div id="goal-suggestion-msg" style="font-family:'Outfit',sans-serif; font-size:14px; color:#ccc; line-height:1.5; margin-bottom:14px;"></div>
-        <div id="goal-suggestion-detail" style="font-family:'Bebas Neue',sans-serif; font-size:22px; color:#fff; margin-bottom:14px;"></div>
-        <div style="display:flex; gap:8px; justify-content:center;">
-          <button onclick="acceptGoalSuggestion()" style="background:linear-gradient(135deg, #00b4c5, #00d4aa); border:none; color:#000; padding:10px 24px; border-radius:8px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer;">LET'S DO IT 💪</button>
-          <button onclick="declineGoalSuggestion()" style="background:none; border:1px solid #555; color:#888; padding:10px 20px; border-radius:8px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer;">NOT YET</button>
-        </div>
-      </div>
-
-      <div class="quests-container" style="display:none">
-        <div class="quests-title">YOUR QUEST TODAY:</div>
-        <div id="all-complete-banner" class="all-complete-banner">
-          <div class="all-complete-title">ALL QUESTS COMPLETE! 🏆</div>
-          <div class="all-complete-sub">You crushed it today. See you tomorrow.</div>
-        </div>
-        <div id="quests-list"></div>
-      </div>
-
-      <!-- Boss Unlocked Card (shows only after all quests complete) -->
-      <div id="boss-unlocked-card" class="boss-unlocked-card" onclick="handleBossCardClick()">
-        <div id="boss-unlocked-title" class="boss-unlocked-title">⚔️ BOSS BATTLE UNLOCKED</div>
-        <div id="boss-unlocked-sub" class="boss-unlocked-sub">All quests complete — time to face a boss!</div>
-        <div id="boss-unlocked-active-info" class="boss-unlocked-active-info"></div>
+        <div id="dash-next-rank" class="dash-next-rank"></div>
       </div>
 
       <!-- Two big choices: shooting (Swish Quest) and ball handling (Dribble Quest). Log Your Stats lives on the Stats tab. -->
@@ -3306,93 +2550,98 @@
 <!-- Coach widget removed -->
     </div>
 
-    <!-- ===== BOSS BATTLES ===== -->
-    <div id="boss-battles" class="screen boss-screen">
-      <div class="boss-screen-header">
-        <div class="boss-screen-title">⚔️ BOSS BATTLES</div>
-        <div class="boss-screen-subtitle">Defeat bosses by completing challenges in a single session</div>
-      </div>
-      <div id="boss-battles-list"></div>
-      <button class="back-btn" onclick="showNav('dashboard')" style="width:100%; margin-top:14px;">← BACK TO DASHBOARD</button>
-    </div>
-
-    <!-- ===== BOSS BATTLE LOG ===== -->
-    <div id="boss-battle-log" class="screen boss-log-screen">
-      <h2 class="screen-title" style="color: #ff6b35;">⚔️ BOSS BATTLE</h2>
-      <div id="boss-log-header" class="boss-log-header">
-        <div id="boss-log-emoji" class="boss-log-emoji"></div>
-        <div id="boss-log-name" class="boss-log-name"></div>
-        <div id="boss-log-challenge" class="boss-log-challenge"></div>
-        <div id="boss-log-requirement" class="boss-log-requirement"></div>
-      </div>
-      <div id="boss-log-form" class="boss-log-form"></div>
-      <div id="boss-log-progress" class="boss-log-progress" style="display:none;">
-        <div class="boss-log-progress-label">PROGRESS TOWARD BOSS GOAL</div>
-        <div class="boss-log-progress-bar"><div id="boss-log-progress-fill" class="boss-log-progress-fill" style="width:0%"></div></div>
-        <div id="boss-log-progress-text" class="boss-log-progress-text"></div>
-        <div id="boss-log-progress-status" class="boss-log-progress-status"></div>
-      </div>
-      <div id="boss-log-not-defeated" class="boss-log-not-defeated">
-        <div class="boss-log-not-defeated-title">NOT QUITE!</div>
-        <div id="boss-log-not-defeated-text" class="boss-log-not-defeated-text">Keep trying! The boss is still standing.</div>
-      </div>
-      <button id="boss-submit-btn" class="boss-submit-btn" onclick="submitBossSession()" disabled>⚔️ SUBMIT BOSS BATTLE</button>
-      <button class="back-btn" onclick="showNav('dashboard')" style="width:100%;">← BACK TO DASHBOARD</button>
-    </div>
-
     <!-- ===== LOG SESSION ===== -->
+    <!-- Two ways to log by hand: BY SPOT (tap where you shot from; fills the shot chart) and QUICK TOTALS (the four shot types).
+         The Android app's camera sessions are saved through the QUICK TOTALS fields, so their ids stay as they are. -->
     <div id="log-session" class="screen log-screen">
       <h2 class="screen-title">📝 LOG SESSION</h2>
-      <p class="screen-subtitle">Record your practice</p>
-      <div class="log-form">
-        <div class="log-grid">
-          <div class="log-grid-head"><span></span><span>MADE</span><span>ATTEMPTED</span></div>
-          <div class="log-grid-row">
-            <span class="log-grid-label">LAYUPS</span>
-            <input id="log-layups-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups made">
-            <input id="log-layups-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups attempted">
-          </div>
-          <div class="log-grid-row">
-            <span class="log-grid-label">MID RANGE</span>
-            <input id="log-midrange-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range made">
-            <input id="log-midrange-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range attempted">
-          </div>
-          <div class="log-grid-row">
-            <span class="log-grid-label">FREE THROWS</span>
-            <input id="log-ft-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws made">
-            <input id="log-ft-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws attempted">
-          </div>
-          <div class="log-grid-row">
-            <span class="log-grid-label">3 POINTERS</span>
-            <input id="log-three-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers made">
-            <input id="log-three-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers attempted">
-          </div>
+      <div class="log-form mode-spots" id="log-form">
+        <div class="log-mode-toggle" role="tablist">
+          <button type="button" id="log-mode-spots" class="log-mode-btn active" onclick="setLogMode('spots')">BY SPOT</button>
+          <button type="button" id="log-mode-quick" class="log-mode-btn" onclick="setLogMode('quick')">QUICK TOTALS</button>
         </div>
+        <div class="log-panes">
+          <div class="log-pane-main">
+            <div id="log-spots">
+              <div class="spot-hint">Tap your spot, then add makes and misses.</div>
+              <div id="spot-court" class="spot-court"></div>
+            </div>
+            <div id="log-quick" style="display:none;">
+              <div class="log-grid">
+                <div class="log-grid-head"><span></span><span>MADE</span><span>ATTEMPTED</span></div>
+                <div class="log-grid-row">
+                  <span class="log-grid-label">LAYUPS</span>
+                  <input id="log-layups-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups made">
+                  <input id="log-layups-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Layups attempted">
+                </div>
+                <div class="log-grid-row">
+                  <span class="log-grid-label">MID RANGE</span>
+                  <input id="log-midrange-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range made">
+                  <input id="log-midrange-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Mid Range attempted">
+                </div>
+                <div class="log-grid-row">
+                  <span class="log-grid-label">FREE THROWS</span>
+                  <input id="log-ft-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws made">
+                  <input id="log-ft-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="Free Throws attempted">
+                </div>
+                <div class="log-grid-row">
+                  <span class="log-grid-label">3 POINTERS</span>
+                  <input id="log-three-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers made">
+                  <input id="log-three-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="calcSession()" aria-label="3 Pointers attempted">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="log-pane-side">
+            <div id="spot-side">
+              <div class="spot-panel" id="spot-panel">
+                <div class="spot-panel-head">
+                  <span id="spot-name" class="spot-name">PICK A SPOT</span>
+                  <span id="spot-count" class="spot-count"></span>
+                </div>
+                <div class="spot-tap-row">
+                  <button type="button" id="spot-make-btn" class="spot-tap spot-tap-make" onclick="spotTap(true)" disabled>✓ MAKE</button>
+                  <button type="button" id="spot-miss-btn" class="spot-tap spot-tap-miss" onclick="spotTap(false)" disabled>✕ MISS</button>
+                </div>
+                <div class="spot-type-row">
+                  <label>MADE <input id="spot-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="spotTyped()" disabled aria-label="Made from this spot"></label>
+                  <label>SHOTS <input id="spot-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="spotTyped()" disabled aria-label="Shots from this spot"></label>
+                  <button type="button" id="spot-undo-btn" class="spot-undo" onclick="spotUndo()" disabled>↶ UNDO</button>
+                </div>
+              </div>
+              <div class="spot-ft-row">
+                <span class="log-grid-label">FREE THROWS</span>
+                <label>MADE <input id="spot-ft-made" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="spotFtTyped()" aria-label="Free throws made"></label>
+                <label>SHOTS <input id="spot-ft-att" class="form-input" type="number" inputmode="numeric" placeholder="0" min="0" max="2000" oninput="spotFtTyped()" aria-label="Free throws attempted"></label>
+              </div>
+            </div>
 
-        <div class="shot-type-totals-bar">
-          <span class="shot-type-totals-label">TOTALS</span>
-          <span id="log-total-display" class="shot-type-totals-value">0 / 0</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">SESSION TIME (MINUTES)</label>
-          <input id="log-time" class="form-input" type="number" placeholder="30" min="1" max="480" oninput="calcSession()">
-        </div>
-        <div id="calc-results" class="calc-result" style="display:none;">
-          <div class="calc-row">
-            <span class="calc-label">Accuracy</span>
-            <span id="calc-accuracy" class="calc-value">0%</span>
+            <div class="shot-type-totals-bar">
+              <span class="shot-type-totals-label">TOTALS</span>
+              <span id="log-total-display" class="shot-type-totals-value">0 / 0</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">SESSION TIME (MINUTES)</label>
+              <input id="log-time" class="form-input" type="number" inputmode="numeric" placeholder="How many minutes?" min="1" max="480" oninput="updateLogTotals()">
+            </div>
+            <div id="calc-results" class="calc-result" style="display:none;">
+              <div class="calc-row">
+                <span class="calc-label">Accuracy</span>
+                <span id="calc-accuracy" class="calc-value">0%</span>
+              </div>
+              <div class="calc-row">
+                <span class="calc-label">Shots / Minute</span>
+                <span id="calc-spm" class="calc-value">0</span>
+              </div>
+            </div>
+            <div id="log-save-hint" class="form-hint log-save-hint"></div>
+            <button id="save-session-btn" class="save-btn" onclick="saveSession()" disabled>SAVE SESSION 💾</button>
+            <div class="log-foot-row">
+              <button class="back-btn" onclick="showNav('stats')">← BACK</button>
+              <button type="button" id="spot-clear-btn" class="back-btn spot-clear" onclick="spotClearAll()" style="display:none;">CLEAR SPOTS</button>
+            </div>
           </div>
-          <div class="calc-row">
-            <span class="calc-label">Shots / Minute</span>
-            <span id="calc-spm" class="calc-value">0</span>
-          </div>
-          <div class="calc-row">
-            <span class="calc-label">Target Shots</span>
-            <span id="calc-target" class="calc-value">—</span>
-          </div>
         </div>
-        <button id="save-session-btn" class="save-btn" onclick="saveSession()" disabled>SAVE SESSION 💾</button>
-        <button class="back-btn" onclick="showNav('stats')">← BACK</button>
       </div>
     </div>
 
@@ -3400,10 +2649,9 @@
     <div id="stats" class="screen stats-screen">
       <div class="stats-header">
         <h2 class="screen-title">📊 YOUR STATS</h2>
+        <button class="log-session-btn stats-log-btn" onclick="showScreen('log-session')">📝 LOG YOUR STATS</button>
       </div>
       <div id="stats-content"></div>
-      <div class="stats-log-spacer"></div>
-      <div class="stats-log-bar"><button class="log-session-btn" onclick="showScreen('log-session')">📝 LOG YOUR STATS</button></div>
     </div>
 
     <!-- ===== BADGES ===== -->
@@ -3436,54 +2684,6 @@
         <div class="profile-stat">
           <div id="profile-xp" class="profile-stat-val">0</div>
           <div class="profile-stat-label">LIFETIME FGA</div>
-        </div>
-      </div>
-      <div style="display:none; justify-content:space-between; align-items:center; width:100%; max-width:360px; margin-bottom:10px;">
-        <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">GOALS</div>
-        <button id="edit-goals-btn" onclick="showGoalEditor()" style="background:none; border:1px solid var(--teal); color:var(--teal); padding:4px 12px; border-radius:6px; font-family:'Outfit',sans-serif; font-size:12px; cursor:pointer;">✏️ EDIT</button>
-      </div>
-      <!-- Goals display -->
-      <div id="profile-goals-display" class="stat-cards-grid" style="display:none; width:100%; max-width:360px;">
-        <div class="profile-stat">
-          <div id="profile-goal-days" class="profile-stat-val">—</div>
-          <div class="profile-stat-label">DAYS / WEEK</div>
-        </div>
-        <div class="profile-stat">
-          <div id="profile-goal-time" class="profile-stat-val">—</div>
-          <div class="profile-stat-label">MINUTES / DAY</div>
-        </div>
-        <div class="profile-stat">
-          <div id="profile-goal-shots" class="profile-stat-val">—</div>
-          <div class="profile-stat-label">MIN. SHOT ATTEMPTS</div>
-        </div>
-        <div class="profile-stat">
-          <div id="profile-goal-accuracy" class="profile-stat-val">—</div>
-          <div class="profile-stat-label">TARGET FG%</div>
-        </div>
-      </div>
-      <!-- Goals editor (hidden by default) -->
-      <div id="profile-goals-editor" style="display:none; width:100%; max-width:360px;">
-        <div class="stat-cards-grid">
-          <div class="profile-stat" style="padding:8px;">
-            <input id="edit-goal-days" class="form-input" type="number" min="1" max="7" style="text-align:center; font-size:20px; padding:6px; width:60px; margin:0 auto;">
-            <div class="profile-stat-label">DAYS / WEEK</div>
-          </div>
-          <div class="profile-stat" style="padding:8px;">
-            <input id="edit-goal-time" class="form-input" type="number" min="5" max="120" step="5" style="text-align:center; font-size:20px; padding:6px; width:60px; margin:0 auto;">
-            <div class="profile-stat-label">MINUTES / DAY</div>
-          </div>
-          <div class="profile-stat" style="padding:8px;">
-            <input id="edit-goal-shots" class="form-input" type="number" min="25" max="1000" step="25" style="text-align:center; font-size:20px; padding:6px; width:80px; margin:0 auto;">
-            <div class="profile-stat-label">MIN. SHOT ATTEMPTS</div>
-          </div>
-          <div class="profile-stat" style="padding:8px;">
-            <input id="edit-goal-accuracy" class="form-input" type="number" min="10" max="100" step="5" style="text-align:center; font-size:20px; padding:6px; width:60px; margin:0 auto;">
-            <div class="profile-stat-label">TARGET FG%</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:8px; justify-content:center; margin-top:10px;">
-          <button onclick="saveEditedGoals()" style="background:var(--teal); border:none; color:#000; padding:10px 24px; border-radius:6px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer;">SAVE GOALS</button>
-          <button onclick="hideGoalEditor()" style="background:none; border:1px solid #555; color:#888; padding:10px 24px; border-radius:6px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer;">CANCEL</button>
         </div>
       </div>
       <!-- Gamertag & Friend Code -->
@@ -3531,7 +2731,6 @@
 
       <div class="powered-by">
         <div class="powered-logo">HOUSE OF SWISH</div>
-        <div class="powered-text">Saratoga Springs, UT</div>
         <a href="https://houseofswish.com" target="_blank" class="powered-link">Learn about House of Swish →</a>
       </div>
       <details class="profile-danger">
@@ -3563,7 +2762,6 @@
           <span class="board-pill" onclick="setBoardCategory('fgm')">FGM</span>
           <span class="board-pill" onclick="setBoardCategory('fgpct')">FG%</span>
           <span class="board-pill" onclick="setBoardCategory('streak')">STREAK</span>
-          <span class="board-pill" onclick="setBoardCategory('bosses')">BOSSES</span>
         </div>
         <div class="board-selects">
           <select id="board-time-select" class="board-select" onchange="setBoardTime(this.value)">
@@ -3688,8 +2886,8 @@
 
       <div class="parent-cta">
         <div class="parent-cta-text">
-          Want 6x more reps? <strong>House of Swish</strong> is coming to Saratoga Springs →
-          <a href="https://houseofswish.com" target="_blank">Learn More</a>
+          Want 6x more reps? <strong>House of Swish</strong> is coming soon.
+          <a href="https://houseofswish.com" target="_blank">Learn more →</a>
         </div>
       </div>
 
@@ -3747,21 +2945,6 @@
       <div id="level-up-sub" class="level-up-sub">Keep grinding!</div>
     </div>
 
-    <!-- Boss Overlay -->
-    <div id="boss-overlay" class="boss-overlay">
-      <div class="boss-text">🏆 ALL QUESTS COMPLETE! 🏆</div>
-      <div class="boss-xp">BOSS DEFEATED!</div>
-    </div>
-
-    <!-- Boss Defeat Celebration Overlay -->
-    <div id="boss-defeat-overlay" class="boss-defeat-overlay" onclick="dismissBossDefeat()">
-      <div id="boss-defeat-particles" class="boss-defeat-particles"></div>
-      <div id="boss-defeat-emoji" class="boss-defeat-emoji"></div>
-      <div class="boss-defeat-title">BOSS DEFEATED!</div>
-      <div id="boss-defeat-name" class="boss-defeat-name"></div>
-      <div class="boss-defeat-sub">TAP TO CONTINUE</div>
-    </div>
-
     <!-- Tier Celebration Overlay -->
     <div id="tier-celebration" class="tier-celebration">
       <div class="tier-celeb-pre">⭐ TIER ADVANCEMENT! ⭐</div>
@@ -3797,7 +2980,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.12.0';
+  const APP_VERSION = '1.13.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -3919,16 +3102,16 @@
   // FGA-based tier configuration
   const TIER_CONFIG = [
     null, // index 0 unused
-    { name: 'Unranked',  minAttempts: 100,  fgaRequired: 100,     accGate: 0,  accWindow: 0 },
-    { name: 'Prospect',  minAttempts: 100,  fgaRequired: 300,     accGate: 0,  accWindow: 0 },
-    { name: 'Rookie',    minAttempts: 150,  fgaRequired: 2250,    accGate: 0,  accWindow: 0 },
-    { name: 'Starter',   minAttempts: 200,  fgaRequired: 6000,    accGate: 0,  accWindow: 0 },
-    { name: 'All-Star',  minAttempts: 250,  fgaRequired: 12500,   accGate: 0,  accWindow: 0 },
-    { name: 'All-Pro',   minAttempts: 300,  fgaRequired: 45000,   accGate: 55, accWindow: 2000 },
-    { name: 'MVP',       minAttempts: 350,  fgaRequired: 87500,   accGate: 60, accWindow: 2000 },
-    { name: 'Legend',    minAttempts: 500,  fgaRequired: 125000,  accGate: 65, accWindow: 5000 },
-    { name: 'Icon',      minAttempts: 750,  fgaRequired: 187500,  accGate: 70, accWindow: 5000 },
-    { name: 'G.O.A.T.', minAttempts: 1000, fgaRequired: 0,       accGate: 75, accWindow: 5000 },
+    { name: 'Unranked',  fgaRequired: 100,     accGate: 0,  accWindow: 0 },
+    { name: 'Prospect',  fgaRequired: 300,     accGate: 0,  accWindow: 0 },
+    { name: 'Rookie',    fgaRequired: 2250,    accGate: 0,  accWindow: 0 },
+    { name: 'Starter',   fgaRequired: 6000,    accGate: 0,  accWindow: 0 },
+    { name: 'All-Star',  fgaRequired: 12500,   accGate: 0,  accWindow: 0 },
+    { name: 'All-Pro',   fgaRequired: 45000,   accGate: 55, accWindow: 2000 },
+    { name: 'MVP',       fgaRequired: 87500,   accGate: 60, accWindow: 2000 },
+    { name: 'Legend',    fgaRequired: 125000,  accGate: 65, accWindow: 5000 },
+    { name: 'Icon',      fgaRequired: 187500,  accGate: 70, accWindow: 5000 },
+    { name: 'G.O.A.T.', fgaRequired: 0,       accGate: 75, accWindow: 5000 },
   ];
 
   function getTierLevel() {
@@ -4074,7 +3257,7 @@
       "The best shooters have a routine. Same feet, same focus, same result.",
       "Swish > rim. Aim for the back of the net every single time.",
       "Your shooting form is your signature. Make it consistent.",
-      "Want to 6x your reps? House of Swish is coming to Saratoga Springs...",
+      "Want to 6x your reps? House of Swish is coming soon...",
       "Eyes on the target before, during, and after the release.",
       "Great shooters are made in the driveway, not just the gym.",
       "One more set. Your future self will thank you.",
@@ -4110,7 +3293,7 @@
   const ACHIEVEMENTS = [
     // ===== BADGES: Getting Started =====
     { id: 'first_session', icon: '🎯', name: 'First Session', desc: 'Log your first practice', category: 'badges' },
-    { id: 'first_quest', icon: '📋', name: 'Quest Accepted', desc: 'Complete all daily quests', category: 'badges' },
+    { id: 'first_quest', icon: '📋', name: 'Quest Accepted', desc: 'Complete all daily quests', category: 'badges', retired: true },
     
     // ===== BADGES: Volume — Single Session =====
     { id: 'century', icon: '💯', name: 'Century Club', desc: '100 shots in one session', category: 'badges' },
@@ -4163,11 +3346,11 @@
     { id: 'weekend_warrior', icon: '🗓️', name: 'Weekend Warrior', desc: 'Practice both Saturday and Sunday', category: 'badges' },
     { id: 'perfect_week', icon: '🌟', name: 'Perfect Week', desc: 'Practice all 7 days in a week', category: 'badges' },
 
-    // ===== BADGES: Boss Battles =====
-    { id: 'boss', icon: '⚔️', name: 'Boss Slayer', desc: 'Defeat your first boss', category: 'badges' },
-    { id: 'boss_3', icon: '🗡️', name: 'Boss Hunter', desc: 'Defeat 3 bosses', category: 'badges' },
-    { id: 'boss_5', icon: '🛡️', name: 'Boss Crusher', desc: 'Defeat 5 bosses', category: 'badges' },
-    { id: 'boss_all', icon: '👹', name: 'Final Boss', desc: 'Defeat all bosses', category: 'badges' },
+    // ===== BADGES: Boss Battles (retired in 1.13 with boss battles; kept for players who earned them) =====
+    { id: 'boss', icon: '⚔️', name: 'Boss Slayer', desc: 'Defeat your first boss', category: 'badges', retired: true },
+    { id: 'boss_3', icon: '🗡️', name: 'Boss Hunter', desc: 'Defeat 3 bosses', category: 'badges', retired: true },
+    { id: 'boss_5', icon: '🛡️', name: 'Boss Crusher', desc: 'Defeat 5 bosses', category: 'badges', retired: true },
+    { id: 'boss_all', icon: '👹', name: 'Final Boss', desc: 'Defeat all bosses', category: 'badges', retired: true },
 
     // ===== BADGES: Social =====
     { id: 'first_friend', icon: '🤝', name: 'First Friend', desc: 'Add your first friend', category: 'badges' },
@@ -4228,13 +3411,8 @@
     if (s.gamertag === undefined) s.gamertag = null;
     if (s.friendCode === undefined) s.friendCode = null;
     if (!s.parentControls) s.parentControls = { allowRequests: true, requireApproval: true, visibility: 'anyone' };
-    if (s.goals) {
-      if (s.goals.daysPerWeek && !s.goals.days) s.goals.days = s.goals.daysPerWeek;
-      if (!s.goals.days) s.goals.days = 4;
-      if (!s.goals.shots) s.goals.shots = 200;
-      if (!s.goals.time) s.goals.time = 30;
-      if (!s.goals.accuracy) s.goals.accuracy = 50;
-    }
+    // Goals were removed in 1.13 (the goal is the next rank). The field is kept, filled in, for older Android app builds.
+    if (!s.goals) s.goals = legacyGoals();
     return s;
   }
 
@@ -4244,7 +3422,10 @@
   const MAX_PROFILES = 5;
   let _activeProfileId = null; // Current active profile ID
   let state = defaultState(); // Active profile's state
-  let goalSelections = { days: null, shots: null, time: null, accuracy: null };
+
+  // Not shown or used anywhere in Swish Quest any more. Older Android app builds only save a camera
+  // session when the player has a `goals` value, so every player still gets one.
+  function legacyGoals() { return { days: 4, shots: 200, time: 30, accuracy: 50 }; }
 
   function defaultState() {
     return {
@@ -4832,7 +4013,8 @@
     }
 
     // Proceed with active profile
-    if (state.player && state.goals) {
+    if (state.player) {
+      if (!state.goals) { state.goals = legacyGoals(); saveState(); }
       if (user && !state.gamertag) {
         showScreen('gamertag-setup');
         return;
@@ -4843,8 +4025,6 @@
       } else {
         showNav('dashboard');
       }
-    } else if (state.player) {
-      showScreen('set-goals');
     } else {
       showScreen('signup');
     }
@@ -4887,127 +4067,50 @@
   });
 
   // =============================================
-  // CONSISTENCY CALCULATIONS
+  // WEEKS AND MONTHS
   // =============================================
-  function getWeeklyConsistency() {
-    if (!state.goals) return { practiced: 0, goal: 0, pct: 0 };
-    const goalDays = state.goals.days;
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sun
-    // Get dates from start of week (Sunday)
-    const practiced = new Set();
-    for (let i = 0; i <= dayOfWeek; i++) {
-      const d = new Date(now.getTime() - i * 86400000);
-      const ds = dateStr(d);
-      if (state.sessions.some(s => s.date === ds)) {
-        practiced.add(ds);
-      }
-    }
-    const pct = goalDays > 0 ? Math.round((practiced.size / goalDays) * 100) : 0;
-    return { practiced: practiced.size, goal: goalDays, pct: Math.min(pct, 100) };
+  // "This week" means the same thing on every screen (Stats, Badges, Parent view, Leaderboard):
+  // Sunday through Saturday, in the phone's own time zone.
+  function getWeekStart(d) {
+    const s = getLocalMidnight(d || new Date());
+    s.setDate(s.getDate() - s.getDay());
+    return s;
   }
 
+  // The seven days of this week, Sunday first, as YYYY-MM-DD.
+  function getWeekDays() {
+    const start = getWeekStart();
+    const out = [];
+    for (let i = 0; i < 7; i++) out.push(dateStr(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i)));
+    return out;
+  }
+
+  // A session's day as local midnight. Dates are saved as YYYY-MM-DD; reading that with new Date('YYYY-MM-DD')
+  // gives the evening before in US time zones, which is how Sunday's session used to drop out of "this week".
+  function sessionDay(s) {
+    if (!s || !s.date) return null;
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(s.date) ? new Date(s.date + 'T00:00:00') : new Date(s.date);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function getMonthSessions() {
+    const now = new Date();
+    return state.sessions.filter(s => {
+      const d = sessionDay(s);
+      return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+  }
+
+  // How steadily they've practiced this month, against a baseline of 4 days a week.
   function getMonthlyConsistency() {
-    if (!state.goals) return { practiced: 0, totalDays: 0, pct: 0, grade: '—' };
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const today = now.getDate();
-    
-    // Count unique practice days this month
-    const practiced = new Set();
-    state.sessions.forEach(s => {
-      const sd = new Date(s.date);
-      if (sd.getFullYear() === year && sd.getMonth() === month) {
-        practiced.add(s.date);
-      }
-    });
-    
-    // Expected days: (days elapsed / 7) * goal days per week
-    const weeksElapsed = today / 7;
-    const expectedDays = Math.max(1, Math.round(weeksElapsed * state.goals.days));
-    const pct = Math.min(100, Math.round((practiced.size / expectedDays) * 100));
-    
-    return { practiced: practiced.size, totalDays: expectedDays, pct, grade: getConsistencyGrade(pct) };
-  }
-
-  function getConsistencyGrade(pct) {
-    if (pct >= 95) return 'A+';
-    if (pct >= 90) return 'A';
-    if (pct >= 85) return 'A-';
-    if (pct >= 80) return 'B+';
-    if (pct >= 75) return 'B';
-    if (pct >= 70) return 'B-';
-    if (pct >= 65) return 'C+';
-    if (pct >= 60) return 'C';
-    if (pct >= 55) return 'C-';
-    if (pct >= 40) return 'D';
-    return 'F';
-  }
-
-  function getMonthName(monthIdx) {
-    return ['January','February','March','April','May','June','July','August','September','October','November','December'][monthIdx];
-  }
-
-  function getMonthShort(monthIdx) {
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][monthIdx];
-  }
-
-  // Rolling 30-day consistency (for tier advancement)
-  function getRolling30DayConsistency() {
-    const now = new Date();
-    const thirtyAgo = new Date(now.getTime() - 30 * 86400000);
-    const practiced = new Set();
-    state.sessions.forEach(s => {
-      if (new Date(s.date) >= thirtyAgo) practiced.add(s.date);
-    });
-    const goalDays = state.goals ? state.goals.days : 4;
-    const expectedDays = Math.round((30 / 7) * goalDays);
-    return Math.min(100, Math.round((practiced.size / Math.max(1, expectedDays)) * 100));
-  }
-
-  // Rolling 30-day averages (for tier advancement)
-  function getRolling30DayStats() {
-    const now = new Date();
-    const thirtyAgo = new Date(now.getTime() - 30 * 86400000);
-    const recent = state.sessions.filter(s => new Date(s.date) >= thirtyAgo);
-    if (recent.length === 0) return { avgShots: 0, avgAcc: 0, sessionCount: 0 };
-    
-    const totalShots = recent.reduce((s, x) => s + x.shots, 0);
-    const totalMakes = recent.reduce((s, x) => s + x.makes, 0);
-    const avgShots = Math.round(totalShots / recent.length);
-    const avgAcc = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
-    
-    // Unique practice days
-    const uniqueDays = new Set(recent.map(s => s.date)).size;
-    
-    return { avgShots, avgAcc, sessionCount: recent.length, uniqueDays };
+    const practiced = new Set(getMonthSessions().map(s => s.date));
+    const expectedDays = Math.max(1, Math.round((new Date().getDate() / 7) * 4));
+    return { practiced: practiced.size, totalDays: expectedDays, pct: Math.min(100, Math.round((practiced.size / expectedDays) * 100)) };
   }
 
   // =============================================
   // GENERAL CALCULATIONS
   // =============================================
-  function getDailyTarget() {
-    if (state.goals) return state.goals.shots;
-    return 200;
-  }
-
-  function getWeeklyTarget() {
-    if (state.goals) return state.goals.shots * state.goals.days;
-    return 800;
-  }
-
-  function getTimeTarget() {
-    if (state.goals) return state.goals.time;
-    return 30;
-  }
-
-  function getAccuracyTarget() {
-    if (state.goals) return state.goals.accuracy;
-    return 50;
-  }
-
   function getStreak() {
     if (!state.sessions || state.sessions.length === 0) return 0;
     // Normalize all dates to YYYY-MM-DD to handle any legacy formats
@@ -5067,9 +4170,8 @@
   }
 
   function getWeekSessions() {
-    const now = new Date();
-    const weekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-    return state.sessions.filter(s => new Date(s.date + 'T00:00:00') >= weekAgo);
+    const start = getWeekStart();
+    return state.sessions.filter(s => { const d = sessionDay(s); return d && d >= start; });
   }
 
   function getWeekShots() {
@@ -5266,375 +4368,6 @@
   }
 
   // =============================================
-  // EDIT GOALS (inline on profile)
-  // =============================================
-  function showGoalEditor() {
-    if (!state.goals) return;
-    document.getElementById('profile-goals-display').style.display = 'none';
-    document.getElementById('profile-goals-editor').style.display = 'block';
-    document.getElementById('edit-goals-btn').style.display = 'none';
-
-    // Pre-fill with current values
-    document.getElementById('edit-goal-days').value = state.goals.days || 4;
-    document.getElementById('edit-goal-time').value = state.goals.time || 30;
-    document.getElementById('edit-goal-shots').value = state.goals.shots || 200;
-    document.getElementById('edit-goal-accuracy').value = state.goals.accuracy || 50;
-  }
-
-  function hideGoalEditor() {
-    document.getElementById('profile-goals-display').style.display = '';
-    document.getElementById('profile-goals-editor').style.display = 'none';
-    document.getElementById('edit-goals-btn').style.display = '';
-  }
-
-  function saveEditedGoals() {
-    const days = clampValue(parseInt(document.getElementById('edit-goal-days').value) || 4, 1, 7);
-    const time = clampValue(parseInt(document.getElementById('edit-goal-time').value) || 30, 5, 120);
-    const shots = clampValue(parseInt(document.getElementById('edit-goal-shots').value) || 200, 25, 1000);
-    const accuracy = clampValue(parseInt(document.getElementById('edit-goal-accuracy').value) || 50, 10, 100);
-
-    state.goals = { days, shots, time, accuracy };
-
-    // Reset suggestion cooldown so we don't suggest changes right after a manual edit
-    initGoalSuggestions();
-    state.goalSuggestions.lastManualEdit = todayStr();
-
-    saveState();
-    hideGoalEditor();
-    setupProfile(); // Refresh display
-  }
-
-  // =============================================
-  // GOAL SUGGESTION ENGINE
-  // =============================================
-  // Tracks: state.goalSuggestions = {
-  //   lastSuggested: '2025-01-15',      // date of last suggestion shown
-  //   lastDeclined: '2025-01-15',        // date of last decline
-  //   lastManualEdit: '2025-01-10',      // date goals were manually edited
-  //   lastAccepted: '2025-01-08',        // date of last acceptance
-  //   history: [ { date, type, from, to, action } ]
-  // }
-
-  let _currentSuggestion = null; // holds the active suggestion for accept/decline
-
-  function initGoalSuggestions() {
-    if (!state.goalSuggestions) {
-      state.goalSuggestions = {
-        lastSuggested: null,
-        lastDeclined: null,
-        lastManualEdit: null,
-        lastAccepted: null,
-        history: []
-      };
-    }
-  }
-
-  function checkGoalSuggestion() {
-    if (!state.goals || !state.sessions || !state.player) return;
-    initGoalSuggestions();
-
-    const today = todayStr();
-    const gs = state.goalSuggestions;
-    const COOLDOWN_DAYS = 14;
-
-    // Don't suggest if player has fewer than 2 weeks of data
-    const joinDate = state.player.joinDate || '';
-    if (joinDate && daysSinceDate(joinDate) < 14) return;
-
-    // Don't suggest if less than 2 weeks since last suggestion, decline, accept, or manual edit
-    const recentDates = [gs.lastSuggested, gs.lastDeclined, gs.lastAccepted, gs.lastManualEdit].filter(Boolean);
-    if (recentDates.length > 0) {
-      const mostRecent = recentDates.sort().reverse()[0];
-      if (daysSinceDate(mostRecent) < COOLDOWN_DAYS) return;
-    }
-
-    // Analyze last 2 weeks of sessions
-    const twoWeeksAgo = getDateNDaysAgo(14);
-    const recentSessions = state.sessions.filter(s => s.date >= twoWeeksAgo);
-
-    if (recentSessions.length < 4) return; // Need at least 4 sessions to evaluate
-
-    // Count unique practice days
-    const practiceDays = [...new Set(recentSessions.map(s => s.date))];
-
-    // Calculate per-day aggregates
-    const dailyAggs = {};
-    recentSessions.forEach(s => {
-      if (!dailyAggs[s.date]) dailyAggs[s.date] = { shots: 0, makes: 0, time: 0 };
-      dailyAggs[s.date].shots += (s.shots || 0);
-      dailyAggs[s.date].makes += (s.makes || 0);
-      dailyAggs[s.date].time += (s.time || 0);
-    });
-
-    const dayValues = Object.values(dailyAggs);
-
-    // Check each goal dimension for consistent over-achievement
-    const suggestion = findBestSuggestion(dayValues, practiceDays.length);
-
-    if (suggestion) {
-      _currentSuggestion = suggestion;
-      showGoalSuggestionCard(suggestion);
-    } else {
-      // Check for under-achievement (goal decrease)
-      const decreaseSuggestion = findDecreaseSuggestion(dayValues, practiceDays.length);
-      if (decreaseSuggestion) {
-        _currentSuggestion = decreaseSuggestion;
-        showGoalSuggestionCard(decreaseSuggestion);
-      }
-    }
-  }
-
-  function findBestSuggestion(dayValues, totalPracticeDays) {
-    const goals = state.goals;
-    const candidates = [];
-
-    // Shots: did they exceed shot goal 80%+ of practice days?
-    const daysHitShots = dayValues.filter(d => d.shots >= goals.shots).length;
-    const shotHitRate = daysHitShots / dayValues.length;
-    if (shotHitRate >= 0.8 && goals.shots < 1000) {
-      const avgShots = Math.round(dayValues.reduce((s, d) => s + d.shots, 0) / dayValues.length);
-      const bump = getBump(goals.shots, avgShots, 'shots');
-      if (bump > 0) {
-        candidates.push({
-          type: 'shots',
-          direction: 'increase',
-          from: goals.shots,
-          to: Math.min(1000, goals.shots + bump),
-          hitRate: shotHitRate,
-          priority: shotHitRate * 1.2 // Prioritize shots (core metric)
-        });
-      }
-    }
-
-    // Accuracy: consistently 5+ points above target?
-    const daysWithAccuracy = dayValues.filter(d => d.shots >= 20); // Need enough shots for meaningful %
-    if (daysWithAccuracy.length >= 3) {
-      const daysHitAcc = daysWithAccuracy.filter(d => {
-        const acc = Math.round((d.makes / d.shots) * 100);
-        return acc >= goals.accuracy + 5;
-      }).length;
-      const accHitRate = daysHitAcc / daysWithAccuracy.length;
-      if (accHitRate >= 0.7 && goals.accuracy < 95) {
-        candidates.push({
-          type: 'accuracy',
-          direction: 'increase',
-          from: goals.accuracy,
-          to: Math.min(95, goals.accuracy + 5),
-          hitRate: accHitRate,
-          priority: accHitRate
-        });
-      }
-    }
-
-    // Time: consistently exceeding time goal?
-    const daysHitTime = dayValues.filter(d => d.time >= goals.time).length;
-    const timeHitRate = daysHitTime / dayValues.length;
-    if (timeHitRate >= 0.8 && goals.time < 120) {
-      candidates.push({
-        type: 'time',
-        direction: 'increase',
-        from: goals.time,
-        to: Math.min(120, goals.time + 10),
-        hitRate: timeHitRate,
-        priority: timeHitRate * 0.8
-      });
-    }
-
-    // Days: practicing more days than goal says?
-    const expectedDays14 = goals.days * 2; // 2 weeks
-    if (totalPracticeDays >= expectedDays14 * 1.3 && goals.days < 7) {
-      candidates.push({
-        type: 'days',
-        direction: 'increase',
-        from: goals.days,
-        to: Math.min(7, goals.days + 1),
-        hitRate: totalPracticeDays / expectedDays14,
-        priority: 0.7
-      });
-    }
-
-    // Return highest priority candidate
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => b.priority - a.priority);
-    return candidates[0];
-  }
-
-  function findDecreaseSuggestion(dayValues, totalPracticeDays) {
-    const goals = state.goals;
-
-    // Shots: hitting goal less than 30% of practice days for 2 weeks?
-    const daysHitShots = dayValues.filter(d => d.shots >= goals.shots).length;
-    const shotHitRate = daysHitShots / dayValues.length;
-    if (shotHitRate < 0.3 && goals.shots > 50) {
-      const avgShots = Math.round(dayValues.reduce((s, d) => s + d.shots, 0) / dayValues.length);
-      // Suggest a goal slightly above their average (reachable but challenging)
-      const newTarget = Math.max(50, Math.round(avgShots * 1.15 / 25) * 25); // Round to nearest 25
-      if (newTarget < goals.shots) {
-        return {
-          type: 'shots',
-          direction: 'decrease',
-          from: goals.shots,
-          to: newTarget,
-          hitRate: shotHitRate,
-          priority: 1
-        };
-      }
-    }
-
-    // Days: practicing way less than goal?
-    const expectedDays14 = goals.days * 2;
-    if (totalPracticeDays < expectedDays14 * 0.5 && goals.days > 2) {
-      return {
-        type: 'days',
-        direction: 'decrease',
-        from: goals.days,
-        to: Math.max(2, goals.days - 1),
-        hitRate: totalPracticeDays / expectedDays14,
-        priority: 0.9
-      };
-    }
-
-    return null;
-  }
-
-  function getBump(current, average, type) {
-    // Scale bump based on how much they're exceeding
-    if (type === 'shots') {
-      const excess = average - current;
-      if (excess > current * 0.5) return 50;  // Way over → bigger bump
-      if (excess > current * 0.25) return 50;
-      return 25; // Modest bump
-    }
-    return 0;
-  }
-
-  function showGoalSuggestionCard(suggestion) {
-    const card = document.getElementById('goal-suggestion-card');
-    const msgEl = document.getElementById('goal-suggestion-msg');
-    const detailEl = document.getElementById('goal-suggestion-detail');
-
-    const LABELS = {
-      shots: 'SHOT ATTEMPTS / SESSION',
-      accuracy: 'TARGET FG%',
-      time: 'MINUTES / DAY',
-      days: 'DAYS / WEEK'
-    };
-
-    const UNITS = {
-      shots: ' shots',
-      accuracy: '%',
-      time: ' min',
-      days: ' days'
-    };
-
-    if (suggestion.direction === 'increase') {
-      const messages = [
-        `You've been crushing your ${LABELS[suggestion.type].toLowerCase()} goal! Time to level up.`,
-        `Coach sees you consistently beating your target. Let's push it higher.`,
-        `You've been exceeding your goal for 2 weeks straight. Ready for more?`
-      ];
-      msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
-      detailEl.innerHTML = `${suggestion.from}${UNITS[suggestion.type]} → <span style="color:#00d4aa; font-size:28px;">${suggestion.to}${UNITS[suggestion.type]}</span>`;
-    } else {
-      const messages = [
-        `Your current ${LABELS[suggestion.type].toLowerCase()} goal might be too high right now. Let's dial it back to build momentum.`,
-        `Consistency beats volume. Let's set a target you can hit every day, then build from there.`,
-        `Coach wants you hitting your goals consistently. Let's adjust and start stacking wins.`
-      ];
-      msgEl.textContent = messages[Math.floor(Math.random() * messages.length)];
-      detailEl.innerHTML = `${suggestion.from}${UNITS[suggestion.type]} → <span style="color:#ffa500; font-size:28px;">${suggestion.to}${UNITS[suggestion.type]}</span>`;
-    }
-
-    card.style.display = '';
-  }
-
-  function acceptGoalSuggestion() {
-    if (!_currentSuggestion) return;
-    initGoalSuggestions();
-
-    const s = _currentSuggestion;
-
-    // Apply the new goal
-    state.goals[s.type] = s.to;
-
-    // Track
-    state.goalSuggestions.lastAccepted = todayStr();
-    state.goalSuggestions.lastSuggested = todayStr();
-    state.goalSuggestions.history.push({
-      date: todayStr(),
-      type: s.type,
-      direction: s.direction,
-      from: s.from,
-      to: s.to,
-      action: 'accepted'
-    });
-
-    // Keep history manageable (last 20)
-    if (state.goalSuggestions.history.length > 20) {
-      state.goalSuggestions.history = state.goalSuggestions.history.slice(-20);
-    }
-
-    saveState();
-    _currentSuggestion = null;
-
-    // Show celebration
-    const card = document.getElementById('goal-suggestion-card');
-    card.innerHTML = `
-      <div style="font-size:36px; margin-bottom:8px;">🎯🔥</div>
-      <div style="font-family:'Bebas Neue',sans-serif; font-size:22px; color:#00d4aa; letter-spacing:2px;">GOALS UPDATED!</div>
-      <div style="font-family:'Outfit',sans-serif; font-size:14px; color:#ccc; margin-top:6px;">New target locked in. Let's get to work.</div>
-    `;
-
-    // Hide after 3 seconds and refresh dashboard
-    setTimeout(() => {
-      card.style.display = 'none';
-      setupDashboard();
-    }, 3000);
-  }
-
-  function declineGoalSuggestion() {
-    if (!_currentSuggestion) return;
-    initGoalSuggestions();
-
-    const s = _currentSuggestion;
-
-    state.goalSuggestions.lastDeclined = todayStr();
-    state.goalSuggestions.lastSuggested = todayStr();
-    state.goalSuggestions.history.push({
-      date: todayStr(),
-      type: s.type,
-      direction: s.direction,
-      from: s.from,
-      to: s.to,
-      action: 'declined'
-    });
-
-    if (state.goalSuggestions.history.length > 20) {
-      state.goalSuggestions.history = state.goalSuggestions.history.slice(-20);
-    }
-
-    saveState();
-    _currentSuggestion = null;
-
-    document.getElementById('goal-suggestion-card').style.display = 'none';
-  }
-
-  // Helper: days since a YYYY-MM-DD date
-  function daysSinceDate(dStr) {
-    const d = new Date(dStr + 'T00:00:00');
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return Math.floor((today - d) / (1000 * 60 * 60 * 24));
-  }
-
-  // Helper: get YYYY-MM-DD for N days ago
-  function getDateNDaysAgo(n) {
-    const d = new Date();
-    d.setDate(d.getDate() - n);
-    return dateStr(d);
-  }
-
-  // =============================================
   // SCREEN NAVIGATION
   // =============================================
   // Swish Quest button: in the Android app it opens the shot-tracking camera; on the web it opens Log Session.
@@ -5661,6 +4394,7 @@
     const navScreens = ['dashboard', 'stats', 'board', 'badges', 'profile'];
     document.getElementById('bottom-nav').style.display = navScreens.includes(id) ? 'flex' : 'none';
 
+    if (id === 'signup') setupSignup();
     if (id === 'meet-coach') setupCoachScreen();
     if (id === 'dashboard') setupDashboard();
     if (id === 'stats') { setupStats(); syncNavHeightVar(); }
@@ -5743,6 +4477,30 @@
   // =============================================
   // SIGNUP
   // =============================================
+  // The parent's email is asked for once: if they made an account (or already added a player on this phone),
+  // it is filled in for them.
+  function setupSignup() {
+    const el = document.getElementById('inp-email');
+    if (!el || el.value) return;
+    const user = getFirebaseUser();
+    let email = (user && user.email) || '';
+    if (!email) {
+      try {
+        const all = loadAllProfiles().profiles || {};
+        Object.keys(all).some(id => {
+          const e = all[id] && all[id].player && all[id].player.email;
+          if (e) email = e;
+          return !!e;
+        });
+      } catch (e) {}
+    }
+    if (email) el.value = email;
+  }
+
+  function isValidEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && v.length <= 254;
+  }
+
   function submitSignup() {
     const name = document.getElementById('inp-name').value.trim().slice(0, VALIDATION.MAX_NAME_LENGTH);
     const email = document.getElementById('inp-email').value.trim();
@@ -5751,6 +4509,7 @@
     const consent = document.getElementById('inp-consent');
 
     if (!name) { alert('Please enter your name!'); return; }
+    if (!isValidEmail(email)) { alert("Please enter a parent's email address."); return; }
     if (!grade) { alert('Please select your grade!'); return; }
     if (consent && !consent.checked) { alert('Parent or guardian consent is required to continue.'); return; }
 
@@ -5760,12 +4519,17 @@
     }
 
     state.player = { name: sanitizeHTML(name), email, phone, grade, joinDate: todayStr() };
+    state.goals = legacyGoals(); // not used by Swish Quest any more; see legacyGoals()
     saveState();
 
     // Capture lead for marketing
     captureLeadData(name, email, phone, grade);
 
-    showScreen('set-goals');
+    // Clear the form for the next player added on this phone
+    ['inp-name', 'inp-email', 'inp-phone', 'inp-grade'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    if (consent) consent.checked = false;
+
+    showScreen('meet-coach');
   }
 
   // =============================================
@@ -5834,53 +4598,6 @@
   }
 
   // =============================================
-  // GOAL SETTING
-  // =============================================
-  function selectGoalOption(step, el, value) {
-    el.parentElement.querySelectorAll('.goal-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-
-    if (step === 1) goalSelections.days = value;
-    if (step === 2) goalSelections.shots = value;
-    if (step === 3) goalSelections.time = value;
-    if (step === 4) goalSelections.accuracy = value;
-
-    setTimeout(() => {
-      if (step < 4) {
-        document.getElementById('goal-step-' + step).classList.remove('active');
-        document.getElementById('goal-step-' + (step + 1)).classList.add('active');
-        window.scrollTo(0, 0);
-      } else {
-        showGoalSummary();
-      }
-    }, 400);
-  }
-
-  function showGoalSummary() {
-    document.getElementById('goal-step-4').classList.remove('active');
-    document.getElementById('goal-step-5').classList.add('active');
-
-    const weekly = goalSelections.shots * goalSelections.days;
-    document.getElementById('summary-days').textContent = goalSelections.days + ' days';
-    document.getElementById('summary-shots').textContent = goalSelections.shots;
-    document.getElementById('summary-time').textContent = goalSelections.time + ' min';
-    document.getElementById('summary-accuracy').textContent = goalSelections.accuracy + '%';
-    document.getElementById('summary-weekly').textContent = weekly.toLocaleString() + ' shots';
-    window.scrollTo(0, 0);
-  }
-
-  function confirmGoals() {
-    state.goals = {
-      days: goalSelections.days,
-      shots: goalSelections.shots,
-      time: goalSelections.time,
-      accuracy: goalSelections.accuracy
-    };
-    saveState();
-    showScreen('meet-coach');
-  }
-
-  // =============================================
   // COACH SCREEN
   // =============================================
   function setupCoachScreen() {
@@ -5908,17 +4625,44 @@
   // =============================================
   // DASHBOARD
   // =============================================
+  // What is left to reach the next rank: that is the goal now (1.13).
+  function getNextRankInfo() {
+    const config = TIER_CONFIG[state.tier];
+    if (state.tier >= 10 || !config || !config.fgaRequired) return null;
+    const next = TIER_CONFIG[state.tier + 1];
+    const info = { name: getTierName(state.tier + 1), left: Math.max(0, config.fgaRequired - (state.tierFGA || 0)), gate: null };
+    if (next && next.accGate > 0) {
+      const acc = getRollingAccuracy(next.accWindow);
+      if (acc < next.accGate) info.gate = { need: next.accGate, have: acc, window: next.accWindow };
+    }
+    return info;
+  }
+
+  function renderNextRank() {
+    const el = document.getElementById('dash-next-rank');
+    if (!el) return;
+    const info = getNextRankInfo();
+    if (!info) { el.innerHTML = '<span class="next-rank-name">TOP RANK</span>'; return; }
+    const name = `<span class="next-rank-name">${sanitizeHTML(info.name.toUpperCase())}</span>`;
+    const gateNote = info.gate ? `${info.gate.need}% shooting over your last ${info.gate.window.toLocaleString()} shots (now ${info.gate.have}%)` : '';
+    if (info.left > 0) {
+      el.innerHTML = `<strong>${info.left.toLocaleString()}</strong> SHOT${info.left === 1 ? '' : 'S'} TO ${name}` +
+        (gateNote ? `<small>Also needs ${gateNote}</small>` : '');
+    } else {
+      el.innerHTML = `SHOOT <strong>${info.gate ? info.gate.need : 0}%</strong> TO REACH ${name}` +
+        (info.gate ? `<small>Over your last ${info.gate.window.toLocaleString()} shots. You're at ${info.gate.have}%.</small>` : '');
+    }
+  }
+
   function setupDashboard() {
-    if (!state.goals || !state.player) return;
+    if (!state.player) return;
     updateCloudIndicator(!!getFirebaseUser());
-    const coach = COACH;
     const tier = state.tier;
     const tierName = getTierName(tier).toUpperCase();
     const level = state.tierLevel || 1;
     const streak = getStreak();
     
     // Progress ring: the level (percent of the way to the next rank), rank name, streak underneath
-    const config = TIER_CONFIG[state.tier];
     const lvl = Math.max(1, Math.min(100, level));
     const arc = document.getElementById('dash-ring-arc');
     const circ = 2 * Math.PI * 104;
@@ -5930,112 +4674,7 @@
     if (tier === 10) { rank.style.cssText = getTierColorCSS(tier) + ' -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;'; }
     else { rank.style.cssText = 'color:' + getTierColor(tier) + ';'; }
     document.getElementById('dash-streak').textContent = `${getStreakEmoji(streak)} ${streak} day${streak !== 1 ? 's' : ''} in a row`;
-
-    // Goals / quest list are no longer shown on this screen (quests still count in the background)
-    document.getElementById('goal-suggestion-card').style.display = 'none';
-
-    renderQuests();
-  }
-
-  // =============================================
-  // QUESTS — Coach-assigned language
-  // =============================================
-  function getQuestsForToday() {
-    const shotTarget = getDailyTarget();
-    const timeTarget = getTimeTarget();
-    const accTarget = getAccuracyTarget();
-    const todaySessions = getTodaySessions();
-    const todayShots = getTodayShots();
-    const todayTime = getTodayTime();
-    const todayAcc = getTodayAccuracy();
-
-    const hasSession = todaySessions.length > 0;
-    const hitShotTarget = todayShots >= shotTarget;
-    const hitTimeTarget = todayTime >= timeTarget;
-    const hitAccTarget = hasSession && todayAcc >= accTarget;
-
-    return [
-      { text: 'Coach wants you to get shots up today', xp: 25, done: hasSession },
-      { text: `Today's target: ${shotTarget} shots`, xp: 25, done: hitShotTarget, target: `${todayShots}/${shotTarget}` },
-      { text: `Put in ${timeTarget} minutes today`, xp: 15, done: hitTimeTarget, target: `${todayTime}/${timeTarget} min` },
-      { text: `Accuracy challenge: Hit ${accTarget}%+`, xp: 20, done: hitAccTarget, target: hasSession ? `${todayAcc}% / ${accTarget}%` : `— / ${accTarget}%` }
-    ];
-  }
-
-  function renderQuests() {
-    const list = document.getElementById('quests-list');
-    list.innerHTML = '';
-    const quests = getQuestsForToday();
-    const coach = COACH;
-    const allDone = quests.every(q => q.done);
-
-    const banner = document.getElementById('all-complete-banner');
-    const bossCard = document.getElementById('boss-unlocked-card');
-    const questsTitle = document.querySelector('.quests-title');
-
-    if (allDone && quests.length > 0) {
-      // Collapse quests, show summary bar + boss unlocked
-      banner.classList.add('visible');
-      list.style.display = 'none';
-      if (questsTitle) questsTitle.style.display = 'none';
-
-      // Show boss unlocked card
-      if (bossCard) {
-        bossCard.classList.add('visible');
-        const activeInfo = document.getElementById('boss-unlocked-active-info');
-        const titleEl = document.getElementById('boss-unlocked-title');
-        const subEl = document.getElementById('boss-unlocked-sub');
-        if (state.activeBoss) {
-          const boss = getBossById(state.activeBoss);
-          if (boss) {
-            titleEl.textContent = '⚔️ CONTINUE BOSS BATTLE';
-            subEl.textContent = 'Your boss awaits — go fight!';
-            activeInfo.innerHTML = `${boss.emoji} <strong>${boss.name}</strong><br><span style="color:#aaa; font-size:13px;">${boss.challenge}</span>`;
-          }
-        } else {
-          titleEl.textContent = '⚔️ BOSS BATTLE UNLOCKED';
-          subEl.textContent = 'All quests complete — time to face a boss!';
-          activeInfo.innerHTML = '';
-        }
-      }
-    } else {
-      banner.classList.remove('visible');
-      list.style.display = '';
-      if (questsTitle) questsTitle.style.display = '';
-      if (bossCard) bossCard.classList.remove('visible');
-
-      quests.forEach((q, i) => {
-        const item = document.createElement('div');
-        item.className = 'quest-item' + (q.done ? ' completed' : '');
-        item.innerHTML = `
-          <div class="quest-checkbox ${q.done ? 'checked' : ''}" style="border-color: ${coach.color}">
-            ${q.done ? '✓' : ''}
-          </div>
-          <div class="quest-info">
-            <div class="quest-text">${q.text}</div>
-            ${q.target ? `<div class="quest-target">${q.target}</div>` : ''}
-          </div>
-          <div class="quest-xp">${q.done ? '✓' : '○'}</div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    if (allDone && quests.length > 0) {
-      const todayAcc = getTodayAccuracy();
-      const todayShots = getTodayShots();
-      let msg = `All goals hit! ${todayShots} shots at ${todayAcc}% — that's how it's done. Time to face a boss! ⚔️`;
-      const coachMsgEl = document.getElementById('dash-coach-msg');
-      if (coachMsgEl) coachMsgEl.textContent = msg;
-    }
-  }
-
-  function handleBossCardClick() {
-    if (state.activeBoss) {
-      showScreen('boss-battle-log');
-    } else {
-      showScreen('boss-battles');
-    }
+    renderNextRank();
   }
 
   function getStreakEmoji(days) {
@@ -6047,209 +4686,396 @@
   // =============================================
   // LOG SESSION
   // =============================================
+  // Two ways to log by hand:
+  //  - BY SPOT: tap one of the 20 spots (5, 10, 15, 20 ft x left baseline, left wing, middle, right wing,
+  //    right baseline), then add makes and misses. The shots are saved with the session as session.sv,
+  //    the same format the camera uses, so they fill the shot chart on Stats.
+  //  - QUICK TOTALS: makes and attempts for the four shot types.
+  // The Android app saves a camera session by filling the QUICK TOTALS fields and calling calcSession()
+  // and saveSession(), so those two names and the field ids (log-<type>-made/att, log-time,
+  // save-session-btn) must stay as they are.
+  const LOG_TYPES = ['layups', 'midrange', 'ft', 'three'];
+  const SPOT_BANDS = [5, 10, 15, 20];
+  const SPOT_COLS = [ // key, name, from angle, to angle, label angle (degrees from straight out; minus = the shooter's left)
+    ['lb', 'LEFT BASELINE', -180, -67.5, -84], ['lw', 'LEFT WING', -67.5, -22.5, -45], ['m', 'MIDDLE', -22.5, 22.5, 0],
+    ['rw', 'RIGHT WING', 22.5, 67.5, 45], ['rb', 'RIGHT BASELINE', 67.5, 180, 84]];
+  // Drawing only: inner edge, outer edge and label distance in feet. The spots by the hoop are drawn
+  // bigger than life so they are easy to tap.
+  const SPOT_DRAW = { 5: [0, 8, 5.2], 10: [8, 12.75, 10.4], 15: [12.75, 17.5, 15.1], 20: [17.5, 45, 19.9] };
+  const SPOT_VIEW = { halfWidth: 22, top: -4.4, bottom: 23 }; // feet shown either side of the hoop, behind it, and out front
+  const SPOT_TYPE = { 5: 'layups', 10: 'midrange', 15: 'midrange', 20: 'three' }; // the same split the camera uses
+  const SPOT_HEAT = { 5: [60, 45], 10: [45, 35], 15: [40, 30], 20: [35, 27] };     // hot / OK %, as on the shot chart
+  const SPOT_DRAFT_KEY = 'swishquest_spotdraft';
+  const LOG_MODE_KEY = 'swishquest_logmode';
+
+  let _logMode = 'spots';                        // 'spots' | 'quick'
+  let _spot = { log: {}, sel: null, hist: [] };  // log[spot] = [made, attempted]; hist = taps, for Undo
+
+  function logEl(id) { return document.getElementById(id); }
+
+  function spotParts(key) {
+    const m = /^d(5|10|15|20)_(lb|lw|m|rw|rb)$/.exec(String(key || ''));
+    return m ? { band: +m[1], col: SPOT_COLS.find(c => c[0] === m[2]) } : null;
+  }
+
+  function spotHasData() {
+    return Object.keys(_spot.log).length > 0 || !!logEl('spot-ft-made').value || !!logEl('spot-ft-att').value;
+  }
+
+  // A half-finished BY SPOT session is kept on this device for the rest of the day, so tapping shots in
+  // during a workout survives the phone locking or the page reloading.
+  function saveSpotDraft() {
+    try {
+      if (!spotHasData()) { localStorage.removeItem(SPOT_DRAFT_KEY); return; }
+      localStorage.setItem(SPOT_DRAFT_KEY, JSON.stringify({
+        pid: _activeProfileId, date: todayStr(), log: _spot.log, sel: _spot.sel,
+        ft: [logEl('spot-ft-made').value, logEl('spot-ft-att').value]
+      }));
+    } catch (e) {}
+  }
+
+  function loadSpotDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(SPOT_DRAFT_KEY) || 'null');
+      if (!d || d.pid !== _activeProfileId || d.date !== todayStr() || !d.log || typeof d.log !== 'object') return null;
+      const log = {};
+      Object.keys(d.log).forEach(k => {
+        if (!spotParts(k) || !Array.isArray(d.log[k])) return;
+        const made = clampValue(d.log[k][0], 0, VALIDATION.MAX_MAKES_PER_SESSION);
+        const att = clampValue(d.log[k][1], 0, VALIDATION.MAX_SHOTS_PER_SESSION);
+        if (made || att) log[k] = [made, att];
+      });
+      const ft = Array.isArray(d.ft) ? d.ft : ['', ''];
+      const num = v => (v === '' || v == null) ? '' : String(clampValue(v, 0, VALIDATION.MAX_SHOTS_PER_SESSION));
+      return { log: log, sel: spotParts(d.sel) ? d.sel : null, ft: [num(ft[0]), num(ft[1])] };
+    } catch (e) { return null; }
+  }
+
+  function clearSpotDraft() {
+    try { localStorage.removeItem(SPOT_DRAFT_KEY); } catch (e) {}
+    _spot = { log: {}, sel: null, hist: [] };
+    logEl('spot-ft-made').value = '';
+    logEl('spot-ft-att').value = '';
+  }
+
   function resetLogForm() {
-    const types = ['layups', 'midrange', 'ft', 'three'];
-    types.forEach(t => {
-      document.getElementById('log-' + t + '-att').value = '';
-      document.getElementById('log-' + t + '-made').value = '';
+    LOG_TYPES.forEach(t => {
+      logEl('log-' + t + '-att').value = '';
+      logEl('log-' + t + '-made').value = '';
     });
-    document.getElementById('log-total-display').textContent = '0 / 0';
-    document.getElementById('log-time').value = '';
-    document.getElementById('calc-results').style.display = 'none';
-    document.getElementById('save-session-btn').disabled = true;
-    document.getElementById('calc-target').textContent = getDailyTarget() + ' shots';
-  }
-
-  function calcSession() {
-    const types = ['layups', 'midrange', 'ft', 'three'];
-    let totalAtt = 0, totalMade = 0;
-    types.forEach(t => {
-      const attEl = document.getElementById('log-' + t + '-att');
-      const madeEl = document.getElementById('log-' + t + '-made');
-      let att = clampValue(attEl.value, 0, VALIDATION.MAX_SHOTS_PER_SESSION);
-      let made = clampValue(madeEl.value, 0, VALIDATION.MAX_MAKES_PER_SESSION);
-      // Clamp makes to not exceed attempts (live feedback)
-      if (made > att && att > 0) {
-        made = att;
-        madeEl.value = made;
-      }
-      totalAtt += att;
-      totalMade += made;
-    });
-
-    document.getElementById('log-total-display').textContent = totalMade + ' / ' + totalAtt;
-
-    const time = clampValue(document.getElementById('log-time').value, 0, VALIDATION.MAX_TIME_PER_SESSION);
-
-    if (totalAtt > 0) {
-      document.getElementById('calc-results').style.display = 'block';
-      const accuracy = totalMade > 0 ? Math.round((totalMade / totalAtt) * 100) : 0;
-      const spm = time > 0 ? (totalAtt / time).toFixed(1) : '—';
-      document.getElementById('calc-accuracy').textContent = accuracy + '%';
-      document.getElementById('calc-spm').textContent = spm;
-      document.getElementById('calc-target').textContent = getDailyTarget() + ' shots';
-    } else {
-      document.getElementById('calc-results').style.display = 'none';
+    logEl('log-time').value = '';
+    _spot = { log: {}, sel: null, hist: [] };
+    logEl('spot-ft-made').value = '';
+    logEl('spot-ft-att').value = '';
+    const draft = loadSpotDraft();
+    if (draft) {
+      _spot.log = draft.log;
+      _spot.sel = draft.sel;
+      logEl('spot-ft-made').value = draft.ft[0];
+      logEl('spot-ft-att').value = draft.ft[1];
     }
-    checkLogValid();
+    let mode = 'spots';
+    try { if (localStorage.getItem(LOG_MODE_KEY) === 'quick') mode = 'quick'; } catch (e) {}
+    if (draft && spotHasData()) mode = 'spots'; // pick up where they left off
+    setLogMode(mode, true);
+    renderSpotCourt();
+    renderSpotPanel();
   }
 
-  function checkLogValid() {
-    const types = ['layups', 'midrange', 'ft', 'three'];
-    let totalAtt = 0, totalMade = 0;
-    let valid = true;
-    types.forEach(t => {
-      const attVal = document.getElementById('log-' + t + '-att').value;
-      const madeVal = document.getElementById('log-' + t + '-made').value;
-      const att = clampValue(attVal, 0, VALIDATION.MAX_SHOTS_PER_SESSION);
-      const made = clampValue(madeVal, 0, VALIDATION.MAX_MAKES_PER_SESSION);
+  // remember = false when the app switches the view itself (it should not change the player's usual choice)
+  function setLogMode(mode, auto) {
+    _logMode = mode === 'quick' ? 'quick' : 'spots';
+    if (!auto) { try { localStorage.setItem(LOG_MODE_KEY, _logMode); } catch (e) {} }
+    const spots = _logMode === 'spots';
+    const form = logEl('log-form');
+    form.classList.toggle('mode-spots', spots);
+    form.classList.toggle('mode-quick', !spots);
+    logEl('log-spots').style.display = spots ? '' : 'none';
+    logEl('spot-side').style.display = spots ? '' : 'none';
+    logEl('log-quick').style.display = spots ? 'none' : '';
+    logEl('log-mode-spots').classList.toggle('active', spots);
+    logEl('log-mode-quick').classList.toggle('active', !spots);
+    updateLogTotals();
+  }
+
+  // ---- BY SPOT ----
+  function renderSpotCourt() {
+    const box = logEl('spot-court');
+    if (!box) return;
+    const S = 10, L = -SPOT_VIEW.halfWidth, T = SPOT_VIEW.top; // 10 units per foot, hoop at the top
+    const W = SPOT_VIEW.halfWidth * 2 * S, H = Math.round((SPOT_VIEW.bottom - T) * S);
+    const px = x => ((x - L) * S).toFixed(1), py = y => ((y - T) * S).toFixed(1);
+    const ring = (a1, a2, r1, r2) => {
+      const pts = [], n = 28;
+      for (let i = 0; i <= n; i++) { const a = (a1 + (a2 - a1) * i / n) * Math.PI / 180; pts.push(px(r2 * Math.sin(a)) + ',' + py(r2 * Math.cos(a))); }
+      for (let i = n; i >= 0; i--) { const a = (a1 + (a2 - a1) * i / n) * Math.PI / 180; pts.push(px(r1 * Math.sin(a)) + ',' + py(r1 * Math.cos(a))); }
+      return pts.join(' ');
+    };
+    const txt = "font-family:'Bebas Neue',sans-serif;text-anchor:middle;paint-order:stroke;stroke:#000;stroke-width:3px;letter-spacing:0.5px";
+    let zones = '', labels = '', selected = '';
+    SPOT_BANDS.forEach(b => SPOT_COLS.forEach(c => {
+      const key = 'd' + b + '_' + c[0], l = _spot.log[key], d = SPOT_DRAW[b];
+      let fill = 'rgba(255,255,255,0.05)';
+      if (l && l[1] > 0) {
+        const pct = 100 * Math.min(l[0], l[1]) / l[1], g = SPOT_HEAT[b];
+        fill = pct >= g[0] ? 'rgba(34,170,90,0.55)' : pct >= g[1] ? 'rgba(235,200,80,0.5)' : 'rgba(215,60,55,0.5)';
+      }
+      const pts = ring(c[2], c[3], d[0], d[1]);
+      zones += `<polygon class="spot-zone" points="${pts}" fill="${fill}" stroke="rgba(255,255,255,0.24)" stroke-width="1.5" onclick="spotSelect('${key}')"><title>${b} ft, ${c[1].toLowerCase()}</title></polygon>`;
+      if (key === _spot.sel) selected = `<polygon points="${pts}" fill="rgba(0,180,197,0.16)" stroke="#00b4c5" stroke-width="4" stroke-linejoin="round" pointer-events="none"/>`;
+      const a = c[4] * Math.PI / 180, lx = px(d[2] * Math.sin(a)), ly = +py(Math.max(T + 2.6, d[2] * Math.cos(a))) + 7;
+      if (l) labels += `<text x="${lx}" y="${ly}" style="${txt};font-size:${b === 5 ? 19 : 22}px;fill:#fff">${l[0]}/${l[1]}</text>`;
+      else if (c[0] === 'm') labels += `<text x="${lx}" y="${ly}" style="${txt};font-size:17px;fill:rgba(255,255,255,0.7);stroke-width:2px">${b} FT</text>`;
+      else labels += `<text x="${lx}" y="${ly}" style="${txt};font-size:22px;fill:rgba(255,255,255,0.38);stroke-width:0">+</text>`;
+    }));
+    box.innerHTML =
+      `<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Court: tap the spot you shot from" style="overflow:hidden;background:#0f1620">` +
+      zones + selected +
+      `<line x1="${px(-3)}" y1="${py(-1.25)}" x2="${px(3)}" y2="${py(-1.25)}" stroke="#e8e8e8" stroke-width="4" pointer-events="none"/>` +
+      `<circle cx="${px(0)}" cy="${py(0)}" r="7.5" fill="#0f1620" stroke="#ff7a1a" stroke-width="3" pointer-events="none"/>` +
+      labels +
+      `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="11" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" pointer-events="none"/>` +
+      `</svg>`;
+  }
+
+  // typing = true while the player is typing in the MADE / SHOTS boxes (so the boxes are left alone)
+  function renderSpotPanel(typing) {
+    const key = _spot.sel, parts = spotParts(key), l = (key && _spot.log[key]) || [0, 0];
+    logEl('spot-panel').classList.toggle('has-spot', !!parts);
+    logEl('spot-name').textContent = parts ? parts.band + ' FT · ' + parts.col[1] : 'PICK A SPOT';
+    const bad = l[0] > l[1];
+    const count = logEl('spot-count');
+    count.textContent = !parts ? '' : bad ? 'MADE > SHOTS' : l[1] > 0 ? `${l[0]}/${l[1]} · ${Math.round(100 * l[0] / l[1])}%` : '0/0';
+    count.style.color = bad ? '#ff6b6b' : '';
+    ['spot-make-btn', 'spot-miss-btn', 'spot-made', 'spot-att'].forEach(id => { logEl(id).disabled = !parts; });
+    logEl('spot-undo-btn').disabled = _spot.hist.length === 0;
+    logEl('spot-made').classList.toggle('input-bad', bad);
+    if (!typing) {
+      logEl('spot-made').value = parts && (l[0] || l[1]) ? l[0] : '';
+      logEl('spot-att').value = parts && l[1] ? l[1] : '';
+    }
+  }
+
+  function spotChanged(typing) {
+    renderSpotCourt();
+    renderSpotPanel(typing);
+    saveSpotDraft();
+    updateLogTotals();
+  }
+
+  function spotSelect(key) {
+    if (!spotParts(key)) return;
+    _spot.sel = key;
+    spotChanged();
+  }
+
+  // The big MAKE / MISS buttons: one tap per shot.
+  function spotTap(made) {
+    const key = _spot.sel;
+    if (!spotParts(key)) return;
+    const l = _spot.log[key] || [0, 0];
+    if (l[1] >= VALIDATION.MAX_SHOTS_PER_SESSION) return;
+    l[1] += 1;
+    if (made) l[0] += 1;
+    _spot.log[key] = l;
+    _spot.hist.push([key, made ? 1 : 0]);
+    if (_spot.hist.length > 500) _spot.hist.shift();
+    spotChanged();
+  }
+
+  function spotUndo() {
+    const last = _spot.hist.pop();
+    if (!last) return;
+    const l = _spot.log[last[0]];
+    if (l) {
+      l[1] = Math.max(0, l[1] - 1);
+      if (last[1]) l[0] = Math.max(0, l[0] - 1);
+      if (l[0] > l[1]) l[0] = l[1];
+      if (!l[0] && !l[1]) delete _spot.log[last[0]];
+    }
+    _spot.sel = last[0];
+    spotChanged();
+  }
+
+  // The MADE / SHOTS boxes: type the totals for the spot instead of tapping each shot.
+  function spotTyped() {
+    const key = _spot.sel;
+    if (!spotParts(key)) return;
+    const made = clampValue(logEl('spot-made').value, 0, VALIDATION.MAX_MAKES_PER_SESSION);
+    const att = clampValue(logEl('spot-att').value, 0, VALIDATION.MAX_SHOTS_PER_SESSION);
+    if (!made && !att) delete _spot.log[key]; else _spot.log[key] = [made, att];
+    _spot.hist = _spot.hist.filter(h => h[0] !== key); // typed numbers replace this spot's taps
+    spotChanged(true);
+  }
+
+  function spotFtTyped() {
+    saveSpotDraft();
+    updateLogTotals();
+  }
+
+  function spotClearAll() {
+    if (!confirm('Clear every spot you have logged for this session?')) return;
+    clearSpotDraft();
+    spotChanged();
+  }
+
+  // ---- QUICK TOTALS ----
+  // Called by the QUICK TOTALS boxes, and by the Android app after it fills them in for a camera session.
+  function calcSession() {
+    if (_logMode !== 'quick') setLogMode('quick', true);
+    updateLogTotals();
+  }
+
+  // ---- both ----
+  // What is on the form right now. withShots = true also builds the shot-chart data (BY SPOT only).
+  function readLogEntry(withShots) {
+    const shotTypes = {};
+    let totalAtt = 0, totalMade = 0, valid = true, sv = null;
+    const bad = v => v !== '' && (isNaN(parseInt(v)) || parseInt(v) < 0);
+    const add = (type, made, att) => {
+      if (made > att) valid = false; // makes can never be more than shots
+      if (att <= 0) return;
+      const t = shotTypes[type] || (shotTypes[type] = { attempted: 0, made: 0 });
+      t.attempted += att;
+      t.made += Math.min(made, att);
       totalAtt += att;
-      totalMade += made;
-      // Only check made <= att if either field has a value
-      if ((attVal !== '' || madeVal !== '') && made > att) valid = false;
-      // Check for negative or non-numeric input
-      if (attVal !== '' && (isNaN(parseInt(attVal)) || parseInt(attVal) < 0)) valid = false;
-      if (madeVal !== '' && (isNaN(parseInt(madeVal)) || parseInt(madeVal) < 0)) valid = false;
-    });
-    const time = clampValue(document.getElementById('log-time').value, 0, VALIDATION.MAX_TIME_PER_SESSION);
-    valid = valid && totalAtt > 0 && time > 0 && totalAtt <= VALIDATION.MAX_SHOTS_PER_SESSION * 4;
-    document.getElementById('save-session-btn').disabled = !valid;
+      totalMade += Math.min(made, att);
+    };
+    if (_logMode === 'quick') {
+      LOG_TYPES.forEach(t => {
+        const attEl = logEl('log-' + t + '-att'), madeEl = logEl('log-' + t + '-made');
+        if (bad(attEl.value) || bad(madeEl.value)) valid = false;
+        const made = clampValue(madeEl.value, 0, VALIDATION.MAX_MAKES_PER_SESSION), att = clampValue(attEl.value, 0, VALIDATION.MAX_SHOTS_PER_SESSION);
+        madeEl.classList.toggle('input-bad', made > att);
+        add(t, made, att);
+      });
+    } else {
+      const shots = [];
+      SPOT_BANDS.forEach(b => SPOT_COLS.forEach(c => {
+        const l = _spot.log['d' + b + '_' + c[0]];
+        if (!l) return;
+        add(SPOT_TYPE[b], l[0], l[1]);
+        if (!withShots) return;
+        const a = c[4] * Math.PI / 180, x = b * Math.sin(a), y = b * Math.cos(a); // the middle of the spot, in feet from the rim
+        for (let i = 0; i < l[1]; i++) shots.push({ type: 'x', x: x, y: y, r: i < l[0] ? 'make' : 'miss' });
+      }));
+      const ftMadeEl = logEl('spot-ft-made'), ftAttEl = logEl('spot-ft-att');
+      if (bad(ftMadeEl.value) || bad(ftAttEl.value)) valid = false;
+      const ftMade = clampValue(ftMadeEl.value, 0, VALIDATION.MAX_MAKES_PER_SESSION), ftAtt = clampValue(ftAttEl.value, 0, VALIDATION.MAX_SHOTS_PER_SESSION);
+      ftMadeEl.classList.toggle('input-bad', ftMade > ftAtt);
+      add('ft', ftMade, ftAtt);
+      if (withShots && valid && window.svEncodeShots) {
+        for (let i = 0; i < ftAtt; i++) shots.push({ type: 'ft', r: i < ftMade ? 'make' : 'miss' });
+        const enc = window.svEncodeShots(shots);
+        if (enc && (enc.p || (enc.ft && enc.ft[1]))) sv = { v: 1, t: Date.now(), p: enc.p, ft: enc.ft, src: 'spots' };
+      }
+    }
+    Object.keys(shotTypes).forEach(t => { if (shotTypes[t].attempted > VALIDATION.MAX_SHOTS_PER_SESSION) valid = false; });
+    if (totalAtt > VALIDATION.MAX_SHOTS_PER_SESSION * 4) valid = false;
+    return { shotTypes: shotTypes, totalAtt: totalAtt, totalMade: totalMade, valid: valid, sv: sv };
+  }
+
+  function updateLogTotals() {
+    const e = readLogEntry(false);
+    logEl('log-total-display').textContent = e.totalMade + ' / ' + e.totalAtt;
+    const time = clampValue(logEl('log-time').value, 0, VALIDATION.MAX_TIME_PER_SESSION);
+    if (e.totalAtt > 0) {
+      logEl('calc-results').style.display = 'block';
+      logEl('calc-accuracy').textContent = Math.round((e.totalMade / e.totalAtt) * 100) + '%';
+      logEl('calc-spm').textContent = time > 0 ? (e.totalAtt / time).toFixed(1) : '—';
+    } else {
+      logEl('calc-results').style.display = 'none';
+    }
+    logEl('save-session-btn').disabled = !(e.valid && e.totalAtt > 0 && time > 0);
+    const hint = logEl('log-save-hint');
+    if (hint) hint.textContent = !e.valid ? 'Makes can\'t be more than shots.' : (e.totalAtt > 0 && time <= 0) ? 'Add the session time to save.' : '';
+    const clear = logEl('spot-clear-btn');
+    if (clear) clear.style.display = (_logMode === 'spots' && spotHasData()) ? '' : 'none';
   }
 
   function saveSession() {
-    const types = ['layups', 'midrange', 'ft', 'three'];
-    let totalAtt = 0, totalMade = 0;
-    const shotTypes = {};
-    types.forEach(t => {
-      const rawAtt = document.getElementById('log-' + t + '-att').value;
-      const rawMade = document.getElementById('log-' + t + '-made').value;
-      const validated = validateShotInput(rawAtt, rawMade);
-      if (validated.attempted > 0) {
-        shotTypes[t] = { attempted: validated.attempted, made: validated.made };
-      }
-      totalAtt += validated.attempted;
-      totalMade += validated.made;
-    });
-
-    // Final safety: total makes cannot exceed total attempts
-    if (totalMade > totalAtt) totalMade = totalAtt;
-
-    const time = validateTimeInput(document.getElementById('log-time').value);
-
-    if (totalAtt <= 0 || time <= 0) {
+    const entry = readLogEntry(true);
+    const time = validateTimeInput(logEl('log-time').value);
+    if (!entry.valid || entry.totalAtt <= 0 || time <= 0) {
       alert('Please enter valid shot and time data.');
       return;
     }
+    const totalAtt = entry.totalAtt, totalMade = Math.min(entry.totalMade, totalAtt);
 
     const session = {
       date: todayStr(),
       shots: totalAtt,
       makes: totalMade,
       time: time,
-      shotTypes: shotTypes
+      shotTypes: entry.shotTypes
     };
+    if (entry.sv) session.sv = entry.sv;
 
-    const questsBefore = getQuestsForToday();
+    const firstToday = getTodaySessions().length === 0;
+    const prevLevel = state.tierLevel || 1;
 
     state.sessions.push(session);
 
-    // FGA tracking
-    const tierConfig = TIER_CONFIG[state.tier];
-    if (tierConfig && totalAtt >= tierConfig.minAttempts) {
-      const countedFGA = Math.min(totalAtt, tierConfig.minAttempts * 3);
-      state.tierFGA += countedFGA;
-    }
-    state.lifetimeFGA += totalAtt;
-    state.tierLevel = getTierLevel();
-    saveState();
-
-    const questsAfter = getQuestsForToday();
-
-    // Count newly completed quests
-    let newlyCompleted = 0;
-    questsAfter.forEach((q, i) => {
-      if (q.done && !questsBefore[i].done) newlyCompleted++;
-    });
-
-    // All quests complete bonus
-    const allDone = questsAfter.every(q => q.done);
-    const allJustCompleted = allDone && !questsBefore.every(q => q.done);
-    if (allDone) {
-      const today = todayStr();
-      if (!state.quests[today]) {
-        state.quests[today] = true;
-        checkAchievement('boss');
-      }
-    }
-
-    const prevLevel = state.tierLevel;
-    const prevTier = state.tier;
-    
-    // Recalculate level from FGA
-    state.tierLevel = getTierLevel();
-    saveState();
-
-    // Check achievements
-    checkAllAchievements();
-    
-    // Check tier advancement
+    // Every shot counts toward the next rank (1.13: no minimum per session and no cap).
+    state.tierFGA = (state.tierFGA || 0) + totalAtt;
+    state.lifetimeFGA = (state.lifetimeFGA || 0) + totalAtt;
     const tierAdvanced = checkTierAdvancement();
+    state.tierLevel = Math.max(1, getTierLevel());
+    saveState();
+
+    checkAllAchievements();
+
+    if (_logMode === 'spots') clearSpotDraft();
 
     // Navigate to dashboard
     showNav('dashboard');
 
-    // Show FGA animation
-    const tierConfig2 = TIER_CONFIG[state.tier];
-    const fgaAdded = (tierConfig2 && totalAtt >= tierConfig2.minAttempts) ? Math.min(totalAtt, tierConfig2.minAttempts * 3) : totalAtt;
+    const leveledUp = !tierAdvanced && state.tierLevel > prevLevel;
     setTimeout(() => {
-      showXPPopup('+' + fgaAdded + ' FGA');
-      
-      if (state.tierLevel > prevLevel && !tierAdvanced) {
-        setTimeout(() => showLevelUp(state.tierLevel), 1500);
-      }
-      
-      if (tierAdvanced) {
-        setTimeout(() => showTierCelebration(state.tier), 1500);
-      } else if (allDone && state.quests[todayStr()]) {
-        setTimeout(() => showQuestsCompleteCelebration(), state.tierLevel > prevLevel ? 4000 : 1500);
-      }
-      
-      if (getStreak() >= 3) {
-        fireEffect();
-      }
-
-      // Coach Swish quote on quest completion
-      if (allJustCompleted) {
-        setTimeout(() => showCoachQuote("ALL QUESTS DONE! You're built different. 🏆"), 2000);
-      } else if (newlyCompleted > 0) {
-        setTimeout(() => showCoachQuote(), 1500);
-      }
+      showXPPopup('+' + totalAtt + ' FGA');
+      if (tierAdvanced) setTimeout(() => showTierCelebration(state.tier), 1500);
+      else if (leveledUp) setTimeout(() => showLevelUp(state.tierLevel), 1500);
+      if (getStreak() >= 3) fireEffect();
+      // A word from Coach Swish after the first session of the day
+      if (firstToday) setTimeout(() => showCoachQuote(), tierAdvanced ? 5800 : leveledUp ? 4800 : 1500);
     }, 300);
+
+    // Social updates (async, fire-and-forget)
+    if (getFirebaseUser()) {
+      updatePublicProfile().catch(() => {});
+      updateLeaderboardEntry(totalAtt, totalMade, time).catch(() => {});
+      if (state.gamertag) {
+        notifyFriendsOfSession(totalAtt, totalMade).catch(() => {});
+      }
+    }
   }
 
   // =============================================
   // TIER ADVANCEMENT
   // =============================================
+  // Moves the player up when they have the shots for it (and, for the top ranks, the shooting percentage).
+  // Shots beyond what the rank needed carry over to the next one, so every shot counts.
   function checkTierAdvancement() {
-    if (state.tier >= 10) return false;
-    const config = TIER_CONFIG[state.tier];
-    if (!config || state.tierFGA < config.fgaRequired) return false;
-    
-    // Check accuracy gate for next tier
-    const nextConfig = TIER_CONFIG[state.tier + 1];
-    if (nextConfig && nextConfig.accGate > 0) {
-      const rollingAcc = getRollingAccuracy(nextConfig.accWindow);
-      if (rollingAcc < nextConfig.accGate) return false;
+    let advanced = false;
+    while (state.tier < 10) {
+      const config = TIER_CONFIG[state.tier];
+      if (!config || !config.fgaRequired || state.tierFGA < config.fgaRequired) break;
+
+      // Check accuracy gate for next tier
+      const nextConfig = TIER_CONFIG[state.tier + 1];
+      if (nextConfig && nextConfig.accGate > 0 && getRollingAccuracy(nextConfig.accWindow) < nextConfig.accGate) break;
+
+      state.tierFGA -= config.fgaRequired;
+      state.tier += 1;
+      state.tierHistory.push({ tier: state.tier, date: todayStr() });
+      advanced = true;
     }
-    
-    state.tier += 1;
-    state.tierFGA = 0;
-    state.tierLevel = 1;
-    state.tierHistory.push({ tier: state.tier, date: todayStr() });
-    
+    if (!advanced) return false;
+
+    state.tierLevel = Math.max(1, getTierLevel());
     // Check tier achievements
     for (let t = 1; t <= state.tier; t++) { checkAchievement('tier_' + t); }
-    
+
     saveState();
     return true;
   }
@@ -6297,7 +5123,7 @@
   }
 
   // =============================================
-  // COACH SWISH QUOTES ON QUEST COMPLETION
+  // COACH SWISH QUOTES (after the first session of the day)
   // =============================================
   const COACH_QUEST_QUOTES = [
     "That's what I'm talking about! 💪",
@@ -6361,7 +5187,6 @@
     const streak = getStreak();
     const lifetimeFGA = state.lifetimeFGA || 0;
     const lifetimeMakes = sessions.reduce((sum, s) => sum + (s.makes || 0), 0);
-    const bossCount = (state.defeatedBosses || []).length;
 
     // ===== Getting Started =====
     if (sessions.length >= 1) checkAchievement('first_session');
@@ -6487,13 +5312,6 @@
       }
     }
 
-    // ===== Boss Battles =====
-    if (bossCount >= 1) checkAchievement('boss');
-    if (bossCount >= 3) checkAchievement('boss_3');
-    if (bossCount >= 5) checkAchievement('boss_5');
-    // boss_all: check if all bosses defeated (look for total boss count)
-    if (typeof BOSSES !== 'undefined' && bossCount >= BOSSES.length) checkAchievement('boss_all');
-
     // ===== Social =====
     // Friends checks happen async — triggered separately in friend accept flow
     // But also check here in case state has friend data
@@ -6511,9 +5329,6 @@
     if (lifetimeMakes >= 500) checkAchievement('makes_500');
     if (lifetimeMakes >= 1000) checkAchievement('makes_1000');
     if (lifetimeMakes >= 5000) checkAchievement('makes_5000');
-
-    // ===== First Quest Complete =====
-    if (Object.keys(state.quests || {}).length >= 1) checkAchievement('first_quest');
 
     // ===== Tiers =====
     if (state.tierLevel >= 50) checkAchievement('allstar');
@@ -6547,13 +5362,6 @@
     if (numEl) numEl.textContent = 'LEVEL ' + level;
     const subEl = document.getElementById('level-up-sub');
     if (subEl) subEl.textContent = getTierName(state.tier).toUpperCase() + ' · LEVEL ' + level;
-    overlay.classList.add('visible');
-    setTimeout(() => overlay.classList.remove('visible'), 3000);
-  }
-
-  function showQuestsCompleteCelebration() {
-    const overlay = document.getElementById('boss-overlay');
-    if (!overlay) return;
     overlay.classList.add('visible');
     setTimeout(() => overlay.classList.remove('visible'), 3000);
   }
@@ -6649,16 +5457,16 @@
       }
     });
 
-    const weekData = [];
+    // This week: Sunday to Saturday, the same week Badges, Parent view and the Leaderboard use
     const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(Date.now() - i * 86400000);
-      const ds = dateStr(d);
-      const daySessions = sessions.filter(s => s.date === ds);
-      const dayShots = daySessions.reduce((s, x) => s + x.shots, 0);
-      weekData.push({ label: dayNames[d.getDay()], shots: dayShots });
-    }
+    const todayKey = todayStr();
+    const weekData = getWeekDays().map((ds, i) => ({
+      label: dayNames[i],
+      today: ds === todayKey,
+      shots: sessions.filter(s => s.date === ds).reduce((t, x) => t + (x.shots || 0), 0)
+    }));
     const maxWeekShots = Math.max(...weekData.map(d => d.shots), 1);
+    const weekTotal = getWeekShots();
 
 
     // Today's stats
@@ -6728,13 +5536,15 @@
       </div>
 
       <div class="chart-container">
-        <div class="chart-title">SHOTS THIS WEEK</div>
+        <div class="chart-title" style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span>SHOTS THIS WEEK</span><span style="color:var(--teal);">${weekTotal.toLocaleString()}</span>
+        </div>
         <div class="bar-chart">
           ${weekData.map(d => `
             <div class="bar-col">
               <div class="bar-value">${d.shots || ''}</div>
               <div class="bar-track"><div class="bar" style="height: ${d.shots ? Math.max(4, (d.shots / maxWeekShots) * 100) : 0}%; background: linear-gradient(to top, var(--teal), var(--pink));"></div></div>
-              <div class="bar-label">${d.label}</div>
+              <div class="bar-label"${d.today ? ' style="color:#fff;"' : ''}>${d.label}</div>
             </div>
           `).join('')}
         </div>
@@ -6792,7 +5602,7 @@
     const has = id => !!(state.achievements && state.achievements.includes(id));
 
     // Ranks are on the Quest ring, so this screen shows streaks and badges (1.10).
-    const shown = ACHIEVEMENTS.filter(a => a.category !== 'tiers');
+    const shown = ACHIEVEMENTS.filter(a => a.category !== 'tiers' && (!a.retired || has(a.id)));
     const countEl = document.getElementById('badges-count');
     if (countEl) countEl.textContent = `${shown.filter(a => has(a.id)).length} / ${shown.length} earned`;
 
@@ -6804,7 +5614,6 @@
     const shots = sum('shots'), makes = sum('makes'), streak = getStreak();
     const week = typeof getWeekShots === 'function' ? getWeekShots() : 0;
     const bestSession = best(x => x.shots), longest = best(x => x.time);
-    const bosses = (state.defeatedBosses || []).length;
     const P = {
       first_session: [ss.length, 1, 'session'],
       century: [bestSession, 100, 'shots in a session'], double_century: [bestSession, 200, 'shots in a session'],
@@ -6818,7 +5627,6 @@
       layup_master: [typeBest('layups'), 50, 'layups in a session'], midrange_master: [typeBest('midrange'), 50, 'mid-range in a session'],
       ft_master: [typeBest('ft'), 50, 'free throws in a session'], three_master: [typeBest('three'), 50, 'threes in a session'],
       hour_session: [longest, 60, 'minutes in a session'], marathon: [longest, 120, 'minutes in a session'],
-      boss: [bosses, 1, 'bosses'], boss_3: [bosses, 3, 'bosses'], boss_5: [bosses, 5, 'bosses'],
       streak_3: [streak, 3, 'days in a row'], streak_7: [streak, 7, 'days in a row'], streak_10: [streak, 10, 'days in a row'],
       streak_20: [streak, 20, 'days in a row'], streak_30: [streak, 30, 'days in a row'], streak_50: [streak, 50, 'days in a row'],
       streak_100: [streak, 100, 'days in a row'],
@@ -6882,12 +5690,6 @@
     setEl('profile-level', level);
     setEl('profile-xp', state.lifetimeFGA ? state.lifetimeFGA.toLocaleString() : '0');
 
-    if (state.goals) {
-      setEl('profile-goal-days', state.goals.days);
-      setEl('profile-goal-time', state.goals.time);
-      setEl('profile-goal-shots', state.goals.shots);
-      setEl('profile-goal-accuracy', state.goals.accuracy + '%');
-    }
     setEl('profile-coach', 'Coach Swish');
     
     if (state.player.joined) {
@@ -6908,9 +5710,7 @@
   // PARENT VIEW
   // =============================================
   function setupParentView() {
-    if (!state.player || !state.goals) return;
-    const sessions = state.sessions || [];
-    const now = new Date();
+    if (!state.player) return;
 
     // Player name with profile switcher
     const nameEl = document.getElementById('parent-player-name');
@@ -6931,13 +5731,10 @@
       }
     }
 
-    // This week stats
-    const weekStart = new Date(now);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    weekStart.setHours(0,0,0,0);
-    const weekSessions = sessions.filter(s => new Date(s.date) >= weekStart);
-    const weekShots = weekSessions.reduce((t, s) => t + s.shots, 0);
-    const weekTime = weekSessions.reduce((t, s) => t + s.time, 0);
+    // This week stats (Sunday to Saturday, the same week as Stats and Badges)
+    const weekSessions = getWeekSessions();
+    const weekShots = weekSessions.reduce((t, s) => t + (s.shots || 0), 0);
+    const weekTime = weekSessions.reduce((t, s) => t + (s.time || 0), 0);
 
     const weekEl = document.getElementById('parent-week-stats');
     if (weekEl) weekEl.innerHTML = `
@@ -6947,12 +5744,9 @@
     `;
 
     // This month stats
-    const monthSessions = sessions.filter(s => {
-      const d = new Date(s.date);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
-    const monthShots = monthSessions.reduce((t, s) => t + s.shots, 0);
-    const monthMakes = monthSessions.reduce((t, s) => t + s.makes, 0);
+    const monthSessions = getMonthSessions();
+    const monthShots = monthSessions.reduce((t, s) => t + (s.shots || 0), 0);
+    const monthMakes = monthSessions.reduce((t, s) => t + (s.makes || 0), 0);
     const monthAcc = monthShots > 0 ? Math.round((monthMakes / monthShots) * 100) : 0;
     const monthly = getMonthlyConsistency();
     const streak = getStreak();
@@ -7034,574 +5828,6 @@
   function dismissNewSeason() {
     showNav('dashboard');
   }
-
-  // =============================================
-  // BOSS BATTLES
-  // =============================================
-  const BOSSES = [
-    // EASY (Tier 1+)
-    { id: 'warmup_warrior', name: 'Warmup Warrior', emoji: '🏃', challenge: 'Make 30 shots in one session', type: 'makes', target: 30, minAttempts: 0, difficulty: 'easy', tier: 1 },
-    { id: 'half_century', name: 'The Half Century', emoji: '5️⃣', challenge: 'Attempt 50 shots in one session', type: 'shots', target: 50, minAttempts: 0, difficulty: 'easy', tier: 1 },
-    { id: 'lay_it_up', name: 'Lay It Up', emoji: '🪜', challenge: 'Make 15 layups in one session', type: 'layups', target: 15, minAttempts: 0, difficulty: 'easy', tier: 1 },
-    { id: 'free_bird', name: 'Free Bird', emoji: '🕊️', challenge: 'Make 15 free throws in one session', type: 'freethrows', target: 15, minAttempts: 0, difficulty: 'easy', tier: 1 },
-
-    // MEDIUM (Tier 2+)
-    { id: 'century_boss', name: 'The Century', emoji: '💯', challenge: 'Make 100 shots in one session', type: 'makes', target: 100, minAttempts: 0, difficulty: 'medium', tier: 2 },
-    { id: 'iron_rim', name: 'Iron Rim', emoji: '🔩', challenge: 'Hit 55% accuracy on 80+ shots', type: 'accuracy', target: 55, minAttempts: 80, difficulty: 'medium', tier: 2 },
-    { id: 'layup_lord', name: 'Layup Lord', emoji: '👑', challenge: 'Make 30 layups in one session', type: 'layups', target: 30, minAttempts: 0, difficulty: 'medium', tier: 2 },
-    { id: 'the_middy', name: 'The Middy', emoji: '🎯', challenge: 'Make 20 mid-range shots in one session', type: 'midrange', target: 20, minAttempts: 0, difficulty: 'medium', tier: 2 },
-    { id: 'downtown', name: 'Downtown', emoji: '🏙️', challenge: 'Make 10 three-pointers in one session', type: 'threes', target: 10, minAttempts: 0, difficulty: 'medium', tier: 3 },
-
-    // HARD (Tier 3+)
-    { id: 'shot_blocker', name: 'The Shot Blocker', emoji: '🖐️', challenge: 'Hit 65% accuracy on 100+ shots', type: 'accuracy', target: 65, minAttempts: 100, difficulty: 'hard', tier: 3 },
-    { id: 'the_closer', name: 'The Closer', emoji: '🔒', challenge: 'Make 50 free throws in one session', type: 'freethrows', target: 50, minAttempts: 0, difficulty: 'hard', tier: 3 },
-    { id: 'splash_zone', name: 'Splash Zone', emoji: '💦', challenge: 'Make 20 three-pointers in one session', type: 'threes', target: 20, minAttempts: 0, difficulty: 'hard', tier: 4 },
-    { id: 'volume_dealer', name: 'Volume Dealer', emoji: '📦', challenge: 'Attempt 300 shots in one session', type: 'shots', target: 300, minAttempts: 0, difficulty: 'hard', tier: 4 },
-    { id: 'sniper', name: 'The Sniper', emoji: '🔫', challenge: 'Hit 70% accuracy on 120+ shots', type: 'accuracy', target: 70, minAttempts: 120, difficulty: 'hard', tier: 5 },
-
-    // LEGENDARY (Tier 5+)
-    { id: 'half_court_heave', name: 'Half-Court Heave', emoji: '🌋', challenge: 'Make 30 three-pointers in one session', type: 'threes', target: 30, minAttempts: 0, difficulty: 'legendary', tier: 5 },
-    { id: 'the_machine', name: 'The Machine', emoji: '🤖', challenge: 'Attempt 500 shots in a single session', type: 'shots', target: 500, minAttempts: 0, difficulty: 'legendary', tier: 6 },
-    { id: 'perfection', name: 'Perfection', emoji: '💎', challenge: 'Hit 75% accuracy on 150+ shots', type: 'accuracy', target: 75, minAttempts: 150, difficulty: 'legendary', tier: 7 },
-    { id: 'the_goat_boss', name: 'The Final Boss', emoji: '🐐', challenge: 'Make 200 shots in a single session at 60%+ accuracy', type: 'makes_with_accuracy', target: 200, minAttempts: 0, accTarget: 60, difficulty: 'legendary', tier: 8 },
-  ];
-
-  function getBossById(id) {
-    return BOSSES.find(b => b.id === id) || null;
-  }
-
-  function isBossDefeated(bossId) {
-    return (state.defeatedBosses || []).some(d => d.id === bossId);
-  }
-
-  function isBossUnlocked(boss) {
-    return (state.tier || 1) >= boss.tier;
-  }
-
-  function getBossProgress(boss) {
-    // Calculate progress based on today's sessions for display
-    const todaySessions = getTodaySessions();
-    if (todaySessions.length === 0) return { current: 0, target: boss.target, pct: 0 };
-    return getBossProgressFromSessions(boss, todaySessions);
-  }
-
-  function getBossProgressFromSessions(boss, sessions) {
-    let current = 0, target = boss.target;
-
-    // Aggregate all sessions provided
-    let totalMakes = 0, totalShots = 0;
-    let layupMakes = 0, midrangeMakes = 0, ftMakes = 0, threeMakes = 0;
-
-    sessions.forEach(s => {
-      totalMakes += s.makes || 0;
-      totalShots += s.shots || 0;
-      if (s.shotTypes) {
-        if (s.shotTypes.layups) layupMakes += s.shotTypes.layups.made || 0;
-        if (s.shotTypes.midrange) midrangeMakes += s.shotTypes.midrange.made || 0;
-        if (s.shotTypes.ft) ftMakes += s.shotTypes.ft.made || 0;
-        if (s.shotTypes.three) threeMakes += s.shotTypes.three.made || 0;
-      }
-    });
-
-    switch (boss.type) {
-      case 'makes': current = totalMakes; break;
-      case 'shots': current = totalShots; break;
-      case 'accuracy':
-        current = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
-        break;
-      case 'layups': current = layupMakes; break;
-      case 'freethrows': current = ftMakes; break;
-      case 'midrange': current = midrangeMakes; break;
-      case 'threes': current = threeMakes; break;
-      case 'makes_with_accuracy': current = totalMakes; break;
-      default: current = 0;
-    }
-
-    const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-    return { current, target, pct };
-  }
-
-  function checkBossDefeated(boss, session) {
-    // Check if this single session meets the boss challenge
-    let totalMakes = session.makes || 0;
-    let totalShots = session.shots || 0;
-    let layupMakes = 0, midrangeMakes = 0, ftMakes = 0, threeMakes = 0;
-
-    if (session.shotTypes) {
-      if (session.shotTypes.layups) layupMakes = session.shotTypes.layups.made || 0;
-      if (session.shotTypes.midrange) midrangeMakes = session.shotTypes.midrange.made || 0;
-      if (session.shotTypes.ft) ftMakes = session.shotTypes.ft.made || 0;
-      if (session.shotTypes.three) threeMakes = session.shotTypes.three.made || 0;
-    }
-
-    switch (boss.type) {
-      case 'makes': return totalMakes >= boss.target;
-      case 'shots': return totalShots >= boss.target;
-      case 'accuracy':
-        if (totalShots < (boss.minAttempts || 0)) return false;
-        const acc = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
-        return acc >= boss.target;
-      case 'layups': return layupMakes >= boss.target;
-      case 'freethrows': return ftMakes >= boss.target;
-      case 'midrange': return midrangeMakes >= boss.target;
-      case 'threes': return threeMakes >= boss.target;
-      case 'makes_with_accuracy':
-        if (totalMakes < boss.target) return false;
-        const accPct = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
-        return accPct >= (boss.accTarget || 0);
-      default: return false;
-    }
-  }
-
-  function acceptBoss(bossId) {
-    if (state.activeBoss) {
-      if (!confirm('You already have an active boss. Switch to this one?')) return;
-    }
-    state.activeBoss = bossId;
-    saveState();
-    // Go back to dashboard so they can tap "FIGHT BOSS"
-    showNav('dashboard');
-  }
-
-  function abandonBoss() {
-    if (confirm('Abandon this boss battle?')) {
-      state.activeBoss = null;
-      saveState();
-      setupBossBattles();
-    }
-  }
-
-  // Boss battle log screen setup and submission
-  function setupBossBattleLog() {
-    if (!state.activeBoss) {
-      showScreen('boss-battles');
-      return;
-    }
-    const boss = getBossById(state.activeBoss);
-    if (!boss) {
-      showScreen('boss-battles');
-      return;
-    }
-
-    // Hide the not-defeated message
-    document.getElementById('boss-log-not-defeated').classList.remove('visible');
-
-    // Set header info
-    document.getElementById('boss-log-emoji').textContent = boss.emoji;
-    document.getElementById('boss-log-name').textContent = boss.name;
-    document.getElementById('boss-log-challenge').textContent = boss.challenge;
-
-    // Build requirement text
-    let reqText = '';
-    switch (boss.type) {
-      case 'makes': reqText = `GOAL: ${boss.target} MAKES`; break;
-      case 'shots': reqText = `GOAL: ${boss.target} SHOT ATTEMPTS`; break;
-      case 'accuracy': reqText = `GOAL: ${boss.target}% ACCURACY (MIN ${boss.minAttempts} SHOTS)`; break;
-      case 'layups': reqText = `GOAL: ${boss.target} LAYUP MAKES`; break;
-      case 'freethrows': reqText = `GOAL: ${boss.target} FREE THROW MAKES`; break;
-      case 'midrange': reqText = `GOAL: ${boss.target} MID-RANGE MAKES`; break;
-      case 'threes': reqText = `GOAL: ${boss.target} THREE-POINTER MAKES`; break;
-      case 'makes_with_accuracy': reqText = `GOAL: ${boss.target} MAKES AT ${boss.accTarget}%+ ACCURACY`; break;
-    }
-    document.getElementById('boss-log-requirement').textContent = reqText;
-
-    // Build dynamic form based on boss type
-    const form = document.getElementById('boss-log-form');
-    form.innerHTML = '';
-    let formHTML = '';
-
-    switch (boss.type) {
-      case 'makes':
-      case 'makes_with_accuracy':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">TOTAL SHOTS ATTEMPTED</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">TOTAL MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div id="boss-log-accuracy-live" class="boss-log-accuracy-live"></div>`;
-        break;
-      case 'shots':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">TOTAL SHOTS ATTEMPTED</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>`;
-        break;
-      case 'accuracy':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">TOTAL SHOTS ATTEMPTED</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">TOTAL MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div id="boss-log-accuracy-live" class="boss-log-accuracy-live"></div>`;
-        break;
-      case 'layups':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">LAYUP ATTEMPTS</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">LAYUP MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>`;
-        break;
-      case 'freethrows':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">FREE THROW ATTEMPTS</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">FREE THROW MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>`;
-        break;
-      case 'midrange':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">MID-RANGE ATTEMPTS</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">MID-RANGE MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>`;
-        break;
-      case 'threes':
-        formHTML = `
-          <div class="form-group">
-            <label class="form-label">THREE-POINT ATTEMPTS</label>
-            <input id="boss-log-shots" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">THREE-POINT MAKES</label>
-            <input id="boss-log-makes" class="form-input" type="number" placeholder="0" min="0" oninput="calcBossProgress()">
-          </div>`;
-        break;
-    }
-    form.innerHTML = formHTML;
-
-    // Reset progress display
-    document.getElementById('boss-log-progress').style.display = 'none';
-    document.getElementById('boss-submit-btn').disabled = true;
-  }
-
-  function calcBossProgress() {
-    if (!state.activeBoss) return;
-    const boss = getBossById(state.activeBoss);
-    if (!boss) return;
-
-    const shotsEl = document.getElementById('boss-log-shots');
-    const makesEl = document.getElementById('boss-log-makes');
-    const rawShots = shotsEl ? shotsEl.value : 0;
-    const rawMakes = makesEl ? makesEl.value : 0;
-    const validated = validateShotInput(rawShots, rawMakes);
-    const shots = validated.attempted;
-    const makes = validated.made;
-
-    // Update fields if clamped
-    if (makesEl && parseInt(rawMakes) > shots && shots > 0) {
-      makesEl.value = shots;
-    }
-
-    // Validate makes <= shots
-    let valid = shots > 0;
-
-    // Show live accuracy for relevant types
-    const accLive = document.getElementById('boss-log-accuracy-live');
-    if (accLive) {
-      if (shots > 0 && makes >= 0) {
-        const pct = Math.round((makes / shots) * 100);
-        accLive.textContent = `LIVE ACCURACY: ${pct}%`;
-      } else {
-        accLive.textContent = '';
-      }
-    }
-
-    // Calculate progress toward boss goal
-    let current = 0, target = boss.target;
-    switch (boss.type) {
-      case 'makes': current = makes; break;
-      case 'shots': current = shots; break;
-      case 'accuracy':
-        current = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        break;
-      case 'layups': case 'freethrows': case 'midrange': case 'threes':
-        current = makes; break;
-      case 'makes_with_accuracy': current = makes; break;
-    }
-
-    const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
-
-    // Show progress
-    const progressDiv = document.getElementById('boss-log-progress');
-    if (shots > 0 || makes > 0) {
-      progressDiv.style.display = 'block';
-      document.getElementById('boss-log-progress-fill').style.width = pct + '%';
-
-      let progressText = '';
-      if (boss.type === 'accuracy') {
-        progressText = `${current}% / ${target}%`;
-        if (shots < (boss.minAttempts || 0)) {
-          document.getElementById('boss-log-progress-status').textContent = `Need ${boss.minAttempts - shots} more shot attempts`;
-        } else if (current >= target) {
-          document.getElementById('boss-log-progress-status').textContent = '✅ CHALLENGE MET!';
-        } else {
-          document.getElementById('boss-log-progress-status').textContent = `Need ${target - current}% more accuracy`;
-        }
-      } else if (boss.type === 'makes_with_accuracy') {
-        const acc = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        progressText = `${current} / ${target} makes (${acc}% acc)`;
-        if (current >= target && acc >= (boss.accTarget || 0)) {
-          document.getElementById('boss-log-progress-status').textContent = '✅ CHALLENGE MET!';
-        } else if (current >= target) {
-          document.getElementById('boss-log-progress-status').textContent = `Makes done! Need ${boss.accTarget}% accuracy (currently ${acc}%)`;
-        } else {
-          document.getElementById('boss-log-progress-status').textContent = `Need ${target - current} more makes`;
-        }
-      } else {
-        progressText = `${current} / ${target}`;
-        if (current >= target) {
-          document.getElementById('boss-log-progress-status').textContent = '✅ CHALLENGE MET!';
-        } else {
-          document.getElementById('boss-log-progress-status').textContent = `Need ${target - current} more`;
-        }
-      }
-      document.getElementById('boss-log-progress-text').textContent = progressText;
-    } else {
-      progressDiv.style.display = 'none';
-    }
-
-    document.getElementById('boss-submit-btn').disabled = !valid;
-  }
-
-  function submitBossSession() {
-    if (!state.activeBoss) return;
-    const boss = getBossById(state.activeBoss);
-    if (!boss) return;
-
-    const shotsEl = document.getElementById('boss-log-shots');
-    const makesEl = document.getElementById('boss-log-makes');
-    const rawShots = shotsEl ? shotsEl.value : 0;
-    const rawMakes = makesEl ? makesEl.value : 0;
-    const validated = validateShotInput(rawShots, rawMakes);
-    const shots = validated.attempted;
-    const makes = validated.made;
-
-    if (shots <= 0) return;
-
-    // Build boss session object
-    const bossSession = {
-      bossId: boss.id,
-      date: todayStr(),
-      shots: shots,
-      makes: makes,
-      shotType: boss.type,
-      completed: false
-    };
-
-    // Check if boss is defeated
-    const defeated = checkBossDefeatedFromBossLog(boss, shots, makes);
-    bossSession.completed = defeated;
-
-    // Store in bossSessions
-    if (!state.bossSessions) state.bossSessions = [];
-    state.bossSessions.push(bossSession);
-
-    // Boss sessions STILL count toward FGA/tier progression
-    state.lifetimeFGA += shots;
-    const tierConfig = TIER_CONFIG[state.tier];
-    if (tierConfig && shots >= tierConfig.minAttempts) {
-      const countedFGA = Math.min(shots, tierConfig.minAttempts * 3);
-      state.tierFGA += countedFGA;
-    }
-    state.tierLevel = getTierLevel();
-
-    if (defeated) {
-      // Boss defeated!
-      if (!state.defeatedBosses) state.defeatedBosses = [];
-      state.defeatedBosses.push({ id: boss.id, date: todayStr() });
-      state.activeBoss = null;
-      saveState();
-
-      // Check tier advancement
-      const tierAdvanced = checkTierAdvancement();
-
-      // Navigate to dashboard
-      showNav('dashboard');
-
-      // Show celebrations
-      setTimeout(() => {
-        showXPPopup('+' + shots + ' FGA');
-        setTimeout(() => showBossDefeatCelebration(boss), 1500);
-        if (tierAdvanced) {
-          setTimeout(() => showTierCelebration(state.tier), 4000);
-        }
-      }, 300);
-    } else {
-      // Not defeated — show message, stay on screen
-      saveState();
-      document.getElementById('boss-log-not-defeated').classList.add('visible');
-      const notDefeatedText = document.getElementById('boss-log-not-defeated-text');
-      if (boss.type === 'accuracy') {
-        const acc = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        notDefeatedText.textContent = `You hit ${acc}% — need ${boss.target}%. Keep grinding!`;
-      } else if (boss.type === 'makes_with_accuracy') {
-        const acc = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        notDefeatedText.textContent = `${makes} makes at ${acc}% — need ${boss.target} makes at ${boss.accTarget}%+. You'll get it!`;
-      } else {
-        let current = boss.type === 'shots' ? shots : makes;
-        notDefeatedText.textContent = `${current} / ${boss.target} — so close! Try again!`;
-      }
-
-      // Show FGA gained
-      setTimeout(() => showXPPopup('+' + shots + ' FGA'), 300);
-    }
-  }
-
-  function checkBossDefeatedFromBossLog(boss, shots, makes) {
-    switch (boss.type) {
-      case 'makes': return makes >= boss.target;
-      case 'shots': return shots >= boss.target;
-      case 'accuracy':
-        if (shots < (boss.minAttempts || 0)) return false;
-        const acc = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        return acc >= boss.target;
-      case 'layups': case 'freethrows': case 'midrange': case 'threes':
-        return makes >= boss.target;
-      case 'makes_with_accuracy':
-        if (makes < boss.target) return false;
-        const accPct = shots > 0 ? Math.round((makes / shots) * 100) : 0;
-        return accPct >= (boss.accTarget || 0);
-      default: return false;
-    }
-  }
-
-  function setupBossBattles() {
-    const container = document.getElementById('boss-battles-list');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const difficulties = ['easy', 'medium', 'hard', 'legendary'];
-    const diffLabels = { easy: '🟢 EASY', medium: '🟡 MEDIUM', hard: '🔴 HARD', legendary: '🟣 LEGENDARY' };
-
-    // Count stats
-    const defeated = (state.defeatedBosses || []).length;
-    const total = BOSSES.length;
-    const statsDiv = document.createElement('div');
-    statsDiv.style.cssText = "text-align:center; margin-bottom:16px; font-family:'Outfit',sans-serif; font-size:14px; color:#888;";
-    statsDiv.textContent = `${defeated} / ${total} Bosses Defeated`;
-    container.appendChild(statsDiv);
-
-    difficulties.forEach(diff => {
-      const bosses = BOSSES.filter(b => b.difficulty === diff);
-      if (bosses.length === 0) return;
-
-      const section = document.createElement('div');
-      section.className = `boss-difficulty-section boss-difficulty-${diff}`;
-      section.innerHTML = `<div class="boss-difficulty-title">${diffLabels[diff]}</div>`;
-
-      bosses.forEach(boss => {
-        const defeated = isBossDefeated(boss.id);
-        const unlocked = isBossUnlocked(boss);
-        const isActive = state.activeBoss === boss.id;
-
-        const card = document.createElement('div');
-        let cardClass = `boss-card boss-${diff}`;
-        if (defeated) cardClass += ' boss-defeated';
-        else if (!unlocked) cardClass += ' boss-locked';
-        else if (isActive) cardClass += ' boss-active';
-        card.className = cardClass;
-
-        let actionHTML = '';
-        if (defeated) {
-          const defeatDate = (state.defeatedBosses || []).find(d => d.id === boss.id);
-          actionHTML = `<div class="boss-card-defeated-badge">✅ DEFEATED${defeatDate ? ' · ' + defeatDate.date : ''}</div>`;
-        } else if (!unlocked) {
-          actionHTML = `<div class="boss-card-lock">🔒 Requires ${getTierName(boss.tier)} (Tier ${boss.tier})</div>`;
-        } else if (isActive) {
-          const progress = getBossProgress(boss);
-          actionHTML = `<div class="boss-active-badge">⚔️ ACTIVE</div><button class="abandon-boss-btn" onclick="event.stopPropagation(); abandonBoss()">Abandon this boss</button>`;
-        } else {
-          const hasActive = !!state.activeBoss;
-          actionHTML = `<button class="boss-accept-btn" onclick="event.stopPropagation(); acceptBoss('${boss.id}')">ACCEPT CHALLENGE</button>`;
-        }
-
-        card.innerHTML = `
-          <div class="boss-card-top">
-            <div class="boss-card-emoji">${boss.emoji}</div>
-            <div class="boss-card-info">
-              <div class="boss-card-name">${boss.name}</div>
-              <span class="boss-card-difficulty boss-diff-${diff}">${diff.toUpperCase()}</span>
-            </div>
-          </div>
-          <div class="boss-card-challenge">${boss.challenge}</div>
-          ${actionHTML}
-        `;
-        section.appendChild(card);
-      });
-
-      container.appendChild(section);
-    });
-  }
-
-  function showBossDefeatCelebration(boss) {
-    const overlay = document.getElementById('boss-defeat-overlay');
-    if (!overlay) return;
-
-    document.getElementById('boss-defeat-emoji').textContent = boss.emoji;
-    document.getElementById('boss-defeat-name').textContent = boss.name.toUpperCase();
-
-    // Spawn particles
-    const particlesContainer = document.getElementById('boss-defeat-particles');
-    particlesContainer.innerHTML = '';
-    const colors = ['#ff6b35', '#ff3232', '#ffe66d', '#ff9f7a', '#f9629f', '#00b4c5'];
-    for (let i = 0; i < 30; i++) {
-      const p = document.createElement('div');
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 100 + Math.random() * 300;
-      p.className = 'boss-defeat-particle';
-      p.style.cssText = `
-        width: ${4 + Math.random() * 8}px;
-        height: ${4 + Math.random() * 8}px;
-        background: ${colors[Math.floor(Math.random() * colors.length)]};
-        left: 50%; top: 50%;
-        --tx: ${Math.cos(angle) * dist}px;
-        --ty: ${Math.sin(angle) * dist}px;
-        animation-delay: ${Math.random() * 0.5}s;
-        animation-duration: ${1.5 + Math.random() * 1.5}s;
-      `;
-      particlesContainer.appendChild(p);
-    }
-
-    overlay.classList.add('visible');
-    clearTimeout(overlay._autoDismiss);
-    overlay._autoDismiss = setTimeout(() => dismissBossDefeat(), 4000);
-  }
-
-  function dismissBossDefeat() {
-    const overlay = document.getElementById('boss-defeat-overlay');
-    if (!overlay) return;
-    clearTimeout(overlay._autoDismiss);
-    overlay.classList.remove('visible');
-  }
-
-  // Add boss-battle-log and boss-battles to showScreen handler
-  const _originalShowScreen = showScreen;
-  showScreen = function(id) {
-    _originalShowScreen(id);
-    if (id === 'boss-battles') setupBossBattles();
-    if (id === 'boss-battle-log') setupBossBattleLog();
-  };
 
   // =============================================
   // SOCIAL FEATURES — CACHING
@@ -8535,7 +6761,7 @@
 
   function setBoardCategory(cat) {
     _boardState.category = cat;
-    const cats = ['fga', 'fgm', 'fgpct', 'streak', 'bosses'];
+    const cats = ['fga', 'fgm', 'fgpct', 'streak'];
     document.querySelectorAll('#board-category-pills .board-pill').forEach((p, i) => {
       p.classList.toggle('active', cats[i] === cat);
     });
@@ -8616,18 +6842,23 @@
       // Extract stat value for sorting
       const now = new Date();
       const today = todayStr();
-      const weekId = now.getFullYear() + '-W' + String(Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7)).padStart(2, '0');
       const monthId = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
       entries = entries.map(e => {
         let value = 0;
         const dailyKey = 'daily_' + today.replace(/-/g, '');
-        const weeklyKey = 'weekly_' + weekId.replace(/-/g, '');
         const monthlyKey = 'monthly_' + monthId.replace(/-/g, '');
 
         let periodData = null;
         if (_boardState.time === 'daily') periodData = e[dailyKey];
-        else if (_boardState.time === 'weekly') periodData = e[weeklyKey];
+        else if (_boardState.time === 'weekly') {
+          // Sunday to Saturday, added up from each day's totals: the same week as Stats, Badges and Parent view
+          periodData = { shots: 0, makes: 0 };
+          getWeekDays().forEach(ds => {
+            const day = e['daily_' + ds.replace(/-/g, '')];
+            if (day) { periodData.shots += day.shots || 0; periodData.makes += day.makes || 0; }
+          });
+        }
         else if (_boardState.time === 'monthly') periodData = e[monthlyKey];
         else periodData = e.allTime;
 
@@ -8643,8 +6874,6 @@
           }
         } else if (_boardState.category === 'streak') {
           value = e.currentStreak || 0;
-        } else if (_boardState.category === 'bosses') {
-          value = e.allTime ? (e.allTime.bossesDefeated || 0) : 0;
         }
 
         return { ...e, _value: value };
@@ -8689,7 +6918,7 @@
       return;
     }
 
-    const unitLabels = { fga: ' FGA', fgm: ' FGM', fgpct: '%', streak: ' days', bosses: ' bosses' };
+    const unitLabels = { fga: ' FGA', fgm: ' FGM', fgpct: '%', streak: ' days' };
     const unitLabel = unitLabels[_boardState.category] || '';
 
     // Top 3
@@ -9023,79 +7252,6 @@
   };
 
   // =============================================
-  // ENHANCED saveSession — update social features
-  // =============================================
-  const _origSaveSession = saveSession;
-  saveSession = function() {
-    // Grab values before original saves them
-    const types = ['layups', 'midrange', 'ft', 'three'];
-    let totalAtt = 0, totalMade = 0;
-    types.forEach(t => {
-      const validated = validateShotInput(
-        document.getElementById('log-' + t + '-att').value,
-        document.getElementById('log-' + t + '-made').value
-      );
-      totalAtt += validated.attempted;
-      totalMade += validated.made;
-    });
-    const time = validateTimeInput(document.getElementById('log-time').value);
-
-    // Call original
-    _origSaveSession();
-
-    // Social updates (async, fire-and-forget)
-    if (getFirebaseUser()) {
-      updatePublicProfile().catch(() => {});
-      updateLeaderboardEntry(totalAtt, totalMade, time).catch(() => {});
-      if (state.gamertag) {
-        notifyFriendsOfSession(totalAtt, totalMade).catch(() => {});
-      }
-    }
-  };
-
-  // =============================================
-  // ENHANCED submitBossSession — update social features
-  // =============================================
-  const _origSubmitBossSession = submitBossSession;
-  submitBossSession = function() {
-    const shotsEl = document.getElementById('boss-log-shots');
-    const makesEl = document.getElementById('boss-log-makes');
-    const shots = shotsEl ? (parseInt(shotsEl.value) || 0) : 0;
-    const makes = makesEl ? (parseInt(makesEl.value) || 0) : 0;
-
-    _origSubmitBossSession();
-
-    // Social updates
-    if (getFirebaseUser()) {
-      updatePublicProfile().catch(() => {});
-      updateLeaderboardEntry(shots, makes, 0).catch(() => {});
-      // Notify friends of boss defeat if applicable
-      if (state.gamertag) {
-        const boss = getBossById(state.activeBoss);
-        if (boss && checkBossDefeatedFromBossLog(boss, shots, makes)) {
-          const user = getFirebaseUser();
-          getFriendsList().then(friends => {
-            const accepted = friends.filter(f => f.status === 'accepted');
-            const batch = db.batch();
-            accepted.slice(0, 20).forEach(f => {
-              const ref = db.collection('notifications').doc(f.uid).collection('items').doc();
-              batch.set(ref, {
-                type: 'friend_session',
-                fromUid: user.uid,
-                fromGamertag: state.gamertag,
-                message: `${state.gamertag} defeated ${boss.name}! ⚔️`,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                read: false
-              });
-            });
-            batch.commit().catch(() => {});
-          }).catch(() => {});
-        }
-      }
-    }
-  };
-
-  // =============================================
   // ENHANCED setupDashboard — check notifications
   // =============================================
   const _origSetupDashboard = setupDashboard;
@@ -9108,6 +7264,6 @@
 
   </script>
   <!-- Shot chart + progress cards on the Stats screen (also used by the Android app) -->
-  <script src="js/svstats.js?v=1.12.0"></script>
+  <script src="js/svstats.js?v=1.13.0"></script>
 </body>
 </html>
