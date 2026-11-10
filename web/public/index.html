@@ -484,24 +484,42 @@
     }
     .quest-choice .hoop-icon { width: 34px; height: 34px; flex: none; }
     .quest-choice .quest-emoji { font-size: 28px; line-height: 1; letter-spacing: 0; }
-    /* Stats: Log Your Stats sits under the title, in the page (1.13: it no longer floats over the charts) */
-    .stats-log-btn { margin: 0 0 16px; padding: 14px 20px; min-height: 52px; }
+    /* Stats: Log Your Stats stays on screen just above the bottom bar */
+    .stats-log-spacer { height: 96px; }
+    .stats-log-bar {
+      position: fixed; left: 50%; transform: translateX(-50%); z-index: 49;
+      bottom: calc(var(--sv-nav-h, 76px) + 10px);
+      width: calc(100% - 32px); max-width: 388px;
+    }
+    .stats-log-bar .log-session-btn { margin: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 4px 20px rgba(0,180,197,0.3); }
     /* Quest: what's left to reach the next rank (the goal) */
     .dash-next-rank { margin-top: 14px; font-family: 'Bebas Neue', sans-serif; font-size: clamp(18px, 2.8vh, 24px);
       letter-spacing: 2px; color: #bbb; text-align: center; line-height: 1.25; }
     .dash-next-rank strong { color: #fff; font-weight: normal; }
     .dash-next-rank .next-rank-name { color: var(--gold); }
     .dash-next-rank small { display: block; font-family: 'Outfit', sans-serif; font-size: 13px; letter-spacing: 0; color: #999; margin-top: 2px; }
-    /* Short screens (iPhone in Safari, small Androids): keep both Quest buttons above the bottom bar */
-    @media (max-height: 720px) and (max-width: 1099px) {
-      .dash-ring-wrap { margin: 0 0 18px; }
-      .dash-ring { width: min(64vw, 36vh); }
-      .dash-ring-num { font-size: clamp(64px, 13vh, 96px); }
-      .dash-ring-label { font-size: 16px; letter-spacing: 4px; }
-      .dash-ring-rank { font-size: 20px; margin-top: 2px; }
-      .dash-streak-chip { margin-top: 12px; padding: 5px 14px; font-size: 18px; }
-      .dash-next-rank { margin-top: 8px; font-size: 17px; }
-      .log-session-btn.quest-choice { margin-top: 8px; padding: 12px; min-height: 50px; font-size: 21px; }
+    .dash-ring-box { display: flex; align-items: center; justify-content: center; }
+    /* Quest fills the screen, whatever its size (1.13.2). The ring takes all the room left above the streak,
+       the goal line and the two buttons, and the buttons sit just above the bottom bar. */
+    @media (max-width: 1099px) {
+      .dashboard-screen.active { height: 100vh; height: 100dvh; min-height: 540px; box-sizing: border-box;
+        padding: 14px 16px calc(var(--sv-nav-h, 78px) + 20px); }
+      .dash-ring-wrap { flex: 1 1 auto; min-height: 0; margin: 0; }
+      .dash-ring-box { flex: 1 1 0; min-height: 130px; width: 100%; }
+      .dash-streak-chip { flex: none; margin-top: clamp(6px, 1.6vh, 20px); font-size: clamp(18px, 3vh, 26px); }
+      .dash-next-rank { flex: none; margin-top: clamp(6px, 1.4vh, 14px); font-size: clamp(17px, 2.8vh, 26px); }
+      /* taller screens get taller buttons */
+      #dashboard .log-session-btn.quest-choice { flex: none; margin-top: 12px; padding: 0 20px;
+        min-height: clamp(58px, 9.5vh, 92px); font-size: clamp(21px, 3.3vh, 28px); }
+      #dashboard #swish-quest-btn { margin-top: clamp(12px, 2.6vh, 28px); }
+      /* The ring is the biggest circle that fits its box, and its lettering scales with it */
+      @supports (width: 1cqw) {
+        .dash-ring-box { container-type: size; }
+        .dash-ring { width: min(100cqw, 100cqh, 460px); container-type: inline-size; }
+        .dash-ring-label { font-size: 8cqw; letter-spacing: 1.8cqw; padding-left: 1.8cqw; }
+        .dash-ring-num { font-size: 44cqw; }
+        .dash-ring-rank { font-size: 10.5cqw; letter-spacing: 1.2cqw; padding-left: 1.2cqw; margin-top: 1.6cqw; }
+      }
     }
 
     /* ===== LOG SESSION SCREEN ===== */
@@ -2360,9 +2378,7 @@
       #dashboard > * { width: 100%; max-width: 560px; }
       #dashboard .dash-ring { width: min(56vh, 460px); }
       #dashboard .log-session-btn { width: 100%; }
-      .stats-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-      .stats-header .screen-title { margin: 0; }
-      .stats-log-btn { width: 320px; margin: 0; }
+      .stats-log-bar { left: auto; right: 48px; bottom: 28px; transform: none; width: 360px; }
       /* Log Session: court on the left, numbers on the right */
       .log-form { max-width: 980px; }
       .log-form.mode-quick { max-width: 420px; }
@@ -2522,7 +2538,7 @@
     <div id="dashboard" class="screen dashboard-screen">
       <!-- Progress ring: fills toward the next tier; the day streak in the middle (1.9) -->
       <div class="dash-ring-wrap">
-        <div class="dash-ring">
+        <div class="dash-ring-box"><div class="dash-ring">
           <svg viewBox="0 0 240 240" aria-hidden="true">
             <defs>
               <linearGradient id="dash-ring-grad" x1="1" y1="0" x2="0" y2="1">
@@ -2538,7 +2554,7 @@
             <div id="dash-level-num" class="dash-ring-num">1</div>
             <div id="dash-rank" class="dash-ring-rank">UNRANKED</div>
           </div>
-        </div>
+        </div></div>
         <div id="dash-streak" class="dash-streak-chip">🔥 0 days in a row</div>
         <div id="dash-next-rank" class="dash-next-rank"></div>
       </div>
@@ -2651,9 +2667,10 @@
     <div id="stats" class="screen stats-screen">
       <div class="stats-header">
         <h2 class="screen-title">📊 YOUR STATS</h2>
-        <button class="log-session-btn stats-log-btn" onclick="showScreen('log-session')">📝 LOG YOUR STATS</button>
       </div>
       <div id="stats-content"></div>
+      <div class="stats-log-spacer"></div>
+      <div class="stats-log-bar"><button class="log-session-btn" onclick="showScreen('log-session')">📝 LOG YOUR STATS</button></div>
     </div>
 
     <!-- ===== BADGES ===== -->
@@ -2982,7 +2999,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.13.1';
+  const APP_VERSION = '1.13.2';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4400,7 +4417,7 @@
 
     if (id === 'signup') setupSignup();
     if (id === 'meet-coach') setupCoachScreen();
-    if (id === 'dashboard') setupDashboard();
+    if (id === 'dashboard') { setupDashboard(); syncNavHeightVar(); }
     if (id === 'stats') { setupStats(); syncNavHeightVar(); }
     if (id === 'board') setupBoard();
     if (id === 'badges') setupBadges();
