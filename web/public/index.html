@@ -819,6 +819,23 @@
     .badge-tile.earned .badge-tile-name { color: #fff; }
     .badge-tile.earned .badge-tile-desc { color: #9aa; }
     .badge-next { display: flex; flex-direction: column; gap: 10px; }
+    /* Badges: the rank ladder (1.14) */
+    .rank-ladder { display: flex; flex-direction: column; gap: 8px; }
+    .rank-row { display: flex; align-items: center; gap: 14px; background: #141414; border: 1px solid #2a2a2a; border-radius: 14px; padding: 10px 14px; }
+    .rank-row-icon { font-size: 30px; width: 40px; text-align: center; flex: none; }
+    .rank-row-info { flex: 1; min-width: 0; }
+    .rank-row-name { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: #fff; line-height: 1.1; }
+    .rank-row-name span { color: #777; font-size: 18px; margin-right: 4px; }
+    .rank-row-status { font-family: 'Outfit', sans-serif; font-size: 14px; color: #bbb; margin-top: 2px; }
+    .rank-row-sub { font-family: 'Outfit', sans-serif; font-size: 14px; color: #ccc; }
+    .rank-row-gate { font-family: 'Outfit', sans-serif; font-size: 12px; color: #999; margin-top: 2px; }
+    .rank-row.done .rank-row-status { color: #4ade80; }
+    .rank-row.current { border: 2px solid var(--teal); background: rgba(0,180,197,0.10); padding: 14px; }
+    .rank-row.current .rank-row-icon { font-size: 38px; }
+    .rank-row.current .rank-row-name { font-size: 28px; color: var(--gold); }
+    .rank-row.current .rank-row-status { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--teal); }
+    .rank-row.locked .rank-row-icon { opacity: 0.55; }
+    .rank-row.locked .rank-row-name { color: #ccc; }
     .badge-next-card { display: flex; align-items: center; gap: 14px; background: #141414; border: 1px solid #333; border-radius: 14px; padding: 12px 14px; }
     .badge-next-icon { font-size: 34px; }
     .badge-next-info { flex: 1; min-width: 0; }
@@ -2999,7 +3016,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.13.2';
+  const APP_VERSION = '1.14.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4132,32 +4149,32 @@
   // =============================================
   // GENERAL CALCULATIONS
   // =============================================
+  // Days in a row (1.14): every day with a session counts, weekends included, but a Saturday or Sunday
+  // with no session never breaks the streak. Only a missed weekday (Monday to Friday) does. Today never
+  // breaks it either, since the day isn't over.
   function getStreak() {
     if (!state.sessions || state.sessions.length === 0) return 0;
-    // Normalize all dates to YYYY-MM-DD to handle any legacy formats
-    const dates = [...new Set(state.sessions.map(s => {
+    const days = new Set(state.sessions.map(s => {
       if (/^\d{4}-\d{2}-\d{2}$/.test(s.date)) return s.date;
-      // Legacy format fallback — parse and re-format
-      const d = new Date(s.date);
+      const d = new Date(s.date); // legacy formats
       return isNaN(d.getTime()) ? null : dateStr(d);
-    }).filter(Boolean))].sort().reverse();
-
-    if (dates.length === 0) return 0;
-    const today = todayStr();
-    const yesterday = dateStr(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - 1));
-
-    if (dates[0] !== today && dates[0] !== yesterday) return 0;
-
-    let streak = 1;
-    for (let i = 0; i < dates.length - 1; i++) {
-      const d1 = new Date(dates[i] + 'T00:00:00');
-      const d2 = new Date(dates[i + 1] + 'T00:00:00');
-      const diff = daysBetween(d1, d2);
-      if (diff === 1) { streak++; }
-      else { break; }
+    }).filter(Boolean));
+    if (days.size === 0) return 0;
+    const earliest = [...days].sort()[0];
+    const now = new Date();
+    let streak = 0;
+    for (let i = 0; ; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const key = dateStr(d);
+      if (key < earliest) break;
+      if (days.has(key)) { streak++; continue; }
+      if (i === 0) continue;                              // today: still time to shoot
+      if (d.getDay() === 0 || d.getDay() === 6) continue; // weekend off: no harm done
+      break;                                              // a weekday was missed
     }
     return streak;
   }
+
 
   function todayStr() {
     const d = new Date();
@@ -5678,6 +5695,48 @@
   // =============================================
   // BADGES
   // =============================================
+  // All ten ranks, top to bottom of the climb: which ones they've reached (and when), where they are now,
+  // and how many shots it takes to reach each one from here (1.14).
+  function renderRankLadder() {
+    const cur = Math.min(10, Math.max(1, state.tier || 1));
+    const icon = t => (ACHIEVEMENTS.find(a => a.id === 'tier_' + t) || {}).icon || '🏀';
+    const reached = {};
+    (state.tierHistory || []).forEach(h => { if (h && h.tier && h.date) reached[h.tier] = h.date; });
+    const shortDate = d => { const x = new Date(d + 'T00:00:00'); return isNaN(x) ? '' : x.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: x.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }); };
+    const leftNow = Math.max(0, ((TIER_CONFIG[cur] && TIER_CONFIG[cur].fgaRequired) || 0) - (state.tierFGA || 0));
+    const rows = [];
+    let toGo = leftNow;
+    for (let t = 1; t <= 10; t++) {
+      const cfg = TIER_CONFIG[t], name = getTierName(t);
+      const gate = cfg.accGate > 0 ? `<div class="rank-row-gate">+ ${cfg.accGate}% shooting over your last ${cfg.accWindow.toLocaleString()} shots</div>` : '';
+      let status, cls;
+      if (t < cur) {
+        cls = 'done';
+        status = `<div class="rank-row-status">✓ ${t === 1 ? 'Done' : reached[t] ? 'Reached ' + shortDate(reached[t]) : 'Reached'}</div>`;
+      } else if (t === cur) {
+        cls = 'current';
+        const need = cfg.fgaRequired || 0;
+        status = `<div class="rank-row-status">YOU ARE HERE</div>` + (t < 10 && need
+          ? `<div class="badge-next-bar"><div style="width:${Math.max(3, Math.round(Math.min(1, (state.tierFGA || 0) / need) * 100))}%"></div></div>
+             <div class="rank-row-sub">${leftNow.toLocaleString()} shot${leftNow === 1 ? '' : 's'} to ${getTierName(t + 1)}</div>` : `<div class="rank-row-sub">The top of the climb</div>`);
+      } else {
+        cls = 'locked';
+        status = `<div class="rank-row-status">${toGo.toLocaleString()} shots to go</div>`;
+        toGo += cfg.fgaRequired || 0;
+      }
+      rows.push(`<div class="rank-row ${cls}">
+          <div class="rank-row-icon">${icon(t)}</div>
+          <div class="rank-row-info">
+            <div class="rank-row-name"><span>${t}</span> ${sanitizeHTML(name.toUpperCase())}</div>
+            ${status}${t > cur ? gate : ''}
+          </div>
+        </div>`);
+    }
+    const sec = document.createElement('div');
+    sec.innerHTML = `<div class="badge-section-title">🏅 RANKS <span>${cur}/10</span></div><div class="rank-ladder">${rows.join('')}</div>`;
+    return sec;
+  }
+
   function setupBadges() {
     const container = document.getElementById('badges-list');
     if (!container) return;
@@ -5744,6 +5803,8 @@
         }).join('')}</div>`;
       container.appendChild(sec);
     }
+
+    container.appendChild(renderRankLadder());
 
     [{ key: 'streaks', title: '🔥 STREAKS' }, { key: 'badges', title: '🏀 BADGES' }].forEach(cat => {
       const list = shown.filter(a => a.category === cat.key);
