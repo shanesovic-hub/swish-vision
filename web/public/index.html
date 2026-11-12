@@ -819,6 +819,69 @@
     .badge-tile.earned .badge-tile-name { color: #fff; }
     .badge-tile.earned .badge-tile-desc { color: #9aa; }
     .badge-next { display: flex; flex-direction: column; gap: 10px; }
+    /* Diary of a Baller (1.15) */
+    .diary-screen { background: linear-gradient(180deg, #0a0a0a 0%, #0f0f1a 100%); padding: 16px 16px 40px; align-items: center; }
+    .diary-player { font-family: 'Outfit', sans-serif; font-size: 15px; color: #aaa; text-align: center; margin-bottom: 14px; }
+    .diary-wrap { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
+    .diary-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 14px; padding: 14px; }
+    .diary-card .form-input { width: 100%; box-sizing: border-box; }
+    .diary-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--teal); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .diary-card-title span { color: #ccc; font-size: 18px; letter-spacing: 1px; }
+    .diary-intro { font-family: 'Outfit', sans-serif; font-size: 15px; color: #ccc; line-height: 1.5; margin-bottom: 14px; }
+    .diary-payout { border-color: var(--gold); background: rgba(255,230,109,0.06); text-align: center; }
+    .diary-payout .diary-card-title { color: var(--gold); justify-content: center; }
+    .diary-big { font-family: 'Bebas Neue', sans-serif; font-size: 56px; color: #fff; line-height: 1; margin-bottom: 8px; }
+    .diary-big small { font-size: 26px; color: #aaa; }
+    .diary-payout .save-btn { margin: 10px 0 8px; }
+    .diary-payout .save-btn:disabled { opacity: 0.35; }
+    .diary-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0; }
+    .diary-ledger-row .diary-chips { justify-content: flex-start; }
+    .diary-chip { display: inline-flex; align-items: center; gap: 4px; background: #222; border: 1px solid #3a3a3a; border-radius: 999px; padding: 4px 10px; font-family: 'Outfit', sans-serif; font-size: 13px; color: #eee; }
+    .diary-muted { font-family: 'Outfit', sans-serif; font-size: 13px; color: #999; line-height: 1.45; margin-top: 6px; }
+    .diary-muted.center { text-align: center; }
+    .diary-week { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+    .diary-day { background: #1b1b1b; border: 1px solid #2c2c2c; border-radius: 10px; padding: 8px 2px; text-align: center; }
+    .diary-day-name { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: #888; }
+    .diary-day-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #bbb; }
+    .diary-day.done { border-color: #4ade80; background: rgba(74,222,128,0.12); } .diary-day.done .diary-day-val { color: #4ade80; }
+    .diary-day.part .diary-day-val { color: var(--gold); }
+    .diary-day.missed { border-color: rgba(255,107,107,0.5); } .diary-day.missed .diary-day-val { color: #ff8f8f; }
+    .diary-day.pre { opacity: 0.35; }
+    .diary-day.today { box-shadow: 0 0 0 2px var(--teal) inset; }
+    .diary-next { font-family: 'Outfit', sans-serif; font-size: 16px; color: #ddd; margin-bottom: 8px; }
+    .diary-next strong { color: var(--gold); font-weight: 600; }
+    .diary-earned { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255,230,109,0.08); border: 1px solid rgba(255,230,109,0.35); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-size: 15px; color: #fff; }
+    .diary-earned small { display: block; color: #aaa; font-size: 12px; }
+    .diary-give { flex: none; min-height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--teal); background: rgba(0,180,197,0.15); color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1.5px; cursor: pointer; }
+    .diary-give.given { border-color: #4ade80; background: rgba(74,222,128,0.12); color: #4ade80; }
+    .diary-edit { margin-top: 8px; font-family: 'Outfit', sans-serif; color: #bbb; }
+    .diary-edit summary { cursor: pointer; font-size: 14px; color: var(--teal); padding: 6px 0; }
+    .diary-reward-row { display: grid; grid-template-columns: 76px 1fr 40px; gap: 8px; margin-top: 8px; }
+    .diary-reward-row .form-input { margin: 0; padding: 10px; font-size: 16px; }
+    .diary-x { background: none; border: 1px solid #444; border-radius: 8px; color: #999; cursor: pointer; font-size: 16px; min-height: 40px; }
+    .diary-x.small { min-height: 0; border: none; padding: 0 0 0 4px; font-size: 12px; }
+    .diary-add { width: 100%; margin-top: 10px; }
+    .diary-coin-key { display: flex; flex-wrap: wrap; gap: 6px 12px; font-family: 'Outfit', sans-serif; font-size: 13px; color: #ccc; }
+    .diary-add-streak { display: grid; grid-template-columns: 1fr 96px 76px; gap: 8px; margin-top: 8px; }
+    .diary-add-streak .form-input { margin: 0; padding: 10px; font-size: 16px; }
+    .diary-add-streak .save-btn { padding: 0; min-height: 46px; font-size: 18px; }
+    .diary-plaque { padding: 8px 0; border-top: 1px solid #222; }
+    .diary-plaque:first-of-type { border-top: none; }
+    .diary-plaque-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 1.5px; color: #bbb; }
+    .diary-plaque.got .diary-plaque-top > span:first-child { color: var(--gold); }
+    .diary-plaque .diary-muted { margin: 0; }
+    .diary-ledger-row { padding: 10px 0; border-top: 1px solid #222; }
+    .diary-ledger-row:first-of-type { border-top: none; }
+    .diary-ledger-top { display: flex; justify-content: space-between; font-family: 'Outfit', sans-serif; font-size: 15px; color: #fff; }
+    .diary-ledger-top em { color: var(--gold); font-style: normal; font-size: 13px; }
+    .diary-ledger-top strong { color: var(--gold); font-family: 'Bebas Neue', sans-serif; font-size: 20px; font-weight: normal; letter-spacing: 1px; }
+    .diary-ledger-sub { font-family: 'Outfit', sans-serif; font-size: 13px; color: #aaa; margin-top: 2px; }
+    .diary-ledger-sub .gold { color: var(--gold); }
+    .diary-empty { font-family: 'Outfit', sans-serif; font-size: 14px; color: #999; }
+    .diary-settings { width: 100%; max-width: 560px; margin-top: 4px; }
+    .diary-settings .form-input { width: 100%; box-sizing: border-box; }
+    .diary-back { width: 100%; max-width: 560px; margin-top: 14px; }
+    .parent-view-btn.diary-btn { border-color: var(--gold); color: var(--gold); }
     /* Badges: the rank ladder (1.14) */
     .rank-ladder { display: flex; flex-direction: column; gap: 8px; }
     .rank-row { display: flex; align-items: center; gap: 14px; background: #141414; border: 1px solid #2a2a2a; border-radius: 14px; padding: 10px 14px; }
@@ -2680,6 +2743,14 @@
       </div>
     </div>
 
+    <!-- ===== DIARY OF A BALLER ===== -->
+    <div id="diary" class="screen diary-screen">
+      <h2 class="screen-title">📔 DIARY OF A BALLER</h2>
+      <div id="diary-player" class="diary-player"></div>
+      <div id="diary-content" class="diary-wrap"></div>
+      <button class="back-btn diary-back" onclick="showNav('profile')">← BACK</button>
+    </div>
+
     <!-- ===== STATS ===== -->
     <div id="stats" class="screen stats-screen">
       <div class="stats-header">
@@ -2753,6 +2824,7 @@
         <div id="profile-friends-list"></div>
       </div>
 
+      <button class="parent-view-btn diary-btn" onclick="showScreen('diary')">📔 DIARY OF A BALLER</button>
       <button class="parent-view-btn" onclick="showScreen('parent-view')">👨‍👩‍👧 PARENT VIEW</button>
 
       <!-- Player Profiles Section -->
@@ -3016,7 +3088,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.14.0';
+  const APP_VERSION = '1.15.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4441,6 +4513,7 @@
     if (id === 'profile') setupProfile();
     if (id === 'log-session') resetLogForm();
     if (id === 'parent-view') setupParentView();
+    if (id === 'diary') setupDiary();
     if (id === 'find-friends') setupFindFriends();
     if (id === 'notifications') setupNotifications();
     if (id === 'gamertag-setup') setupGamertagScreen();
@@ -4767,7 +4840,7 @@
     try {
       if (!spotHasData()) { localStorage.removeItem(SPOT_DRAFT_KEY); return; }
       localStorage.setItem(SPOT_DRAFT_KEY, JSON.stringify({
-        pid: _activeProfileId, date: todayStr(), log: _spot.log, sel: _spot.sel,
+        pid: _activeProfileId, date: todayStr(), log: _spot.log, sel: _spot.sel, hist: _spot.hist,
         ft: [logEl('spot-ft-made').value, logEl('spot-ft-att').value]
       }));
     } catch (e) {}
@@ -4786,7 +4859,8 @@
       });
       const ft = Array.isArray(d.ft) ? d.ft : ['', ''];
       const num = v => (v === '' || v == null) ? '' : String(clampValue(v, 0, VALIDATION.MAX_SHOTS_PER_SESSION));
-      return { log: log, sel: spotParts(d.sel) ? d.sel : null, ft: [num(ft[0]), num(ft[1])] };
+      const hist = Array.isArray(d.hist) ? d.hist.filter(h => Array.isArray(h) && log[h[0]] && (h[1] === 0 || h[1] === 1)).slice(-500) : [];
+      return { log: log, sel: spotParts(d.sel) ? d.sel : null, ft: [num(ft[0]), num(ft[1])], hist: hist };
     } catch (e) { return null; }
   }
 
@@ -4810,6 +4884,7 @@
     if (draft) {
       _spot.log = draft.log;
       _spot.sel = draft.sel;
+      _spot.hist = draft.hist;
       logEl('spot-ft-made').value = draft.ft[0];
       logEl('spot-ft-att').value = draft.ft[1];
     }
@@ -5049,6 +5124,7 @@
       shotTypes: entry.shotTypes
     };
     if (entry.sv) session.sv = entry.sv;
+    if (_logMode === 'spots') { const runs = makeRuns(_spot.hist.map(h => !!h[1])); if (runs.length) session.streaks = runs; }
 
     const firstToday = getTodaySessions().length === 0;
     const prevLevel = state.tierLevel || 1;
@@ -5071,7 +5147,7 @@
 
     const leveledUp = !tierAdvanced && state.tierLevel > prevLevel;
     setTimeout(() => {
-      showXPPopup('+' + totalAtt + ' FGA');
+      showXPPopup('+' + totalAtt + ' FGA' + (diaryOn() && session.date >= state.diary.start ? ' · +' + sessionPennies(session).toLocaleString() + '¢' : ''));
       if (tierAdvanced) setTimeout(() => showTierCelebration(state.tier), 1500);
       else if (leveledUp) setTimeout(() => showLevelUp(state.tierLevel), 1500);
       if (getStreak() >= 3) fireEffect();
@@ -5188,6 +5264,352 @@
       else showXPPopup('+' + n.added.toLocaleString() + ' FGA');
     }, 700);
   }
+
+  // =============================================
+  // DIARY OF A BALLER (1.15)
+  // =============================================
+  // The family reward program, kept per player in state.diary. Everything is worked out from the sessions,
+  // so editing or adding a session updates the jar; only these are stored:
+  //   start         first day that pays (YYYY-MM-DD)
+  //   paid          { pennies, coins: { nickel, quarter, ... } }: what has been handed out so far
+  //   extraStreaks  [{ date, n }]: makes-in-a-row typed in by hand
+  //   rewards       [{ days, what }]: days-in-a-row rewards
+  //   given         { key: date }: rewards and plaques handed out
+  // Rules:
+  //   1 point = 1 penny. Layup 1, mid-range 2, free throw 2, three 3. Saturday pays 1.5x.
+  //   A day with 100+ makes is a full session. All five weekdays full = +100 pennies for that week.
+  //   Every run of 5+ makes in a row earns one coin, for the highest step it reached.
+  //   Days in a row: weekends off never break it (same as the app's streak).
+  //   Career makes plaques at 1,000 / 5,000 / 10,000.
+  const DIARY_POINTS = { layups: 1, midrange: 2, ft: 2, three: 3 };
+  const DIARY_MIN_MAKES = 100;
+  const DIARY_WEEK_BONUS = 100;
+  const DIARY_SAT_MULT = 1.5;
+  const DIARY_COINS = [ // makes in a row, key, name, icon
+    [25, 'copper', 'Copper coin', '🟤'], [20, 'dollar', 'Silver dollar', '🥈'], [15, 'half', 'Fifty-cent piece', '🪙'],
+    [10, 'quarter', 'Quarter', '🪙'], [5, 'nickel', 'Nickel', '🪙']];
+  const DIARY_PLAQUES = [1000, 5000, 10000];
+
+  function diaryOn() { return !!(state && state.diary && state.diary.on); }
+
+  function dayOfWeek(ds) { return new Date(ds + 'T00:00:00').getDay(); }
+  function addDays(ds, n) { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return dateStr(d); }
+
+  // Runs of makes in a row (5 or more) from shots in the order they were taken: true = make.
+  function makeRuns(seq) {
+    const out = []; let run = 0;
+    (seq || []).forEach(m => { if (m) run++; else { if (run >= 5) out.push(run); run = 0; } });
+    if (run >= 5) out.push(run);
+    return out;
+  }
+
+  function coinFor(n) { return DIARY_COINS.find(c => n >= c[0]) || null; }
+
+  function sessionPoints(s) {
+    const t = s && s.shotTypes;
+    if (t && Object.keys(t).length) return Object.keys(DIARY_POINTS).reduce((p, k) => p + (t[k] ? (t[k].made || 0) * DIARY_POINTS[k] : 0), 0);
+    return s ? (s.makes || 0) : 0; // very old sessions: makes only
+  }
+
+  function sessionPennies(s) {
+    const pts = sessionPoints(s);
+    return dayOfWeek(s.date) === 6 ? Math.round(pts * DIARY_SAT_MULT) : pts;
+  }
+
+  // Everything the diary needs, worked out from the sessions.
+  function diaryLedger() {
+    const D = state.diary, start = D.start, today = todayStr();
+    const days = {};
+    const day = ds => days[ds] || (days[ds] = { date: ds, makes: 0, shots: 0, byType: { layups: 0, midrange: 0, ft: 0, three: 0 }, points: 0, pennies: 0, streaks: [], sessions: 0 });
+    (state.sessions || []).forEach(s => {
+      if (!s || !s.date || s.date < start) return;
+      const d = day(s.date);
+      d.sessions++;
+      d.makes += s.makes || 0;
+      d.shots += s.shots || 0;
+      Object.keys(d.byType).forEach(k => { if (s.shotTypes && s.shotTypes[k]) d.byType[k] += s.shotTypes[k].made || 0; });
+      d.points += sessionPoints(s);
+      d.pennies += sessionPennies(s);
+      (s.streaks || []).forEach(n => d.streaks.push({ n: n }));
+    });
+    (D.extraStreaks || []).forEach((x, i) => { if (x && x.date >= start) day(x.date).streaks.push({ n: x.n, extra: i }); });
+
+    // weekly bonus: Monday to Friday all full (100+ makes), for weeks that started on or after the start day
+    const bonuses = [];
+    const firstMonday = (() => { let d = start; while (dayOfWeek(d) !== 1) d = addDays(d, 1); return d; })();
+    for (let mon = firstMonday; mon <= today; mon = addDays(mon, 7)) {
+      const wk = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
+      if (wk.every(ds => days[ds] && days[ds].makes >= DIARY_MIN_MAKES)) bonuses.push({ date: wk[4], pennies: DIARY_WEEK_BONUS });
+    }
+
+    const coins = {}; DIARY_COINS.forEach(c => { coins[c[1]] = 0; });
+    let pennies = 0, best = 0;
+    Object.values(days).forEach(d => {
+      pennies += d.pennies;
+      d.streaks.forEach(st => { const c = coinFor(st.n); if (c) coins[c[1]]++; best = Math.max(best, st.n); });
+    });
+    bonuses.forEach(b => { pennies += b.pennies; });
+    (state.sessions || []).forEach(s => (s && s.streaks || []).forEach(n => { best = Math.max(best, n); }));
+
+    // days-in-a-row runs since the start (same rule as getStreak: a missed weekday ends a run; weekends and today don't)
+    const runs = []; let cur = null;
+    for (let ds = start; ds <= today; ds = addDays(ds, 1)) {
+      if (days[ds] && days[ds].sessions) { if (!cur) { cur = { start: ds, days: [] }; runs.push(cur); } cur.days.push(ds); }
+      else if (ds !== today && dayOfWeek(ds) !== 0 && dayOfWeek(ds) !== 6) cur = null;
+    }
+    const rewards = (D.rewards || []).filter(r => r && r.days > 0 && r.what).slice().sort((a, b) => a.days - b.days);
+    const earned = [];
+    runs.forEach(run => rewards.forEach(r => {
+      if (run.days.length >= r.days) earned.push({ key: 'run:' + run.start + ':' + r.days, what: r.what, days: r.days, date: run.days[r.days - 1] });
+    }));
+    const current = cur ? cur.days.length : 0;
+    const nextReward = rewards.find(r => r.days > current) || null;
+
+    const careerMakes = (state.sessions || []).reduce((t, s) => t + (s && s.makes || 0), 0);
+    const paid = D.paid || { pennies: 0, coins: {} };
+    const owedCoins = {}; DIARY_COINS.forEach(c => { owedCoins[c[1]] = Math.max(0, coins[c[1]] - ((paid.coins || {})[c[1]] || 0)); });
+    return { days, bonuses, pennies, coins, best, runs, current, rewards, earned, nextReward, careerMakes,
+      owedPennies: Math.max(0, pennies - (paid.pennies || 0)), owedCoins };
+  }
+
+  function centsText(c) {
+    return c.toLocaleString() + '¢' + (c >= 100 ? ` <small>($${(c / 100).toFixed(2)})</small>` : '');
+  }
+
+  function coinChips(counts) {
+    const list = DIARY_COINS.filter(c => counts[c[1]] > 0);
+    if (!list.length) return '';
+    return list.map(c => `<span class="diary-chip">${c[3]} ${counts[c[1]]} × ${c[2]}</span>`).join('');
+  }
+
+  function shortDay(ds) {
+    return new Date(ds + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function setupDiary() {
+    const box = document.getElementById('diary-content');
+    if (!box || !state.player) return;
+    const name = sanitizeHTML(state.player.name || 'this player');
+    document.getElementById('diary-player').textContent = state.player.name || '';
+    if (!diaryOn()) {
+      box.innerHTML = `
+        <div class="diary-card">
+          <div class="diary-intro">Track ${name}'s pennies, bonus coins, days-in-a-row rewards and career plaques. The app works it all out from the sessions you log.</div>
+          <label class="form-label" for="diary-start-input">PENNIES COUNT FROM</label>
+          <input id="diary-start-input" class="form-input" type="date" value="${todayStr()}" max="${todayStr()}">
+          <div class="form-hint">Pick an earlier day only if you haven't paid for those sessions yet.</div>
+          <button class="save-btn" style="margin-top:16px;" onclick="diaryStart()">START DIARY OF A BALLER</button>
+        </div>`;
+      return;
+    }
+    const L = diaryLedger(), D = state.diary, today = todayStr();
+    const owedChips = coinChips(L.owedCoins);
+    const nothingOwed = L.owedPennies === 0 && !owedChips;
+
+    // this week (Monday to Saturday)
+    let mon = today; while (dayOfWeek(mon) !== 1) mon = addDays(mon, -1);
+    const wkDays = [0, 1, 2, 3, 4, 5].map(i => addDays(mon, i));
+    const full = wkDays.slice(0, 5).filter(ds => L.days[ds] && L.days[ds].makes >= DIARY_MIN_MAKES).length;
+    const bonusThisWeek = L.bonuses.some(b => b.date === wkDays[4]);
+    const weekHtml = wkDays.map((ds, i) => {
+      const d = L.days[ds], m = d ? d.makes : 0, sat = i === 5, done = m >= DIARY_MIN_MAKES;
+      const cls = ds < D.start ? 'pre' : done ? 'done' : m > 0 ? 'part' : ds < today && !sat ? 'missed' : '';
+      return `<div class="diary-day ${cls}${ds === today ? ' today' : ''}">
+          <div class="diary-day-name">${['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][i]}</div>
+          <div class="diary-day-val">${done ? '✓' : m || (sat ? '1.5×' : '–')}</div>
+        </div>`;
+    }).join('');
+
+    // days in a row
+    const unGiven = L.earned.filter(e => !(D.given || {})[e.key]);
+    const rewardsHtml = (D.rewards || []).map((r, i) => `
+        <div class="diary-reward-row">
+          <input class="form-input" type="number" inputmode="numeric" min="1" max="365" value="${r.days || ''}" onchange="diaryEditReward(${i}, 'days', this.value)" aria-label="Days in a row">
+          <input class="form-input" type="text" maxlength="40" value="${sanitizeHTML(r.what || '')}" placeholder="Reward" onchange="diaryEditReward(${i}, 'what', this.value)" aria-label="Reward">
+          <button class="diary-x" onclick="diaryRemoveReward(${i})" aria-label="Remove">✕</button>
+        </div>`).join('');
+
+    // ledger: last 14 days with anything on them
+    const rows = Object.values(L.days).filter(d => d.sessions || d.streaks.length).sort((a, b) => b.date < a.date ? -1 : 1).slice(0, 14);
+    const bonusOn = ds => L.bonuses.find(b => b.date === ds);
+    const ledgerHtml = rows.length ? rows.map(d => {
+      const t = d.byType, parts = [['Layups', t.layups], ['Mid', t.midrange], ['FT', t.ft], ['3s', t.three]].filter(p => p[1]).map(p => p[0] + ' ' + p[1]).join(' · ') || (d.makes + ' makes');
+      const coins = d.streaks.map(st => { const c = coinFor(st.n); return c ? `<span class="diary-chip">${c[3]} ${st.n} in a row${st.extra !== undefined ? ` <button class="diary-x small" onclick="diaryRemoveStreak(${st.extra})" aria-label="Remove">✕</button>` : ''}</span>` : ''; }).join('');
+      const b = bonusOn(d.date);
+      return `<div class="diary-ledger-row">
+          <div class="diary-ledger-top"><span>${shortDay(d.date)}${dayOfWeek(d.date) === 6 ? ' <em>1.5×</em>' : ''}</span><strong>${(d.pennies + (b ? b.pennies : 0)).toLocaleString()}¢</strong></div>
+          <div class="diary-ledger-sub">${d.makes} makes${d.makes >= DIARY_MIN_MAKES ? ' ✓' : ''} · ${parts}${b ? ' · <span class="gold">+100 week bonus</span>' : ''}</div>
+          ${coins ? `<div class="diary-chips">${coins}</div>` : ''}
+        </div>`;
+    }).join('') : '<div class="diary-empty">No sessions yet. Log one and it shows up here.</div>';
+
+    const plaqueHtml = DIARY_PLAQUES.map(p => {
+      const got = L.careerMakes >= p, key = 'plaque:' + p, given = (D.given || {})[key];
+      return `<div class="diary-plaque${got ? ' got' : ''}">
+          <div class="diary-plaque-top"><span>🏅 ${p.toLocaleString()} MAKES</span>${got ? `<button class="diary-give${given ? ' given' : ''}" onclick="diaryToggleGiven('${key}')">${given ? '✓ GIVEN' : 'MARK GIVEN'}</button>` : `<span class="diary-muted">${(p - L.careerMakes).toLocaleString()} to go</span>`}</div>
+          ${got ? '' : `<div class="badge-next-bar"><div style="width:${Math.max(2, Math.round(L.careerMakes / p * 100))}%"></div></div>`}
+        </div>`;
+    }).join('');
+
+    box.innerHTML = `
+      <div class="diary-card diary-payout">
+        <div class="diary-card-title">💰 TO PAY OUT</div>
+        <div class="diary-big">${centsText(L.owedPennies)}</div>
+        ${owedChips ? `<div class="diary-chips">${owedChips}</div>` : ''}
+        <button class="save-btn" onclick="diaryPayOut()" ${nothingOwed ? 'disabled' : ''}>✓ PAID OUT</button>
+        <div class="diary-muted center">Jar total since ${shortDay(D.start)}: ${L.pennies.toLocaleString()}¢ ($${(L.pennies / 100).toFixed(2)})${coinChips(L.coins) ? ' · coins: ' + DIARY_COINS.filter(c => L.coins[c[1]]).map(c => L.coins[c[1]] + ' ' + c[2].toLowerCase() + (L.coins[c[1]] > 1 ? 's' : '')).join(', ') : ''}</div>
+      </div>
+
+      <div class="diary-card">
+        <div class="diary-card-title">📅 THIS WEEK <span>${full}/5 full${bonusThisWeek ? ' · +100 ✓' : ''}</span></div>
+        <div class="diary-week">${weekHtml}</div>
+        <div class="diary-muted">${DIARY_MIN_MAKES} makes = a full session. All five weekdays full = +${DIARY_WEEK_BONUS}¢. Saturday pays 1.5×.</div>
+      </div>
+
+      <div class="diary-card">
+        <div class="diary-card-title">🔥 DAYS IN A ROW <span>${L.current}</span></div>
+        ${L.nextReward ? `<div class="diary-next">${L.nextReward.days - L.current} more day${L.nextReward.days - L.current === 1 ? '' : 's'} to <strong>${sanitizeHTML(L.nextReward.what)}</strong></div>` : ''}
+        ${unGiven.map(e => `<div class="diary-earned"><span>🎁 ${sanitizeHTML(e.what)} <small>${e.days} days · ${shortDay(e.date)}</small></span><button class="diary-give" onclick="diaryToggleGiven('${e.key}')">MARK GIVEN</button></div>`).join('')}
+        <details class="diary-edit"><summary>Edit rewards</summary>
+          ${rewardsHtml}
+          <button class="back-btn diary-add" onclick="diaryAddReward()">+ ADD A REWARD</button>
+        </details>
+        <div class="diary-muted">Weekends off never break it. Shooting on a weekend adds to it.</div>
+      </div>
+
+      <div class="diary-card">
+        <div class="diary-card-title">🪙 MAKES IN A ROW <span>best ${L.best}</span></div>
+        <div class="diary-coin-key">${DIARY_COINS.slice().reverse().map(c => `<span>${c[0]}+ ${c[2].toLowerCase()}</span>`).join('')}</div>
+        <div class="diary-muted">Counted automatically for camera sessions and BY SPOT taps. For anything else, add it here:</div>
+        <div class="diary-add-streak">
+          <input id="diary-streak-date" class="form-input" type="date" value="${today}" min="${D.start}" max="${today}" aria-label="Day">
+          <input id="diary-streak-n" class="form-input" type="number" inputmode="numeric" min="5" max="200" placeholder="In a row" aria-label="Makes in a row">
+          <button class="save-btn" onclick="diaryAddStreak()">ADD</button>
+        </div>
+      </div>
+
+      <div class="diary-card">
+        <div class="diary-card-title">🏅 CAREER MAKES <span>${L.careerMakes.toLocaleString()}</span></div>
+        ${plaqueHtml}
+      </div>
+
+      <div class="diary-card">
+        <div class="diary-card-title">📒 LEDGER</div>
+        ${ledgerHtml}
+      </div>
+
+      <details class="diary-edit diary-settings"><summary>Diary settings</summary>
+        <label class="form-label" for="diary-start-edit">PENNIES COUNT FROM</label>
+        <input id="diary-start-edit" class="form-input" type="date" value="${D.start}" max="${today}" onchange="diarySetStart(this.value)">
+        <button class="back-btn diary-add" onclick="diaryTurnOff()">TURN OFF FOR ${name.toUpperCase()}</button>
+      </details>`;
+  }
+
+  function diaryStart() {
+    const v = (document.getElementById('diary-start-input') || {}).value;
+    const start = /^\d{4}-\d{2}-\d{2}$/.test(v || '') && v <= todayStr() ? v : todayStr();
+    const old = state.diary || {};
+    state.diary = { v: 1, on: true, start: start, paid: old.paid || { pennies: 0, coins: {} }, extraStreaks: old.extraStreaks || [],
+      rewards: old.rewards || [{ days: 5, what: 'Ice cream' }], given: old.given || {} };
+    saveState();
+    setupDiary();
+  }
+
+  function diaryPayOut() {
+    if (!diaryOn()) return;
+    const L = diaryLedger();
+    const coins = DIARY_COINS.filter(c => L.owedCoins[c[1]]).map(c => L.owedCoins[c[1]] + ' ' + c[2].toLowerCase() + (L.owedCoins[c[1]] > 1 ? 's' : ''));
+    if (!confirm(`Mark as paid: ${L.owedPennies.toLocaleString()} pennies${coins.length ? ' and ' + coins.join(', ') : ''}?`)) return;
+    state.diary.paid = { pennies: L.pennies, coins: Object.assign({}, L.coins), date: todayStr() };
+    saveState();
+    setupDiary();
+  }
+
+  function diaryAddStreak() {
+    const date = document.getElementById('diary-streak-date').value;
+    const n = parseInt(document.getElementById('diary-streak-n').value, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > todayStr() || date < state.diary.start) { alert('Pick a day since the diary started.'); return; }
+    if (!(n >= 5 && n <= 200)) { alert('Bonus coins start at 5 makes in a row.'); return; }
+    (state.diary.extraStreaks = state.diary.extraStreaks || []).push({ date: date, n: n });
+    saveState();
+    setupDiary();
+  }
+
+  function diaryRemoveStreak(i) {
+    const x = (state.diary.extraStreaks || [])[i];
+    if (!x || !confirm(`Remove ${x.n} in a row on ${shortDay(x.date)}?`)) return;
+    state.diary.extraStreaks.splice(i, 1);
+    saveState();
+    setupDiary();
+  }
+
+  function diaryToggleGiven(key) {
+    const g = state.diary.given = state.diary.given || {};
+    if (g[key]) delete g[key]; else g[key] = todayStr();
+    saveState();
+    setupDiary();
+  }
+
+  function diaryEditReward(i, field, value) {
+    const r = (state.diary.rewards || [])[i];
+    if (!r) return;
+    if (field === 'days') r.days = Math.max(1, Math.min(365, parseInt(value, 10) || 0));
+    else r.what = String(value || '').trim().slice(0, 40);
+    saveState();
+    setupDiary();
+  }
+
+  function diaryAddReward() {
+    const list = state.diary.rewards = state.diary.rewards || [];
+    const last = list.reduce((m, r) => Math.max(m, r.days || 0), 0);
+    list.push({ days: last ? last + 5 : 5, what: '' });
+    saveState();
+    setupDiary();
+    const d = document.querySelector('#diary-content .diary-edit'); if (d) d.open = true;
+  }
+
+  function diaryRemoveReward(i) {
+    (state.diary.rewards || []).splice(i, 1);
+    saveState();
+    setupDiary();
+    const d = document.querySelector('#diary-content .diary-edit'); if (d) d.open = true;
+  }
+
+  function diarySetStart(v) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '') || v > todayStr()) return;
+    state.diary.start = v;
+    saveState();
+    setupDiary();
+  }
+
+  function diaryTurnOff() {
+    if (!confirm(`Turn off Diary of a Baller for ${state.player.name}? What's been paid is kept if you turn it back on.`)) return;
+    state.diary.on = false;
+    saveState();
+    setupDiary();
+  }
+
+  // Camera sessions: the Android app hands the shots over in order. Wrap its hand-off so each saved session
+  // also keeps its runs of makes in a row (no app update needed).
+  (function () {
+    let fn = window.__svApply;
+    const wrap = f => (typeof f !== 'function' || f.__diary) ? f : Object.assign(function (str) {
+      const r = f.apply(this, arguments);
+      if (r === 'saved') {
+        try {
+          const d = JSON.parse(str), s = state.sessions[state.sessions.length - 1];
+          const seq = (d.log || []).filter(x => x && (x.r === 'make' || x.r === 'miss')).map(x => x.r === 'make');
+          const runs = makeRuns(seq);
+          if (s && runs.length && !s.streaks) { s.streaks = runs; saveState(); }
+        } catch (e) {}
+      }
+      return r;
+    }, { __diary: true });
+    fn = wrap(fn);
+    try {
+      Object.defineProperty(window, '__svApply', { configurable: true, get: () => fn, set: v => { fn = wrap(v); } });
+    } catch (e) {}
+  })();
 
   // =============================================
   // ACHIEVEMENTS
