@@ -492,12 +492,6 @@
       width: calc(100% - 32px); max-width: 388px;
     }
     .stats-log-bar .log-session-btn { margin: 0; box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 4px 20px rgba(0,180,197,0.3); }
-    /* Quest: what's left to reach the next rank (the goal) */
-    .dash-next-rank { margin-top: 14px; font-family: 'Bebas Neue', sans-serif; font-size: clamp(18px, 2.8vh, 24px);
-      letter-spacing: 2px; color: #bbb; text-align: center; line-height: 1.25; }
-    .dash-next-rank strong { color: #fff; font-weight: normal; }
-    .dash-next-rank .next-rank-name { color: var(--gold); }
-    .dash-next-rank small { display: block; font-family: 'Outfit', sans-serif; font-size: 13px; letter-spacing: 0; color: #999; margin-top: 2px; }
     .dash-ring-box { display: flex; align-items: center; justify-content: center; }
     /* Quest fills the screen, whatever its size (1.13.2). The ring takes all the room left above the streak,
        the goal line and the two buttons, and the buttons sit just above the bottom bar. */
@@ -507,7 +501,6 @@
       .dash-ring-wrap { flex: 1 1 auto; min-height: 0; margin: 0; }
       .dash-ring-box { flex: 1 1 0; min-height: 130px; width: 100%; }
       .dash-streak-chip { flex: none; margin-top: clamp(6px, 1.6vh, 20px); font-size: clamp(18px, 3vh, 26px); }
-      .dash-next-rank { flex: none; margin-top: clamp(6px, 1.4vh, 14px); font-size: clamp(17px, 2.8vh, 26px); }
       /* taller screens get taller buttons */
       #dashboard .log-session-btn.quest-choice { flex: none; margin-top: 12px; padding: 0 20px;
         min-height: clamp(58px, 9.5vh, 92px); font-size: clamp(21px, 3.3vh, 28px); }
@@ -2666,7 +2659,6 @@
           </div>
         </div></div>
         <div id="dash-streak" class="dash-streak-chip">🔥 0 days in a row</div>
-        <div id="dash-next-rank" class="dash-next-rank"></div>
       </div>
 
       <!-- Two big choices: shooting (Swish Quest) and ball handling (Dribble Quest). Log Your Stats lives on the Stats tab. -->
@@ -3124,7 +3116,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.3';
+  const APP_VERSION = '1.16.4';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4780,7 +4772,7 @@
   // =============================================
   // DASHBOARD
   // =============================================
-  // What is left to reach the next rank: that is the goal now (1.13).
+  // What is left to reach the next rank (shown on the Badges rank ladder).
   function getNextRankInfo() {
     const config = TIER_CONFIG[state.tier];
     if (state.tier >= 10 || !config || !config.fgaRequired) return null;
@@ -4793,21 +4785,7 @@
     return info;
   }
 
-  function renderNextRank() {
-    const el = document.getElementById('dash-next-rank');
-    if (!el) return;
-    const info = getNextRankInfo();
-    if (!info) { el.innerHTML = '<span class="next-rank-name">TOP RANK</span>'; return; }
-    const name = `<span class="next-rank-name">${sanitizeHTML(info.name.toUpperCase())}</span>`;
-    const gateNote = info.gate ? `${info.gate.need}% shooting over your last ${info.gate.window.toLocaleString()} shots (now ${info.gate.have}%)` : '';
-    if (info.left > 0) {
-      el.innerHTML = `<strong>${info.left.toLocaleString()}</strong> SHOT${info.left === 1 ? '' : 'S'} TO ${name}` +
-        (gateNote ? `<small>Also needs ${gateNote}</small>` : '');
-    } else {
-      el.innerHTML = `SHOOT <strong>${info.gate ? info.gate.need : 0}%</strong> TO REACH ${name}` +
-        (info.gate ? `<small>Over your last ${info.gate.window.toLocaleString()} shots. You're at ${info.gate.have}%.</small>` : '');
-    }
-  }
+
 
   function setupDashboard() {
     if (!state.player) return;
@@ -4829,7 +4807,6 @@
     if (tier === 10) { rank.style.cssText = getTierColorCSS(tier) + ' -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;'; }
     else { rank.style.cssText = 'color:' + getTierColor(tier) + ';'; }
     document.getElementById('dash-streak').textContent = `${getStreakEmoji(streak)} ${streak} day${streak !== 1 ? 's' : ''} in a row`;
-    renderNextRank();
     showShotCreditNotice();
   }
 
@@ -6434,7 +6411,11 @@
         const need = cfg.fgaRequired || 0;
         status = `<div class="rank-row-status">YOU ARE HERE</div>` + (t < 10 && need
           ? `<div class="badge-next-bar"><div style="width:${Math.max(3, Math.round(Math.min(1, (state.tierFGA || 0) / need) * 100))}%"></div></div>
-             <div class="rank-row-sub">${leftNow.toLocaleString()} shot${leftNow === 1 ? '' : 's'} to ${getTierName(t + 1)}</div>` : `<div class="rank-row-sub">The top of the climb</div>`);
+             <div class="rank-row-sub">${(() => {
+               const nx = getNextRankInfo();
+               if (nx && nx.left === 0 && nx.gate) return `Shoot ${nx.gate.need}% over your last ${nx.gate.window.toLocaleString()} shots to reach ${nx.name} (you're at ${nx.gate.have}%)`;
+               return `${leftNow.toLocaleString()} shot${leftNow === 1 ? '' : 's'} to ${getTierName(t + 1)}`;
+             })()}</div>` : `<div class="rank-row-sub">The top of the climb</div>`);
       } else {
         cls = 'locked';
         status = `<div class="rank-row-status">${toGo.toLocaleString()} shots to go</div>`;
