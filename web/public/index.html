@@ -3124,7 +3124,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.2';
+  const APP_VERSION = '1.16.3';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -5550,6 +5550,7 @@
         <input id="diary-start-edit" class="form-input" type="date" value="${D.start}" max="${today}" onchange="diarySetStart(this.value)">
         <button class="back-btn diary-add" onclick="diaryTurnOff()">TURN OFF FOR ${name.toUpperCase()}</button>
       </details>`;
+    if (jarSoundOn()) loadJarSound(clinkCtx());
     if (document.getElementById('diary').classList.contains('active')) jarCheckNew(L);
   }
 
@@ -5758,6 +5759,32 @@
     slotNote(ctx, pay1 + 0.05, C6 / 2, 0.9, 0.06, 'triangle');
   }
 
+  // The jar's sound is a real recording of a slot machine paying out (sounds/jar-payout.mp3, 3.2 s).
+  // It's loaded once; if it can't be loaded, the made-on-the-spot version (slotWin) plays instead.
+  const JAR_SOUND_URL = 'sounds/jar-payout.mp3?v=1';
+  let _jarBuf = null, _jarBufLoading = null, _jarPlays = 0;
+  function loadJarSound(ctx) {
+    if (!ctx || _jarBuf) return Promise.resolve(_jarBuf);
+    if (_jarBufLoading) return _jarBufLoading;
+    _jarBufLoading = fetch(JAR_SOUND_URL)
+      .then(r => { if (!r.ok) throw new Error('sound ' + r.status); return r.arrayBuffer(); })
+      .then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .then(buf => { _jarBuf = buf; return buf; })
+      .catch(() => { _jarBufLoading = null; return null; });
+    return _jarBufLoading;
+  }
+  function playJarSound(ctx, coins) {
+    const out = _jarOut;
+    const play = buf => {
+      if (!out || out !== _jarOut) return; // closed before it loaded
+      if (!buf) { slotWin(ctx, 0.05, 1.9, coins); return; }
+      _jarPlays++;
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(out); src.start(ctx.currentTime + 0.05);
+    };
+    if (_jarBuf) play(_jarBuf); else loadJarSound(ctx).then(play);
+  }
+
   function toggleJarSound(ev) {
     if (ev) ev.stopPropagation();
     try { localStorage.setItem(JAR_SOUND_KEY, jarSoundOn() ? 'off' : 'on'); } catch (e) {}
@@ -5814,7 +5841,7 @@
     }
     if (ctx && (add > 0 || coinList.length)) {
       _jarOut = ctx.createGain(); _jarOut.connect(ctx.destination);
-      slotWin(ctx, 0.05, reduce ? 0.6 : 1.9, coinList.length);
+      playJarSound(ctx, coinList.length);
     }
 
     // the jar level and the numbers rise together
