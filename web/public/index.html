@@ -2795,7 +2795,7 @@
       <!-- Player Profiles Section -->
       <div id="profile-players-section" class="friends-section" style="width:100%; max-width:360px; margin-top:18px;">
         <div class="friends-section-header">
-          <div class="friends-section-title">👥 PLAYERS</div>
+          <div class="friends-section-title">PLAYERS</div>
           <div class="friends-count" id="profile-players-count">1 player</div>
         </div>
         <div id="profile-players-list"></div>
@@ -3087,7 +3087,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.15.1';
+  const APP_VERSION = '1.15.2';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4301,17 +4301,13 @@
     if (countEl) countEl.textContent = profiles.length + ' player' + (profiles.length !== 1 ? 's' : '');
     if (addBtn) addBtn.style.display = profiles.length < MAX_PROFILES ? 'block' : 'none';
 
-    const avatars = ['🏀', '⛹️', '🎯', '🔥', '⭐'];
-
     list.innerHTML = '';
     profiles.forEach((p, i) => {
       const isActive = p.id === _activeProfileId;
-      const avatar = avatars[i % avatars.length];
       const card = document.createElement('div');
       card.className = 'friend-card';
       card.style.cssText = 'cursor:pointer;' + (isActive ? ' border-color:var(--teal); background:rgba(0,180,197,0.06);' : '');
       card.innerHTML = `
-        <div class="friend-card-badge">${avatar}</div>
         <div class="friend-card-info">
           <div class="friend-card-name" style="${isActive ? 'color:var(--teal);' : ''}">${sanitizeHTML(p.name)} ${isActive ? '<span style="font-size:11px; color:var(--teal);">● ACTIVE</span>' : ''}</div>
           <div class="friend-card-tag">${getTierBadge(p.tier)} ${sanitizeHTML(getTierName(p.tier))} · Level ${parseInt(p.tierLevel) || 1}${p.gamertag ? ' · @' + sanitizeHTML(p.gamertag) : ''}</div>
