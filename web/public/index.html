@@ -820,7 +820,36 @@
     .badge-tile.earned .badge-tile-desc { color: #9aa; }
     .badge-next { display: flex; flex-direction: column; gap: 10px; }
     /* Diary of a Baller (1.15) */
-    .diary-screen { background: linear-gradient(180deg, #0a0a0a 0%, #0f0f1a 100%); padding: 16px 16px 40px; align-items: center; }
+    .diary-screen { background: linear-gradient(180deg, #0a0a0a 0%, #0f0f1a 100%); padding: 16px 16px calc(var(--sv-nav-h, 78px) + 30px); align-items: center; }
+    /* Penny jar (1.16) */
+    .diary-jar-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 4px; }
+    .diary-jar-btn { width: 74px; height: 92px; flex: none; padding: 0; border: none; background: none; cursor: pointer; position: relative; }
+    .diary-jar-btn .jar-svg { width: 100%; height: 100%; display: block; }
+    .diary-jar-btn::after { content: 'TAP'; position: absolute; left: 0; right: 0; bottom: -14px; font-family: 'Bebas Neue', sans-serif; font-size: 12px; letter-spacing: 2px; color: var(--gold); }
+    .jar-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(5,5,12,0.92); display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .jar-overlay.visible { opacity: 1; pointer-events: auto; }
+    .jar-stage { text-align: center; padding: 20px; }
+    .jar-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 4px; color: var(--teal); }
+    .jar-amount { font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--gold); line-height: 1; margin: 4px 0 10px; text-shadow: 0 0 24px rgba(255,230,109,0.35); }
+    .jar-wrap { position: relative; width: min(56vw, 230px); height: calc(min(56vw, 230px) * 1.25); margin: 0 auto; }
+    .jar-wrap .jar-svg { width: 100%; height: 100%; display: block; position: relative; z-index: 1; }
+    .jar-total { font-family: 'Bebas Neue', sans-serif; font-size: 34px; color: #fff; letter-spacing: 1px; margin-top: 12px; }
+    .jar-total span { color: #999; font-size: 22px; }
+    .jar-coins { font-family: 'Outfit', sans-serif; font-size: 16px; color: #e8e8e8; margin-top: 4px; }
+    .jar-tap { font-family: 'Outfit', sans-serif; font-size: 12px; color: #777; margin-top: 16px; }
+    .jar-penny, .jar-coin { position: absolute; z-index: 2; border-radius: 50%; opacity: 0;
+      animation: jarDrop 0.95s cubic-bezier(0.45, 0, 0.9, 0.6) forwards; }
+    .jar-penny { background: radial-gradient(circle at 35% 30%, #ffc48a, #c26c2c 60%, #8a4515); border: 1.5px solid #7a3d12; }
+    .jar-coin { background: radial-gradient(circle at 35% 30%, #ffffff, #c9ced6 55%, #7d8591); border: 2px solid #6b7280; }
+    .jar-coin-copper { background: radial-gradient(circle at 35% 30%, #ffd6a8, #d9822b 55%, #8a4515); border-color: #ffe066; box-shadow: 0 0 10px rgba(255,200,90,0.7); }
+    .jar-coin-dollar { box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+    @keyframes jarDrop {
+      0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+      10% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    }
     .diary-player { font-family: 'Outfit', sans-serif; font-size: 15px; color: #aaa; text-align: center; margin-bottom: 14px; }
     .diary-wrap { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 12px; }
     .diary-card { background: #141414; border: 1px solid #2a2a2a; border-radius: 14px; padding: 14px; }
@@ -880,7 +909,6 @@
     .diary-empty { font-family: 'Outfit', sans-serif; font-size: 14px; color: #999; }
     .diary-settings { width: 100%; max-width: 560px; margin-top: 4px; }
     .diary-settings .form-input { width: 100%; box-sizing: border-box; }
-    .diary-back { width: 100%; max-width: 560px; margin-top: 14px; }
     .parent-view-btn.diary-btn { border-color: var(--gold); color: var(--gold); margin-top: 8px; margin-bottom: 18px; }
     /* Badges: the rank ladder (1.14) */
     .rank-ladder { display: flex; flex-direction: column; gap: 8px; }
@@ -2441,7 +2469,7 @@
       .bottom-nav .nav-icon, .nav-item.center-tab .nav-icon { font-size: 22px; }
       .bottom-nav .nav-label { font-size: 15px !important; letter-spacing: 2px !important; }
       /* Screens with the rail sit beside it and use the width */
-      .dashboard-screen, .stats-screen, .badges-screen, .profile-screen, .board-screen {
+      .dashboard-screen, .stats-screen, .badges-screen, .profile-screen, .board-screen, .diary-screen {
         margin-left: 210px; padding: 36px 48px 48px !important; min-height: 100vh;
       }
       .dashboard-screen [style*="max-width"], .stats-screen [style*="max-width"], .profile-screen [style*="max-width"],
@@ -2748,8 +2776,10 @@
       <h2 class="screen-title">📔 DIARY OF A BALLER</h2>
       <div id="diary-player" class="diary-player"></div>
       <div id="diary-content" class="diary-wrap"></div>
-      <button class="back-btn diary-back" onclick="showNav('profile')">← BACK</button>
     </div>
+
+    <!-- Penny jar pop-up -->
+    <div id="jar-overlay" class="jar-overlay" onclick="closeJar()" role="dialog" aria-label="Penny jar"></div>
 
     <!-- ===== STATS ===== -->
     <div id="stats" class="screen stats-screen">
@@ -2801,7 +2831,8 @@
         <div id="profile-players-list"></div>
         <button id="add-player-btn" class="find-friends-btn" onclick="addNewPlayerFromProfile()" style="margin-top:8px;">➕ ADD PLAYER</button>
       </div>
-      <button class="parent-view-btn diary-btn" onclick="showScreen('diary')">📔 DIARY OF A BALLER</button>
+      <button id="profile-diary-btn" class="parent-view-btn diary-btn" onclick="showNav('diary')">📔 DIARY OF A BALLER</button>
+      <button id="profile-board-btn" class="parent-view-btn" onclick="showNav('board')" style="display:none;">🏆 LEADERBOARD</button>
       <!-- Gamertag & Friend Code -->
       <div id="profile-social-section" style="width:100%; max-width:360px; margin-top:10px;">
         <div id="profile-gamertag-display" style="text-align:center; margin-bottom:10px;">
@@ -3012,9 +3043,13 @@
         <span class="nav-icon">📊</span>
         <span class="nav-label">STATS</span>
       </div>
-      <div class="nav-item center-tab" onclick="showNav('board')">
+      <div id="nav-board" class="nav-item center-tab" onclick="showNav('board')">
         <span class="nav-icon">🏆</span>
         <span class="nav-label">BOARD</span>
+      </div>
+      <div id="nav-diary" class="nav-item center-tab" onclick="showNav('diary')" style="display:none;">
+        <span class="nav-icon">💰</span>
+        <span class="nav-label">DIARY</span>
       </div>
       <div class="nav-item" onclick="showNav('badges')">
         <span class="nav-icon">🏅</span>
@@ -3087,7 +3122,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.15.2';
+  const APP_VERSION = '1.16.0';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -4496,8 +4531,9 @@
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 
-    const navScreens = ['dashboard', 'stats', 'board', 'badges', 'profile'];
+    const navScreens = ['dashboard', 'stats', 'board', 'badges', 'profile', 'diary'];
     document.getElementById('bottom-nav').style.display = navScreens.includes(id) ? 'flex' : 'none';
+    refreshNavTabs();
 
     if (id === 'signup') setupSignup();
     if (id === 'meet-coach') setupCoachScreen();
@@ -4516,10 +4552,21 @@
     window.scrollTo(0, 0);
   }
 
+  // Diary of a Baller takes the Board tab's place for players it's on for (the leaderboard moves to Profile).
+  function refreshNavTabs() {
+    const on = typeof diaryOn === 'function' && diaryOn();
+    const b = document.getElementById('nav-board'), d = document.getElementById('nav-diary');
+    if (b) b.style.display = on ? 'none' : '';
+    if (d) d.style.display = on ? '' : 'none';
+    const pb = document.getElementById('profile-board-btn'), pd = document.getElementById('profile-diary-btn');
+    if (pb) pb.style.display = on ? '' : 'none';
+    if (pd) pd.style.display = on ? 'none' : '';
+  }
+
   function showNav(id) {
     showScreen(id);
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const labels = { dashboard: 'QUEST', stats: 'STATS', board: 'BOARD', badges: 'BADGES', profile: 'PROFILE' };
+    const labels = { dashboard: 'QUEST', stats: 'STATS', board: 'BOARD', badges: 'BADGES', profile: 'PROFILE', diary: 'DIARY' };
     document.querySelectorAll('.nav-item').forEach(n => {
       if (n.querySelector('.nav-label').textContent === labels[id]) n.classList.add('active');
     });
@@ -5449,10 +5496,13 @@
     box.innerHTML = `
       <div class="diary-card diary-payout">
         <div class="diary-card-title">💰 TO PAY OUT</div>
-        <div class="diary-big">${centsText(L.owedPennies)}</div>
+        <div class="diary-jar-row">
+          <button class="diary-jar-btn" onclick="replayJar()" aria-label="Watch your jar fill up">${jarSVG(L.pennies / jarGoal(L.pennies), 'jarmini')}</button>
+          <div class="diary-big">${centsText(L.owedPennies)}</div>
+        </div>
         ${owedChips ? `<div class="diary-chips">${owedChips}</div>` : ''}
         <button class="save-btn" onclick="diaryPayOut()" ${nothingOwed ? 'disabled' : ''}>✓ PAID OUT</button>
-        <div class="diary-muted center">Jar total since ${shortDay(D.start)}: ${L.pennies.toLocaleString()}¢ ($${(L.pennies / 100).toFixed(2)})${coinChips(L.coins) ? ' · coins: ' + DIARY_COINS.filter(c => L.coins[c[1]]).map(c => L.coins[c[1]] + ' ' + c[2].toLowerCase() + (L.coins[c[1]] > 1 ? 's' : '')).join(', ') : ''}</div>
+        <div class="diary-muted center">Jar: ${dollars(L.pennies)} of ${dollars(jarGoal(L.pennies))} since ${shortDay(D.start)}${coinChips(L.coins) ? ' · coins: ' + DIARY_COINS.filter(c => L.coins[c[1]]).map(c => L.coins[c[1]] + ' ' + c[2].toLowerCase() + (L.coins[c[1]] > 1 ? 's' : '')).join(', ') : ''}</div>
       </div>
 
       <div class="diary-card">
@@ -5498,6 +5548,7 @@
         <input id="diary-start-edit" class="form-input" type="date" value="${D.start}" max="${today}" onchange="diarySetStart(this.value)">
         <button class="back-btn diary-add" onclick="diaryTurnOff()">TURN OFF FOR ${name.toUpperCase()}</button>
       </details>`;
+    if (document.getElementById('diary').classList.contains('active')) jarCheckNew(L);
   }
 
   function diaryStart() {
@@ -5507,7 +5558,8 @@
     state.diary = { v: 1, on: true, start: start, paid: old.paid || { pennies: 0, coins: {} }, extraStreaks: old.extraStreaks || [],
       rewards: old.rewards || [{ days: 5, what: 'Ice cream' }], given: old.given || {} };
     saveState();
-    setupDiary();
+    setJarSeen(0, {}); // the first look shows the whole jar filling
+    showNav('diary');
   }
 
   function diaryPayOut() {
@@ -5581,7 +5633,140 @@
     if (!confirm(`Turn off Diary of a Baller for ${state.player.name}? What's been paid is kept if you turn it back on.`)) return;
     state.diary.on = false;
     saveState();
-    setupDiary();
+    showNav('profile');
+  }
+
+  // =============================================
+  // THE PENNY JAR (1.16)
+  // =============================================
+  // Opening Diary of a Baller after a session drops that session's pennies (and any bonus coins) into a jar,
+  // then the pop-up goes away by itself. Tapping the small jar on the page replays the whole jar filling up.
+  // What each player has already seen is kept on this device, so a parent looking on another device doesn't
+  // use up a kid's animation.
+  const JAR_SEEN_KEY = 'swishquest_jarseen';
+  const JAR_GOALS = [500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+  let _jarTimer = null;
+
+  function jarGoal(cents) { return JAR_GOALS.find(g => g > cents) || Math.ceil((cents + 1) / 1000000) * 1000000; }
+  function dollars(c) { return '$' + (c / 100).toFixed(2); }
+
+  function jarSeenAll() { try { return JSON.parse(localStorage.getItem(JAR_SEEN_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function jarSeen() { const all = jarSeenAll(); return all[_activeProfileId] || null; }
+  function setJarSeen(p, coins) {
+    try { const all = jarSeenAll(); all[_activeProfileId] = { p: p, c: Object.assign({}, coins) }; localStorage.setItem(JAR_SEEN_KEY, JSON.stringify(all)); } catch (e) {}
+  }
+
+  // The jar drawing. level = 0..1 of the way full. Coordinates are in a 160 x 200 box.
+  const JAR_BODY = 'M48 34 h64 q0 12 12 19 q18 10 18 31 v92 q0 20 -20 20 h-84 q-20 0 -20 -20 v-92 q0 -21 18 -31 q12 -7 12 -19 z';
+  const JAR_TOP = 52, JAR_BOTTOM = 196;
+  function jarFillY(level) { return JAR_BOTTOM - Math.max(0, Math.min(1, level)) * (JAR_BOTTOM - JAR_TOP); }
+  function jarSVG(level, id) {
+    const y = jarFillY(level);
+    return `<svg viewBox="0 0 160 200" class="jar-svg" aria-hidden="true">
+      <defs>
+        <clipPath id="${id}-clip"><path d="${JAR_BODY}"/></clipPath>
+        <linearGradient id="${id}-cu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0a35e"/><stop offset="1" stop-color="#a95d24"/></linearGradient>
+        <pattern id="${id}-pile" width="18" height="10" patternUnits="userSpaceOnUse">
+          <ellipse cx="9" cy="5" rx="8" ry="3.2" fill="#c97a3a" stroke="#8a4a1a" stroke-width="0.8"/>
+        </pattern>
+      </defs>
+      <path d="${JAR_BODY}" fill="rgba(255,255,255,0.05)"/>
+      <g clip-path="url(#${id}-clip)">
+        <rect id="${id}-fill" x="0" y="${y}" width="160" height="${200 - y}" fill="url(#${id}-cu)"/>
+        <rect id="${id}-pile" x="0" y="${y}" width="160" height="${200 - y}" fill="url(#${id}-pile)" opacity="0.55"/>
+        <rect id="${id}-edge" x="0" y="${y - 1}" width="160" height="4" fill="#ffd2a1" opacity="${level > 0 ? 0.8 : 0}"/>
+      </g>
+      <path d="${JAR_BODY}" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M32 92 v70" stroke="rgba(255,255,255,0.35)" stroke-width="5" stroke-linecap="round"/>
+      <rect x="42" y="18" width="76" height="17" rx="4" fill="#3b3f4a" stroke="#8b93a5" stroke-width="2"/>
+    </svg>`;
+  }
+
+  function setJarLevel(id, level) {
+    const y = jarFillY(level);
+    ['fill', 'pile'].forEach(k => { const r = document.getElementById(id + '-' + k); if (r) { r.setAttribute('y', y); r.setAttribute('height', 200 - y); } });
+    const e = document.getElementById(id + '-edge'); if (e) { e.setAttribute('y', y - 1); e.setAttribute('opacity', level > 0 ? 0.8 : 0); }
+  }
+
+  // from / to: pennies in the jar before and after. coins: bonus coins to drop too, e.g. { quarter: 1 }.
+  function playJar(from, to, coins, title) {
+    const ov = document.getElementById('jar-overlay');
+    if (!ov) return;
+    clearTimeout(_jarTimer);
+    const goal = jarGoal(to), add = Math.max(0, to - from);
+    const coinList = [];
+    DIARY_COINS.forEach(c => { for (let i = 0; i < Math.min(4, (coins && coins[c[1]]) || 0); i++) coinList.push(c); });
+    const coinNames = DIARY_COINS.filter(c => coins && coins[c[1]] > 0).map(c => `${coins[c[1]]} ${c[2].toLowerCase()}${coins[c[1]] > 1 ? 's' : ''}`);
+    ov.innerHTML = `
+      <div class="jar-stage">
+        <div class="jar-title">${title || 'INTO THE JAR'}</div>
+        <div class="jar-amount" id="jar-amount">+0¢</div>
+        <div class="jar-wrap" id="jar-wrap">${jarSVG(from / goal, 'jarbig')}</div>
+        <div class="jar-total" id="jar-total">${dollars(from)} <span>of ${dollars(goal)}</span></div>
+        ${coinNames.length ? `<div class="jar-coins">+ ${coinNames.join(', ')}</div>` : ''}
+        <div class="jar-tap">Tap to close</div>
+      </div>`;
+    ov.classList.add('visible');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const wrap = document.getElementById('jar-wrap'), amountEl = document.getElementById('jar-amount'), totalEl = document.getElementById('jar-total');
+    const H = wrap.clientHeight || 240, W = wrap.clientWidth || 200;
+    const landY = jarFillY(to / goal) / 200 * H;
+
+    if (!reduce) {
+      const pennies = add > 0 ? Math.max(8, Math.min(36, Math.round(add / 8))) : 0;
+      const drops = [];
+      for (let i = 0; i < pennies; i++) drops.push({ cls: 'jar-penny', size: 20 });
+      coinList.forEach(c => drops.push({ cls: 'jar-coin jar-coin-' + c[1], size: c[1] === 'copper' ? 30 : c[1] === 'nickel' ? 22 : 26 }));
+      drops.forEach((d, i) => {
+        const el = document.createElement('div');
+        el.className = d.cls;
+        el.style.width = el.style.height = d.size + 'px';
+        el.style.left = (W * (0.40 + Math.random() * 0.20) - d.size / 2) + 'px';
+        el.style.top = (-d.size - 10) + 'px';
+        el.style.setProperty('--dx', ((Math.random() - 0.5) * W * 0.45).toFixed(0) + 'px');
+        el.style.setProperty('--dy', (landY + 10 + d.size + Math.random() * 18).toFixed(0) + 'px');
+        el.style.setProperty('--rot', ((Math.random() - 0.5) * 540).toFixed(0) + 'deg');
+        el.style.animationDelay = (0.15 + (i / Math.max(1, drops.length)) * 1.7).toFixed(2) + 's';
+        wrap.appendChild(el);
+      });
+    }
+
+    // the jar level and the numbers rise together
+    const t0 = performance.now(), dur = reduce ? 1 : 2300, lag = reduce ? 0 : 350;
+    const ease = x => 1 - Math.pow(1 - x, 3);
+    const step = now => {
+      const k = ease(Math.max(0, Math.min(1, (now - t0 - lag) / dur)));
+      const cur = Math.round(from + add * k);
+      setJarLevel('jarbig', cur / goal);
+      amountEl.textContent = '+' + Math.round(add * k).toLocaleString() + '¢';
+      totalEl.innerHTML = `${dollars(cur)} <span>of ${dollars(goal)}</span>`;
+      if (k < 1 && ov.classList.contains('visible')) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    _jarTimer = setTimeout(closeJar, reduce ? 3000 : 4800);
+  }
+
+  function closeJar() {
+    clearTimeout(_jarTimer);
+    const ov = document.getElementById('jar-overlay');
+    if (ov) { ov.classList.remove('visible'); setTimeout(() => { if (!ov.classList.contains('visible')) ov.innerHTML = ''; }, 300); }
+  }
+
+  // Called each time the diary is drawn: drop in whatever is new since this player last looked.
+  function jarCheckNew(L) {
+    const seen = jarSeen();
+    const newCoins = {};
+    let anyCoin = false;
+    DIARY_COINS.forEach(c => { const n = L.coins[c[1]] - ((seen && seen.c && seen.c[c[1]]) || 0); if (n > 0) { newCoins[c[1]] = n; anyCoin = true; } });
+    const from = seen ? Math.max(0, Math.min(seen.p || 0, L.pennies)) : 0;
+    setJarSeen(L.pennies, L.coins);
+    if (L.pennies > from || anyCoin) playJar(from, L.pennies, newCoins);
+  }
+
+  function replayJar() {
+    if (!diaryOn()) return;
+    const L = diaryLedger();
+    playJar(0, L.pennies, null, 'YOUR JAR');
   }
 
   // Camera sessions: the Android app hands the shots over in order. Wrap its hand-off so each saved session
