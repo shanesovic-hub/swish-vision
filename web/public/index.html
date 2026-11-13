@@ -838,6 +838,8 @@
     .jar-total span { color: #999; font-size: 22px; }
     .jar-coins { font-family: 'Outfit', sans-serif; font-size: 16px; color: #e8e8e8; margin-top: 4px; }
     .jar-tap { font-family: 'Outfit', sans-serif; font-size: 12px; color: #777; margin-top: 16px; }
+    .jar-sound-btn { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; width: 48px; height: 48px; border-radius: 50%;
+      border: 1px solid #333; background: rgba(255,255,255,0.06); font-size: 22px; cursor: pointer; }
     .jar-penny, .jar-coin { position: absolute; z-index: 2; border-radius: 50%; opacity: 0;
       animation: jarDrop 0.95s cubic-bezier(0.45, 0, 0.9, 0.6) forwards; }
     .jar-penny { background: radial-gradient(circle at 35% 30%, #ffc48a, #c26c2c 60%, #8a4515); border: 1.5px solid #7a3d12; }
@@ -3122,7 +3124,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.0';
+  const APP_VERSION = '1.16.1';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -5688,6 +5690,54 @@
     const e = document.getElementById(id + '-edge'); if (e) { e.setAttribute('y', y - 1); e.setAttribute('opacity', level > 0 ? 0.8 : 0); }
   }
 
+  // ---- Coin clinks (1.16.1): made on the spot with the phone's audio, no sound files. ----
+  // Each coin is a short metallic ring: a few bell-like tones that die away fast, plus a tiny tick.
+  const JAR_SOUND_KEY = 'swishquest_jarsound';
+  let _clinkCtx = null, _clinkCount = 0;
+  function jarSoundOn() { try { return localStorage.getItem(JAR_SOUND_KEY) !== 'off'; } catch (e) { return true; } }
+  function clinkCtx() {
+    try {
+      if (!_clinkCtx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; _clinkCtx = new AC(); }
+      if (_clinkCtx.state === 'suspended') _clinkCtx.resume();
+      return _clinkCtx;
+    } catch (e) { return null; }
+  }
+  // at = seconds from now. big = a bigger, lower coin (bonus coins).
+  function clink(ctx, at, big) {
+    _clinkCount++;
+    const t = ctx.currentTime + at;
+    const base = (big ? 1500 : 2500) * (0.85 + Math.random() * 0.3);
+    const out = ctx.createGain();
+    out.gain.value = (big ? 0.26 : 0.18) * (0.75 + Math.random() * 0.45);
+    out.connect(ctx.destination);
+    [[1, 1, 0.32], [2.76, 0.55, 0.16], [5.40, 0.3, 0.08], [8.93, 0.18, 0.045]].forEach(([ratio, amp, decay]) => {
+      const f = base * ratio;
+      if (f > 15000) return;
+      const o = ctx.createOscillator(), g = ctx.createGain(), d = decay * (big ? 1.7 : 1);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(amp, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(out);
+      o.start(t); o.stop(t + d + 0.03);
+    });
+    // the tick of metal on metal
+    const n = Math.floor(ctx.sampleRate * 0.012), buf = ctx.createBuffer(1, n, ctx.sampleRate), data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), ng = ctx.createGain();
+    src.buffer = buf; hp.type = 'highpass'; hp.frequency.value = 5000; ng.gain.value = 0.35;
+    src.connect(hp); hp.connect(ng); ng.connect(out);
+    src.start(t);
+  }
+
+  function toggleJarSound(ev) {
+    if (ev) ev.stopPropagation();
+    try { localStorage.setItem(JAR_SOUND_KEY, jarSoundOn() ? 'off' : 'on'); } catch (e) {}
+    const b = document.getElementById('jar-sound-btn'); if (b) b.textContent = jarSoundOn() ? '🔊' : '🔇';
+    if (!jarSoundOn() && _clinkCtx) { try { _clinkCtx.suspend(); } catch (e) {} }
+    else clinkCtx();
+  }
+
   // from / to: pennies in the jar before and after. coins: bonus coins to drop too, e.g. { quarter: 1 }.
   function playJar(from, to, coins, title) {
     const ov = document.getElementById('jar-overlay');
@@ -5698,6 +5748,7 @@
     DIARY_COINS.forEach(c => { for (let i = 0; i < Math.min(4, (coins && coins[c[1]]) || 0); i++) coinList.push(c); });
     const coinNames = DIARY_COINS.filter(c => coins && coins[c[1]] > 0).map(c => `${coins[c[1]]} ${c[2].toLowerCase()}${coins[c[1]] > 1 ? 's' : ''}`);
     ov.innerHTML = `
+      <button id="jar-sound-btn" class="jar-sound-btn" onclick="toggleJarSound(event)" aria-label="Sound on or off">${jarSoundOn() ? '🔊' : '🔇'}</button>
       <div class="jar-stage">
         <div class="jar-title">${title || 'INTO THE JAR'}</div>
         <div class="jar-amount" id="jar-amount">+0¢</div>
@@ -5712,6 +5763,8 @@
     const H = wrap.clientHeight || 240, W = wrap.clientWidth || 200;
     const landY = jarFillY(to / goal) / 200 * H;
 
+    const ctx = jarSoundOn() ? clinkCtx() : null;
+    if (ctx) { try { _clinkCtx.resume(); } catch (e) {} }
     if (!reduce) {
       const pennies = add > 0 ? Math.max(8, Math.min(36, Math.round(add / 8))) : 0;
       const drops = [];
@@ -5726,9 +5779,14 @@
         el.style.setProperty('--dx', ((Math.random() - 0.5) * W * 0.45).toFixed(0) + 'px');
         el.style.setProperty('--dy', (landY + 10 + d.size + Math.random() * 18).toFixed(0) + 'px');
         el.style.setProperty('--rot', ((Math.random() - 0.5) * 540).toFixed(0) + 'deg');
-        el.style.animationDelay = (0.15 + (i / Math.max(1, drops.length)) * 1.7).toFixed(2) + 's';
+        const delay = 0.15 + (i / Math.max(1, drops.length)) * 1.7;
+        el.style.animationDelay = delay.toFixed(2) + 's';
         wrap.appendChild(el);
+        // a clink as each coin lands (every other penny when there are lots, so it stays a jingle, not a roar)
+        if (ctx && (d.cls !== 'jar-penny' || pennies <= 16 || i % 2 === 0)) clink(ctx, delay + 0.8, d.cls !== 'jar-penny');
       });
+    } else if (ctx && add > 0) {
+      [0, 0.12, 0.2].forEach(a => clink(ctx, 0.2 + a, false));
     }
 
     // the jar level and the numbers rise together
