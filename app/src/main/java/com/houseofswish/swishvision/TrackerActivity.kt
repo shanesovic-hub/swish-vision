@@ -85,7 +85,6 @@ class TrackerActivity : AppCompatActivity() {
     // --- analysis thread state (only touched on analysisExecutor) ---
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var detector: BallDetector? = null
-    @Volatile private var experimental = false // the retrained detector, opt-in
     @Volatile private var tracker = ShotTracker()
     private val hoopFinder = HoopFinder()
     // Shooter spots (shadow mode): a person finder runs a few times a second on its own thread and the
@@ -277,27 +276,6 @@ class TrackerActivity : AppCompatActivity() {
             hint.visibility = View.VISIBLE
         }
         findViewById<Button>(R.id.end).setOnClickListener { endSession() }
-        experimental = getSharedPreferences("swishvision", MODE_PRIVATE).getBoolean("experimentalCamera", false)
-        val expBtn = findViewById<TextView>(R.id.expBtn)
-        expBtn.alpha = if (experimental) 1f else 0.35f
-        expBtn.setOnClickListener {
-            val on = !experimental
-            experimental = on
-            getSharedPreferences("swishvision", MODE_PRIVATE).edit().putBoolean("experimentalCamera", on).apply()
-            expBtn.alpha = if (on) 1f else 0.35f
-            onAnalysis {
-                // Swap detectors on the analysis thread (the GPU delegate lives there).
-                runCatching {
-                    val d = BallDetector(this, on)
-                    detector?.close()
-                    detector = d
-                    tracker = ShotTracker(TrackerConfig.forCamera(on)) // each detector has its own tuned rules
-                    backend = d.backend
-                    recorder?.note("camera", d.modelName)
-                }.onFailure { Log.e(TAG, "detector swap failed", it) }
-            }
-            Toast.makeText(this, if (on) "Experimental camera ON (new trained detector)" else "Experimental camera off (standard detector)", Toast.LENGTH_LONG).show()
-        }
         val announcerBtn = findViewById<TextView>(R.id.announcerBtn)
         announcerBtn.setOnClickListener {
             announcerOn = !announcerOn
@@ -333,9 +311,9 @@ class TrackerActivity : AppCompatActivity() {
         // Build the detector on the analysis thread: the GPU delegate must run where it was created.
         analysisExecutor.execute {
             try {
-                val d = BallDetector(this, experimental)
+                val d = BallDetector(this)
                 detector = d
-                tracker = ShotTracker(TrackerConfig.forCamera(experimental))
+                tracker = ShotTracker(TrackerConfig.forCamera(experimental = true)) // rules tuned for the retrained detector
                 backend = d.backend
                 recorder = runCatching {
                     ReviewRecorder(File(cacheDir, "review/" + System.currentTimeMillis()).apply { mkdirs() })
@@ -831,7 +809,7 @@ class TrackerActivity : AppCompatActivity() {
             status.text = when {
                 err != null -> "Model error"
                 detector == null -> "Loading…"
-                else -> (if (experimental) "🧪 " else "") + "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
+                else -> "$backend · ${latestFps.toInt()}/s · ball ${ballRate}/s" + if (hot) " · HOT" else ""
             }
             status.setTextColor(ContextCompat.getColor(this@TrackerActivity, if (hot || err != null) R.color.miss else R.color.muted))
             setupCheck()
