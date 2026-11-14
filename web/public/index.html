@@ -3116,7 +3116,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.4';
+  const APP_VERSION = '1.16.5';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -6479,27 +6479,6 @@
       streak_20: [streak, 20, 'days in a row'], streak_30: [streak, 30, 'days in a row'], streak_50: [streak, 50, 'days in a row'],
       streak_100: [streak, 100, 'days in a row'],
     };
-
-    // NEXT UP: the 3 unearned badges they're closest to
-    const next = shown.filter(a => !has(a.id) && P[a.id] && P[a.id][0] < P[a.id][1])
-      .map(a => ({ a, r: P[a.id][0] / P[a.id][1] }))
-      .sort((x, y) => y.r - x.r).slice(0, 3);
-    if (next.length) {
-      const sec = document.createElement('div');
-      sec.innerHTML = `<div class="badge-section-title">⏭️ NEXT UP</div>
-        <div class="badge-next">${next.map(({ a }) => {
-          const [cur, goal, unit] = P[a.id];
-          return `<div class="badge-next-card">
-            <div class="badge-next-icon">${a.icon}</div>
-            <div class="badge-next-info">
-              <div class="badge-next-name">${a.name}</div>
-              <div class="badge-next-bar"><div style="width:${Math.max(3, Math.round(cur / goal * 100))}%"></div></div>
-              <div class="badge-next-count">${cur.toLocaleString()} / ${goal.toLocaleString()} ${unit}</div>
-            </div>
-          </div>`;
-        }).join('')}</div>`;
-      container.appendChild(sec);
-    }
 
     container.appendChild(renderRankLadder());
 
