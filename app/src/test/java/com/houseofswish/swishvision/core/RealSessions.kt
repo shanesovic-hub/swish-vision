@@ -18,7 +18,8 @@ object RealSessions {
 
     /** Floors: today's results. A change may not make any session worse than this. */
     /** Sessions recorded with the retrained (experimental) detector: replayed with its settings. */
-    val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04", "driveway_mixed_2026-10-05", "driveway_threes_2026-10-05", "driveway_close_2026-10-06", "driveway_evening_2026-10-09", "driveway_v3_2026-10-13")
+    val EXPERIMENTAL = setOf("driveway_ft_v2_2026-10-04", "driveway_mixed_2026-10-05", "driveway_threes_2026-10-05", "driveway_close_2026-10-06", "driveway_evening_2026-10-09", "driveway_v3_2026-10-13",
+        "driveway_nov_2026-11-11_1624", "driveway_nov_2026-11-11_1654", "driveway_nov_2026-11-11_2007", "driveway_nov_2026-11-12_1638", "driveway_nov_2026-11-13_1546")
 
     private val FLOORS = mapOf(
         "basement_2026-10-01" to Pair(130, 2),      // right calls of 145, extra calls allowed
@@ -33,6 +34,13 @@ object RealSessions {
         "driveway_close_2026-10-06" to Pair(161, 0), // of 171, experimental camera, close shots, adult rebounding
         "driveway_evening_2026-10-09" to Pair(139, 0), // of 143, experimental camera, adult rebounding under the hoop
         "driveway_v3_2026-10-13" to Pair(151, 0),    // of 159, retrained (v3) camera, dusk into dark
+        // November 2026: five driveway sessions, camera side-on to the hoop (732 shots, 97.7% right).
+        // The misses left are mostly balls that roll off the front of the rim and drop beside the net.
+        "driveway_nov_2026-11-11_1624" to Pair(43, 0),  // of 43
+        "driveway_nov_2026-11-11_1654" to Pair(95, 0),  // of 95
+        "driveway_nov_2026-11-11_2007" to Pair(184, 0), // of 190, night
+        "driveway_nov_2026-11-12_1638" to Pair(236, 0), // of 243
+        "driveway_nov_2026-11-13_1546" to Pair(157, 0), // of 161
         "gym_test5" to Pair(27, 1),                 // of 30
     )
 
