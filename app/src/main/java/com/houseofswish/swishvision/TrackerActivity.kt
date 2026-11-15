@@ -44,7 +44,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.houseofswish.swishvision.core.Box
 import com.houseofswish.swishvision.core.Detection
-import com.houseofswish.swishvision.core.HoopFinder
+import com.houseofswish.swishvision.core.RimKeeper
 import com.houseofswish.swishvision.core.Method
 import com.houseofswish.swishvision.core.Phase
 import com.houseofswish.swishvision.core.Result
@@ -86,7 +86,8 @@ class TrackerActivity : AppCompatActivity() {
     private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var detector: BallDetector? = null
     @Volatile private var tracker = ShotTracker()
-    private val hoopFinder = HoopFinder()
+    private val keeper = RimKeeper()               // keeps the rim box on the hoop, even when the phone moves
+    private var keeperEpoch = 0                    // which rim change by the player the keeper has caught up with
     // Shooter spots (shadow mode): a person finder runs a few times a second on its own thread and the
     // review record keeps where everyone stood. The shot-type chips stay the answer for now.
     private val personExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -115,8 +116,7 @@ class TrackerActivity : AppCompatActivity() {
     @Volatile private var backend = "…"
     @Volatile private var hot = false          // severe: slow down between shots even more
     @Volatile private var critical = false     // critical: every other frame even during a shot
-    @Volatile private var autoRim = false      // rim came from the hoop finder (and follows the hoop)
-    @Volatile private var autoFind = true      // look for the hoop while no rim is set
+    @Volatile private var rimEpoch = 0         // bumped (UI thread) each time the player draws the box or taps Rim
     @Volatile private var ballRate = 0
     @Volatile private var shotTypeKey = ShotType.FT.key
     @Volatile private var frameW = 0
@@ -130,6 +130,7 @@ class TrackerActivity : AppCompatActivity() {
     private var shotType = ShotType.FT
     private var autoSpots = false     // the camera picks the shot type from where the shooter stands
     private var ftSpotSet = false
+    private var firstShotHere = 0     // shots before this were taken with the camera somewhere else (UI thread)
     @Volatile private var courtSetups = org.json.JSONArray() // remembered camera spots: where the rim was in the picture -> court direction
     private var setupTried: Box? = null                       // analysis thread: rim we last looked up
     private var lastSpotText = ""
@@ -198,8 +199,10 @@ class TrackerActivity : AppCompatActivity() {
         })
 
         overlay.onRimDrawn = { box ->
-            autoRim = false // the player placed it: stop auto-following
+            // The player placed it: the box keeps that shape and spot on the hoop, wherever the hoop goes.
             rim = box
+            val e = ++rimEpoch
+            onAnalysis { keeper.setManual(box, lastFrameT); keeperEpoch = e }
             resetTracker = true
             playIntro()
             if (hint.visibility == View.VISIBLE) {
@@ -266,13 +269,14 @@ class TrackerActivity : AppCompatActivity() {
             refresh()
         }
         findViewById<Button>(R.id.redraw).setOnClickListener {
-            autoFind = false // they want to draw it themselves
-            autoRim = false
+            // Look for the hoop again (it usually takes under a second); drawing a box still works too.
             rim = null
+            val e = ++rimEpoch
+            onAnalysis { keeper.clear(); keeperEpoch = e }
             resetTracker = true
             overlay.rim = null
             overlay.settingRim = true
-            hint.text = getString(R.string.draw_hint)
+            hint.text = getString(R.string.find_hint)
             hint.visibility = View.VISIBLE
         }
         findViewById<Button>(R.id.end).setOnClickListener { endSession() }
@@ -542,14 +546,17 @@ class TrackerActivity : AppCompatActivity() {
         if (resetTracker) {
             resetTracker = false
             tracker.reset()
-            hoopFinder.reset()
         }
-        val r = rim
+        val epoch = keeperEpoch
+        val r = keeper.rim
         val w = frame.width
         val h = frame.height
         frameW = w
         frameH = h
-        val roi = if (r != null) Roi.aroundRim(r, w, h, BallDetector.INPUT) else Roi.full(w, h, BallDetector.INPUT)
+        // Between shots, once the hoop hasn't been seen at the box for a second, look at the whole
+        // picture now and then: after the phone is moved the hoop can be outside the crop.
+        val look = keeper.wantLook(tMs, quiet = tracker.phase == Phase.IDLE && tMs - lastNearRimAt > 800)
+        val roi = if (r != null && !look) Roi.aroundRim(r, w, h, BallDetector.INPUT) else Roi.full(w, h, BallDetector.INPUT)
         val found = try {
             det.detect(frame, roi)
         } catch (t: Throwable) {
@@ -559,13 +566,26 @@ class TrackerActivity : AppCompatActivity() {
         val balls = found.balls
         if (balls.isNotEmpty()) ballFrames++
         if (r != null && balls.any { abs(it.cx - r.cx) < 3f * r.w && it.cy < r.bottom + r.w }) lastNearRimAt = tMs
-        // Find the hoop automatically, and keep the box on it if the phone gets nudged.
-        val autoBox: Box? = when {
-            r == null && autoFind -> hoopFinder.find(found.hoops)
-            r != null && autoRim -> hoopFinder.follow(r, found.hoops)
-            else -> null
+        // Find the hoop, and keep the box on it however the phone gets moved.
+        val change = runCatching { keeper.update(tMs, found.hoops) }.getOrNull()
+        val jumped = change != null && change.kind != RimKeeper.Kind.FOLLOW
+        if (jumped) {
+            tracker.reset() // a new view of the hoop: start fresh
+            ballPath.clear()
+            if (change!!.kind == RimKeeper.Kind.MOVED) {
+                // New camera spot: the shot chart setup (court direction, scale) has to be found again.
+                spotFinder.reset()
+                setupTried = null
+                ui.post { ftSpotSet = false; firstShotHere = session.shots.size; refresh() }
+            }
+            recorder?.note("rim", change.kind.name.lowercase())
         }
-        val call = tracker.update(tMs, balls, r)
+        val rNow = keeper.rim
+        val raw0 = if (jumped) null else tracker.update(tMs, balls, r)
+        val call = if (raw0 != null && !keeper.callsTrusted(tMs)) {
+            recorder?.note("call_dropped", "rim moved") // the box is off the hoop: not a real shot
+            null
+        } else raw0
         lastFrameT = tMs
         tracker.lastBall?.let { b -> ballPath.addLast(TrackPoint(tMs, b.cx, b.cy, b.w)) }
         while (ballPath.isNotEmpty() && tMs - ballPath.first().t > 4000) ballPath.removeFirst()
@@ -574,7 +594,7 @@ class TrackerActivity : AppCompatActivity() {
         val phaseNow = tracker.phase
         if (prevPhase == Phase.IDLE && phaseNow != Phase.IDLE) shotStartT = tMs
         prevPhase = phaseNow
-        if (r != null && !spotFinder.calibrated && setupTried !== r) { setupTried = r; matchSetup(r, w, h) }
+        if (rNow != null && !spotFinder.calibrated && setupTried !== rNow) { setupTried = rNow; matchSetup(rNow, w, h) }
         val spot = if (call != null && r != null) {
             // Where the shooter stood just before the ball went up.
             val start = if (tMs - shotStartT in 0..6000) shotStartT else tMs - 1500
@@ -606,23 +626,26 @@ class TrackerActivity : AppCompatActivity() {
             overlay.update(snap)
             latestFps = fps
             if (r != null && fps > 0f) { fpsSum += fps; fpsCount++ }
-            if (call != null && r === rim) addShot(call, Method.AUTO, spot)
-            if (autoBox != null) applyAutoRim(autoBox, first = r == null)
+            if (epoch != rimEpoch) return@runOnUiThread // the player changed the rim since: this frame is stale
+            if (call != null) addShot(call, Method.AUTO, spot)
+            if (rNow != null) showRim(rNow, change?.kind)
         }
     }
 
-    private fun applyAutoRim(box: Box, first: Boolean) {
-        if (overlay.isEditing) return
-        if (first && (rim != null || !autoFind)) return // the player got there first
+    /** UI thread: put the box where the rim keeper has it. */
+    private fun showRim(box: Box, kind: RimKeeper.Kind?) {
+        if (overlay.isEditing) return // the player is moving it: theirs wins when they let go
+        if (overlay.rim == box && !overlay.settingRim) return
+        val first = overlay.rim == null || overlay.settingRim
         rim = box
         overlay.rim = box
         overlay.settingRim = false
         if (first) {
-            autoRim = true
-            resetTracker = true
             playIntro()
             hint.visibility = View.GONE
-            Toast.makeText(this, "Found the hoop. Drag the box to adjust it if needed.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Found the rim. It follows the hoop if you move the phone.", Toast.LENGTH_LONG).show()
+        } else if (kind == RimKeeper.Kind.MOVED || kind == RimKeeper.Kind.BUMPED) {
+            Toast.makeText(this, "Found the rim again", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -695,7 +718,8 @@ class TrackerActivity : AppCompatActivity() {
     private fun replaceShots() {
         ui.post {
             val shots = session.shots.toList()
-            val spots = shots.map { if (it.retyped) null else it.spot }
+            // Shots from before the phone moved to a new spot were seen from a different angle: leave them be.
+            val spots = shots.mapIndexed { i, it -> if (it.retyped || i < firstShotHere) null else it.spot }
             onAnalysis {
                 val courts = spots.map { s -> s?.let { spotFinder.courtOf(it) } }
                 ui.post {

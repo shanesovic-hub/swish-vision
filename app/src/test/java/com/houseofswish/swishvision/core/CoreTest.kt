@@ -17,6 +17,12 @@ class CoreTest {
     }
 
     @Test
+    fun rimKeeper() {
+        val failures = RimKeeperChecks.runAll(verbose = true)
+        assertTrue(failures.joinToString("\n"), failures.isEmpty())
+    }
+
+    @Test
     fun sessionDecoderAndRoi() {
         val failures = SessionAndDecoderChecks.runAll()
         assertTrue(failures.joinToString("\n"), failures.isEmpty())

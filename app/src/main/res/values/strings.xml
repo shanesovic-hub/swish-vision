@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Swish Quest</string>
-    <string name="setup_hint">Point the phone at the hoop from off to the side (about 45°), with the whole rim and net in view.\nLooking for the hoop… or drag a box around the rim and the top of the net.</string>
+    <string name="setup_hint">Point the phone at the hoop from off to the side (about 45°), with the whole rim and net in view.\nLooking for the rim… or drag a box around the rim and the top of the net. If you move the phone later, the box finds the rim again by itself.</string>
+    <string name="find_hint">Looking for the rim… (or drag a box around the rim and the top of the net)</string>
     <string name="draw_hint">Drag a box snugly around the rim and the top of the net.</string>
     <string name="camera_needed">Swish Vision needs the camera to watch the rim. Tap to allow it.</string>
 </resources>
