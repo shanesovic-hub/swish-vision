@@ -3116,7 +3116,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.5';
+  const APP_VERSION = '1.16.6';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -3126,6 +3126,8 @@
 
   let _authMode = 'signin'; // 'signin' or 'signup'
   let _firebaseReady = false;
+  let _splashSync = null;        // signed-in data loading in the background while the splash shows
+  let _startWhenReady = false;   // BEGIN YOUR QUEST tapped before sign-in had been checked
   let _syncInProgress = false;
 
   // =============================================
@@ -4110,7 +4112,14 @@
   async function proceedAfterAuth() {
     const user = getFirebaseUser();
     if (user) {
-      await syncStateOnAuth();
+      if (_splashSync) {
+        // Already loading (or loaded) while the splash was showing: just wait for it.
+        const p = _splashSync;
+        _splashSync = null;
+        await p;
+      } else {
+        await syncStateOnAuth();
+      }
     } else {
       // Offline — just load whatever is local
       state = loadActiveProfile();
@@ -4188,10 +4197,10 @@
       _firebaseReady = true;
       if (user) {
         console.log('User already signed in:', user.email);
-        // Auto-skip splash if already signed in with data
-        await proceedAfterAuth();
+        // The splash stays up until BEGIN YOUR QUEST is tapped; get the player's data ready meanwhile.
+        _splashSync = syncStateOnAuth().catch(e => console.error('Splash sync error:', e));
       }
-      // If no user on first load, splash screen stays
+      if (_startWhenReady) { _startWhenReady = false; goToSignup(); }
     } else {
       // Subsequent auth changes (sign in from auth screen, sign out)
       if (user) {
@@ -4567,6 +4576,14 @@
   }
 
   function goToSignup() {
+    if (!_firebaseReady) {
+      // Still checking whether someone is signed in (a second at most): go as soon as that's known.
+      if (!_startWhenReady) {
+        _startWhenReady = true;
+        setTimeout(() => { if (_startWhenReady) { _firebaseReady = true; _startWhenReady = false; goToSignup(); } }, 4000);
+      }
+      return;
+    }
     try {
       const user = getFirebaseUser();
       if (user) {
