@@ -3116,7 +3116,7 @@
   const db = firebase.firestore();
 
   // App version — increment on each deploy to bust browser cache
-  const APP_VERSION = '1.16.6';
+  const APP_VERSION = '1.16.7';
   console.log('Swish Quest v' + APP_VERSION);
 
   // Enable offline persistence
@@ -5162,7 +5162,11 @@
       shotTypes: entry.shotTypes
     };
     if (entry.sv) session.sv = entry.sv;
-    if (_logMode === 'spots') { const runs = makeRuns(_spot.hist.map(h => !!h[1])); if (runs.length) session.streaks = runs; }
+    if (_logMode === 'spots' && _spot.hist.length) {
+      const seq = _spot.hist.map(h => !!h[1]);
+      const runs = makeRuns(seq); if (runs.length) session.streaks = runs;
+      session.best = longestRun(seq);
+    }
 
     const firstToday = getTodaySessions().length === 0;
     const prevLevel = state.tierLevel || 1;
@@ -5339,6 +5343,50 @@
     (seq || []).forEach(m => { if (m) run++; else { if (run >= 5) out.push(run); run = 0; } });
     if (run >= 5) out.push(run);
     return out;
+  }
+
+  // Longest run of makes in a row in one session (any length).
+  function longestRun(seq) {
+    let best = 0, run = 0;
+    (seq || []).forEach(m => { run = m ? run + 1 : 0; if (run > best) best = run; });
+    return best;
+  }
+
+  // Best Streak on the Stats page: most makes in a row in any one session. null = no session has its
+  // shots in order (quick-totals sessions only), so there's nothing to show yet.
+  function bestMakeStreak() {
+    let best = 0, known = false;
+    (state.sessions || []).forEach(s => {
+      if (!s) return;
+      if (typeof s.best === 'number') { known = true; best = Math.max(best, s.best); }
+      (s.streaks || []).forEach(n => { known = true; best = Math.max(best, n); });
+    });
+    ((state.diary && state.diary.extraStreaks) || []).forEach(x => { if (x && x.n) { known = true; best = Math.max(best, x.n); } });
+    return known ? best : null;
+  }
+
+  // Camera sessions saved before each session kept its longest run: the Android app still has every
+  // session's shots in order, so match them up (same day, same shots and makes) and fill it in. Once per load.
+  let _bestFilled = '';
+  function fillBestRuns() {
+    try {
+      const N = window.SwishVisionNative;
+      if (!N || typeof N.savedChartSessions !== 'function' || !_activeProfileId) return;
+      if (_bestFilled === _activeProfileId) return;
+      _bestFilled = _activeProfileId;
+      const files = JSON.parse(N.savedChartSessions() || '[]');
+      const dayOf = ms => dateStr(new Date(Number(ms)));
+      let changed = false;
+      files.forEach(d => {
+        if (!d || !d.startedAt) return;
+        const seq = (d.log || []).filter(x => x && (x.r === 'make' || x.r === 'miss')).map(x => x.r === 'make');
+        if (!seq.length) return;
+        const days = [dayOf(d.startedAt), dayOf(d.endedAt || d.startedAt)];
+        const match = state.sessions.filter(s => s && typeof s.best !== 'number' && s.shots === d.shots && s.makes === d.makes && days.includes(s.date));
+        if (match.length === 1) { match[0].best = longestRun(seq); changed = true; }
+      });
+      if (changed) saveState();
+    } catch (e) { console.warn('fillBestRuns', e); }
   }
 
   function coinFor(n) { return DIARY_COINS.find(c => n >= c[0]) || null; }
@@ -5888,6 +5936,7 @@
           const d = JSON.parse(str), s = state.sessions[state.sessions.length - 1];
           const seq = (d.log || []).filter(x => x && (x.r === 'make' || x.r === 'miss')).map(x => x.r === 'make');
           const runs = makeRuns(seq);
+          if (s && seq.length && typeof s.best !== 'number') { s.best = longestRun(seq); saveState(); }
           if (s && runs.length && !s.streaks) { s.streaks = runs; saveState(); }
         } catch (e) {}
       }
@@ -6249,6 +6298,7 @@
 
   function setupStats() {
     const container = document.getElementById('stats-content');
+    fillBestRuns();
     const sessions = state.sessions;
 
     if (sessions.length === 0) {
@@ -6266,7 +6316,8 @@
     const overallAcc = totalShots > 0 ? Math.round((totalMakes / totalShots) * 100) : 0;
     const streak = getStreak();
 
-    let mostMakes = 0, mostAttempts = 0, bestFGPct = 0, bestStreak = getStreak();
+    let mostMakes = 0, mostAttempts = 0, bestFGPct = 0;
+    const bestRun = bestMakeStreak(); // most makes in a row in one session
     sessions.forEach(s => {
       if (s.makes > mostMakes) mostMakes = s.makes;
       if (s.shots > mostAttempts) mostAttempts = s.shots;
@@ -6385,7 +6436,7 @@
             <div class="stat-card-label">Best FG%</div>
           </div>
           <div class="stat-card-mini" style="border: none; padding: 12px;">
-            <div class="stat-card-value">${bestStreak}</div>
+            <div class="stat-card-value">${bestRun === null ? '—' : bestRun}</div>
             <div class="stat-card-label">Best Streak</div>
           </div>
         </div>
