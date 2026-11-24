@@ -7,12 +7,12 @@ val buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
 
 android {
     namespace = "com.houseofswish.swishvision"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.houseofswish.swishvision"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = buildNumber
         versionName = "0.1.$buildNumber"
     }
@@ -21,7 +21,7 @@ android {
     sourceSets["main"].assets.srcDirs("src/main/assets", "../web/public/js")
 
     // One fixed key so every new build installs over the last one.
-    // Personal sideload key for a private repo, not a store key.
+    // Personal sideload key (it's in the public repo), only for the install-link APK.
     signingConfigs {
         create("personal") {
             storeFile = rootProject.file("keystore/swishvision.jks")
@@ -29,12 +29,25 @@ android {
             keyAlias = "swishvision"
             keyPassword = "swishvision"
         }
+        // Google Play upload key: kept out of the repo, handed in by the build machine
+        // (GitHub secrets PLAY_UPLOAD_KEYSTORE / PLAY_UPLOAD_PASSWORD). Google re-signs for the store.
+        System.getenv("PLAY_KEYSTORE_FILE")?.takeIf { File(it).exists() }?.let { path ->
+            create("play") {
+                storeFile = File(path)
+                storePassword = System.getenv("PLAY_KEYSTORE_PASSWORD")
+                keyAlias = "upload"
+                keyPassword = System.getenv("PLAY_KEYSTORE_PASSWORD")
+            }
+        }
     }
+
+    // Build with -Pplay to sign with the Play upload key (for the .aab going to Google Play).
+    val forPlay = project.hasProperty("play") && signingConfigs.findByName("play") != null
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("personal")
+            signingConfig = signingConfigs.getByName(if (forPlay) "play" else "personal")
         }
         debug {
             signingConfig = signingConfigs.getByName("personal")
@@ -69,9 +82,12 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$camerax")
     implementation("androidx.camera:camera-view:$camerax")
 
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-gpu-api:2.16.1")
+    // LiteRT is TensorFlow Lite's successor (same org.tensorflow.lite code); unlike TF Lite 2.16 its
+    // native libraries support 16 KB memory pages, which Google Play requires.
+    val litert = "1.4.0"
+    implementation("com.google.ai.edge.litert:litert:$litert")
+    implementation("com.google.ai.edge.litert:litert-gpu:$litert")
+    implementation("com.google.ai.edge.litert:litert-gpu-api:$litert")
 
     testImplementation("junit:junit:4.13.2")
 }

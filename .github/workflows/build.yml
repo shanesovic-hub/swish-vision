@@ -22,7 +22,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.11.1"
+          gradle-version: "8.13"
 
       - name: Test tracking logic
         shell: bash
@@ -49,16 +49,44 @@ jobs:
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk "SwishVision-0.1.${{ github.run_number }}.apk"
 
+      - name: Check native code supports 16 KB pages (Google Play rule)
+        run: python3 tools/check_16kb.py "SwishVision-0.1.${{ github.run_number }}.apk"
+
+      - name: Build the Google Play bundle (.aab)
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_PASSWORD }}
+        run: |
+          set -o pipefail
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::No Play upload key (PLAY_UPLOAD_KEYSTORE secret): skipping the Google Play bundle."
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export PLAY_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          gradle :app:bundleRelease -Pplay --no-daemon --stacktrace 2>&1 | tee bundle.log || {
+            grep -E "^e: |What went wrong|Error" -A2 bundle.log | grep -v "^\s*at " | head -40 | sed 's/^/::error::/'
+            exit 1
+          }
+          rm -f "$RUNNER_TEMP/upload.jks"
+          cp app/build/outputs/bundle/release/app-release.aab "SwishQuest-0.1.${{ github.run_number }}.aab"
+          python3 tools/check_16kb.py "SwishQuest-0.1.${{ github.run_number }}.aab"
+
       - uses: actions/upload-artifact@v4
         with:
           name: SwishVision-0.1.${{ github.run_number }}
-          path: SwishVision-*.apk
+          path: |
+            SwishVision-*.apk
+            SwishQuest-*.aab
 
       - name: Publish install link
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Swish Vision 0.1.${{ github.run_number }}
-          body: "Open this page on your phone, tap the .apk file, then Install."
-          files: SwishVision-*.apk
+          body: "Open this page on your phone, tap the .apk file, then Install. (The .aab file is for Google Play.)"
+          files: |
+            SwishVision-*.apk
+            SwishQuest-*.aab
           make_latest: true
